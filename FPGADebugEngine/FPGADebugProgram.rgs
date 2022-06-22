@@ -1,0 +1,15 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {ca8b28d5-faaa-47e8-a8eb-0049fe3d0b18} = s 'FPGADebugProgram class'
+		{
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{84f4a577-a2f8-49f0-aa2c-9526af8df3ee}'
+			Version = s '1.0'
+		}
+	}
+}

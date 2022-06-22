@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Rule
+	Name="MyDebugger"
+	DisplayName="My Debugger"
+	PageTemplate="debugger"
+	Description="My debugger options"
+	xmlns="http://schemas.microsoft.com/build/2009/properties">
+    <Rule.DataSource>
+        <!-- Store debugger properties in the user file, as they are design-time -->
+        <DataSource Persistence="UserFileWithXamlDefaults" HasConfigurationCondition="True"/>
+        <!-- Configuration conditions is optional. Depends on if you want these to be set per configuration. -->
+    </Rule.DataSource>
+
+    <!-- Add properties as needed to configure your debugger. These will appear on project properties. -->
+    <StringProperty Name="MyProperty" DisplayName="My Property" Default="something" Description="Some property for configuring the debugger" />
+</Rule>
