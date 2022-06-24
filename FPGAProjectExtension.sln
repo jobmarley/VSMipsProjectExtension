@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsRemoteDebuggerUtils", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsRemoteDebugger", "MipsRemoteDebugger\MipsRemoteDebugger.csproj", "{83F90958-ED61-4974-BB11-29F45AB531B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsDebugEngine", "MipsDebugEngine\MipsDebugEngine.csproj", "{811231FC-10FE-4C5E-9C83-20FE71241BD4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{83F90958-ED61-4974-BB11-29F45AB531B2}.Release|x64.Build.0 = Release|Any CPU
 		{83F90958-ED61-4974-BB11-29F45AB531B2}.Release|x86.ActiveCfg = Release|Any CPU
 		{83F90958-ED61-4974-BB11-29F45AB531B2}.Release|x86.Build.0 = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|x64.Build.0 = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Debug|x86.Build.0 = Debug|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x64.ActiveCfg = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x64.Build.0 = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x86.ActiveCfg = Release|Any CPU
+		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

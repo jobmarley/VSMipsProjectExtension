@@ -1,0 +1,30 @@
+﻿; This file registers the sample debug engine with Visual Studio.
+; The 'AD7Metrics\Engine\{guid}' section declares capabiliets of the engine.
+; Make sure to update the GUID in this file when changing EngineConstants.EngineId
+
+[$RootKey$\AD7Metrics\Engine\{23CCB575-0BF4-423C-B534-73B1AD053EBB}]
+"CLSID"="{AD8869A4-D013-4C71-ABDE-B33998A0CECA}"
+"ProgramProvider"="{9D1EEDD2-CF21-416A-B53A-D933B2F47920}"
+"Attach"=dword:00000001
+"AddressBP"=dword:00000000
+"AutoSelectPriority"=dword:00000004
+"CallstackBP"=dword:00000001
+"Name"="MipsDebugger"
+;"PortSupplier"="{B473EA66-5824-4F62-97DB-7A57F01C0C7A}"
+@="MipsDebugger"
+
+[$RootKey$\AD7Metrics\Engine\{23CCB575-0BF4-423C-B534-73B1AD053EBB}\IncompatibleList]
+"guidCOMPlusNativeEng"="{92EF0900-2251-11D2-B72E-0000F87572EF}"
+"guidCOMPlusOnlyEng"="{449EC4CC-30D2-4032-9256-EE18EB41B62B}"
+"guidNativeOnlyEng"="{449EC4CC-30D2-4032-9256-EE18EB41B62B}"
+"guidScriptEng"="{F200A7E7-DEA5-11D0-B854-00A0244A1DE2}"
+
+[$RootKey$\CLSID\{AD8869A4-D013-4C71-ABDE-B33998A0CECA}]
+"Assembly"="MipsDebugEngine"
+"Class"="FPGAProjectExtension.DebugEngine.MipsDebugEngine"
+"CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
+
+[$RootKey$\CLSID\{9D1EEDD2-CF21-416A-B53A-D933B2F47920}]
+"Assembly"="MipsDebugEngine"
+"Class"="FPGAProjectExtension.DebugEngine.MipsProgramProvider"
+"CodeBase"="$PackageFolder$\MipsDebugEngine.dll"

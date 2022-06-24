@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PropertyPageSchema Include="
-                        $(MSBuildThisFileDirectory)Rules\MyDebugger.xaml;
+                        $(MSBuildThisFileDirectory)Rules\MipsDebugger.xaml;
                         ">
       <Context>Project</Context>
     </PropertyPageSchema>

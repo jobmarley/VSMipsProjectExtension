@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Rule
-	Name="MyDebugger"
-	DisplayName="My Debugger"
+	Name="MipsDebugger"
+	DisplayName="Mips Debugger"
 	PageTemplate="debugger"
-	Description="My debugger options"
+	Description="Mips debugger options"
 	xmlns="http://schemas.microsoft.com/build/2009/properties">
     <Rule.DataSource>
         <!-- Store debugger properties in the user file, as they are design-time -->
