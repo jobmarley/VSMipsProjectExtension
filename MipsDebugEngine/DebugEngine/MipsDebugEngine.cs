@@ -18,39 +18,6 @@ namespace FPGAProjectExtension.DebugEngine
 		//, ICustomQueryInterface
 	{
 
-		[ComRegisterFunction]
-		public static void RegisterFunction(Type t)
-		{
-			// The assembly must be registered with regasm.exe
-			// But it struggles with dependencies, so it can be used with some options to generate a reg file.
-			// I managed to make it work with:
-			// regasm FPGAProjectExtension.dll /regfile:"regfile.reg" /asmpath:"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\PublicAssemblies" /asmpath:"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\Project" /asmpath:"C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089"
-			// WARNING: The .reg file doesnt contain the entries below
-
-			// for details:
-			// https://docs.microsoft.com/en-us/visualstudio/extensibility/debugger/reference/sdk-helpers-for-debugging?view=vs-2022
-			string registrationRoot = "Software\\Microsoft\\VisualStudio\\17.0";
-
-			Microsoft.Win32.RegistryKey engineKey = Microsoft.Win32.Registry.LocalMachine.CreateSubKey(string.Format("{0}\\AD7Metrics\\Engine\\{{{1}}}", registrationRoot, MipsDEGuids.EngineGuid.ToString()));
-			engineKey.SetValue("Name", "My Debugger");
-			engineKey.SetValue("CLSID", string.Format("{{{0}}}", typeof(MipsDebugEngine).GUID.ToString()));
-			engineKey.SetValue("ProgramProvider", string.Format("{{{0}}}", typeof(MipsDebugProgramProvider).GUID.ToString()));
-
-			Microsoft.Win32.RegistryKey portSupplierKey = Microsoft.Win32.Registry.LocalMachine.CreateSubKey(string.Format("{0}\\AD7Metrics\\PortSupplier\\{{{1}}}", registrationRoot, MipsDEGuids.PortSupplierGuid.ToString()));
-			portSupplierKey.SetValue("Name", "Mips Port Supplier");
-			portSupplierKey.SetValue("CLSID", string.Format("{{{0}}}", typeof(MipsDebugPortSupplier).GUID.ToString()));
-
-			engineKey.Close();
-			portSupplierKey.Close();
-		}
-		[ComUnregisterFunction]
-		public static void UnregisterFunction(Type t)
-		{
-			string registrationRoot = "Software\\Microsoft\\VisualStudio\\17.0";
-			Microsoft.Win32.Registry.LocalMachine.DeleteSubKey(string.Format("{0}\\AD7Metrics\\Engine\\{{{1}}}", registrationRoot, MipsDEGuids.EngineGuid.ToString()));
-			Microsoft.Win32.Registry.LocalMachine.DeleteSubKey(string.Format("{0}\\AD7Metrics\\PortSupplier\\{{{1}}}", registrationRoot, MipsDEGuids.PortSupplierGuid.ToString()));
-		}
-
 		string m_registryRoot;
 
 		/*public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
