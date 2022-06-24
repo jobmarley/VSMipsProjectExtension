@@ -67,41 +67,15 @@ namespace FPGAProjectExtension
 			// perform any necessary logic to determine if the debugger can launch
 			return Task.FromResult(true);
 		}
-		[System.Runtime.InteropServices.DllImport("ole32.Dll")]
-		static public extern uint CoCreateInstance(
-			ref Guid clsid,
-			[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.IUnknown)] object inner,
-			uint context,
-			ref Guid uuid,
-			[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.IUnknown)] out object rReturnedComObject);
-
+		
 		Guid MipsDebuggerEngineGuid = new Guid("23CCB575-0BF4-423C-B534-73B1AD053EBB");
 		public override async Task<IReadOnlyList<IDebugLaunchSettings>> QueryDebugTargetsAsync(DebugLaunchOptions launchOptions)
 		{
-			//VSDebug.dll!CDebugger::LaunchTargets(struct VSDEBUG_RESULT *,unsigned long,struct _VsDebugTargetInfo4 *,struct _VsDebugTargetProcessInfo *)	Unknown
-			//VSDebug.dll!CDefaultLaunchHook::OnLaunchDebugTargets(unsigned long,struct _VsDebugTargetInfo4 *,struct _VsDebugTargetProcessInfo *)	Unknown
-			//[Managed to Native Transition]
-			//VsGraphicsLaunchHookPkg.dll!Microsoft.VsPixPkg.XXX_DebugLaunchHook.OnLaunchDebugTargets(uint DebugTargetCount, Microsoft.VisualStudio.Shell.Interop.VsDebugTargetInfo4[] pDebugTargets, Microsoft.VisualStudio.Shell.Interop.VsDebugTargetProcessInfo[] pLaunchResults) Unknown
-			//[Native to Managed Transition]
-			//VSDebug.dll!CDebugger::LaunchTargetsThruHooks(struct VSDEBUG_RESULT *,unsigned long,struct _VsDebugTargetInfo4 *,struct _VsDebugTargetProcessInfo *)	Unknown
-			//VSDebug.dll!CDebugger::LaunchDebugTargets4(unsigned long,struct _VsDebugTargetInfo4 *,struct _VsDebugTargetProcessInfo *)	Unknown
-			//[Managed to Native Transition]
-			//Microsoft.VisualStudio.ProjectSystem.VS.dll!Microsoft.VisualStudio.ProjectSystem.VS.Debug.DebugLaunchProviderBase.LaunchAsync(Microsoft.VisualStudio.ProjectSystem.VS.Debug.IDebugLaunchSettings[] launchSettings) Unknown
-
-			//object comObj = null;
-			//Guid clsid = new Guid("E13B43AC-F1B2-4636-A20A-364ACB053A04");
-			//Guid interfaceid = typeof(Microsoft.VisualStudio.Debugger.Interop.IDebugEngine2).GUID;
-			//uint err = CoCreateInstance(ref clsid, null, 1, ref interfaceid, out comObj);
-#if DEBUG
-			// This is necessary because experimental instance uses a hive. The debug engine needs to be registered in the hive
-			// but the COM components must also be registered in the real registry
-			//DebugEngine.MipsDebugEngine.RegisterFunction(typeof(DebugEngine.MipsDebugEngine));
-#endif
 			var settings = new DebugLaunchSettings(launchOptions);
 
-			//settings.LaunchDebugEngineGuid = MyDebuggerEngineGuid; // Microsoft.VisualStudio.ProjectSystem.Debug.DebuggerEngines has some well known engines
+			//settings.LaunchDebugEngineGuid = DebuggerEngines.NativeOnlyEngine; // Microsoft.VisualStudio.ProjectSystem.Debug.DebuggerEngines has some well known engines
 			settings.LaunchDebugEngineGuid = MipsDebuggerEngineGuid;
-			//settings.LaunchDebugEngineGuid = Guid.Empty;// DebuggerEngines.NativeOnlyEngine;
+			//settings.LaunchDebugEngineGuid = Guid.Empty;
 
 			/*
 			 * If using a PortSupplier, LaunchDebugEngineGuid must be empty.
