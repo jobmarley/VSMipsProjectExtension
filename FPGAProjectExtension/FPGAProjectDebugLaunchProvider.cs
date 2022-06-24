@@ -37,7 +37,7 @@ namespace FPGAProjectExtension
 		private ConfiguredProject m_configuredProject = null;
 
 		[ImportMany(ExportContractNames.VsTypes.IVsHierarchy)]
-		private OrderPrecedenceImportCollection<IVsHierarchy> IVsHierarchies { get; set; }
+		private OrderPrecedenceImportCollection<IVsHierarchy> IVsHierarchies { get; set; } = null;
 
 		[ImportingConstructor]
 		public FPGAProjectDebugLaunchProvider(ConfiguredProject configuredProject, IAdditionalRuleDefinitionsService rds)
@@ -67,7 +67,7 @@ namespace FPGAProjectExtension
 			// perform any necessary logic to determine if the debugger can launch
 			return Task.FromResult(true);
 		}
-		
+
 		Guid MipsDebuggerEngineGuid = new Guid("23CCB575-0BF4-423C-B534-73B1AD053EBB");
 		public override async Task<IReadOnlyList<IDebugLaunchSettings>> QueryDebugTargetsAsync(DebugLaunchOptions launchOptions)
 		{
@@ -77,6 +77,15 @@ namespace FPGAProjectExtension
 			settings.LaunchDebugEngineGuid = MipsDebuggerEngineGuid;
 			//settings.LaunchDebugEngineGuid = Guid.Empty;
 
+			// I think this is the right way to get evaluated properties
+			await ConfiguredProject.Services.ProjectLockService.ReadLockAsync(
+				async access =>
+				{
+					Microsoft.Build.Evaluation.Project project = await access.GetProjectAsync(ConfiguredProject);
+					// Executable & CurrentDirectory should never be null, or the engine isnt launched
+					settings.Executable = project.GetPropertyValue("TargetPath");
+					settings.CurrentDirectory = System.IO.Path.GetDirectoryName(settings.Executable);
+				});
 			/*
 			 * If using a PortSupplier, LaunchDebugEngineGuid must be empty.
 			 * If you use DebuggerEngines.NativeOnlyEngine, the IDebugPort2 implementation
@@ -87,8 +96,6 @@ namespace FPGAProjectExtension
 			 */
 			settings.AppPackageLaunchInfo = new VsAppPackageLaunchInfo();
 			settings.Arguments = "";
-			settings.CurrentDirectory = @"";
-			settings.Executable = @"";
 			settings.LaunchOperation = DebugLaunchOperation.CreateProcess;
 			settings.LaunchOptions = launchOptions;
 			settings.Options = "";
@@ -125,7 +132,7 @@ namespace FPGAProjectExtension
 
 		public async Task LoadAsync()
 		{
-			
+
 		}
 		public async Task UnloadAsync()
 		{
