@@ -12,5 +12,6 @@
     </Rule.DataSource>
 
     <!-- Add properties as needed to configure your debugger. These will appear on project properties. -->
-    <StringProperty Name="MyProperty" DisplayName="My Property" Default="something" Description="Some property for configuring the debugger" />
+    <StringProperty Name="ServerName" DisplayName="Remote Server Name" Default="" Description="Specifies a remote server name" />
+    <StringProperty Name="ServerPort" DisplayName="Remote Server Port" Default="94584" Description="Specifies a remote server port" />
 </Rule>
