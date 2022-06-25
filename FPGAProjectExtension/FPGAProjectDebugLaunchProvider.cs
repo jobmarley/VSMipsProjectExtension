@@ -68,13 +68,14 @@ namespace FPGAProjectExtension
 			return Task.FromResult(true);
 		}
 
-		Guid MipsDebuggerEngineGuid = new Guid("23CCB575-0BF4-423C-B534-73B1AD053EBB");
+		Guid MipsDebugEngineGuid = new Guid("23CCB575-0BF4-423C-B534-73B1AD053EBB");
+		Guid MipsDebugPortSupplierGuid = new Guid("76EE65B4-DFC2-44A7-88D7-52E26DA2E2BE");
 		public override async Task<IReadOnlyList<IDebugLaunchSettings>> QueryDebugTargetsAsync(DebugLaunchOptions launchOptions)
 		{
 			var settings = new DebugLaunchSettings(launchOptions);
 
 			//settings.LaunchDebugEngineGuid = DebuggerEngines.NativeOnlyEngine; // Microsoft.VisualStudio.ProjectSystem.Debug.DebuggerEngines has some well known engines
-			settings.LaunchDebugEngineGuid = MipsDebuggerEngineGuid;
+			settings.LaunchDebugEngineGuid = MipsDebugEngineGuid;
 			//settings.LaunchDebugEngineGuid = Guid.Empty;
 
 			// I think this is the right way to get evaluated properties
@@ -99,9 +100,9 @@ namespace FPGAProjectExtension
 			settings.LaunchOperation = DebugLaunchOperation.CreateProcess;
 			settings.LaunchOptions = launchOptions;
 			settings.Options = "";
-			settings.PortName = "";
-			settings.PortSupplierGuid = Guid.Empty;
-			//settings.PortSupplierGuid = MyDebuggerPortSupplierGuid;
+			settings.PortName = "baba";
+			//settings.PortSupplierGuid = Guid.Empty;
+			settings.PortSupplierGuid = MipsDebugPortSupplierGuid;
 			settings.ProcessId = 0;
 			settings.ProcessLanguageGuid = Guid.Empty;
 			settings.Project = IVsHierarchies.FirstOrDefault()?.Value;

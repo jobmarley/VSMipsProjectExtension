@@ -10,8 +10,12 @@
 "AutoSelectPriority"=dword:00000004
 "CallstackBP"=dword:00000001
 "Name"="MipsDebugger"
-;"PortSupplier"="{B473EA66-5824-4F62-97DB-7A57F01C0C7A}"
+"PortSupplier"="{B473EA66-5824-4F62-97DB-7A57F01C0C7A}"
 @="MipsDebugger"
+
+[$RootKey$\AD7Metrics\PortSupplier\{76EE65B4-DFC2-44A7-88D7-52E26DA2E2BE}]
+"CLSID"="{B473EA66-5824-4F62-97DB-7A57F01C0C7A}"
+"Name"="MipsDebugPortSupplier"
 
 [$RootKey$\AD7Metrics\Engine\{23CCB575-0BF4-423C-B534-73B1AD053EBB}\IncompatibleList]
 "guidCOMPlusNativeEng"="{92EF0900-2251-11D2-B72E-0000F87572EF}"
@@ -27,4 +31,9 @@
 [$RootKey$\CLSID\{9D1EEDD2-CF21-416A-B53A-D933B2F47920}]
 "Assembly"="MipsDebugEngine"
 "Class"="FPGAProjectExtension.DebugEngine.MipsProgramProvider"
+"CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
+
+[$RootKey$\CLSID\{B473EA66-5824-4F62-97DB-7A57F01C0C7A}]
+"Assembly"="MipsDebugPortSupplier"
+"Class"="FPGAProjectExtension.DebugEngine.MipsDebugPortSupplier"
 "CodeBase"="$PackageFolder$\MipsDebugEngine.dll"

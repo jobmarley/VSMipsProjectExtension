@@ -10,16 +10,77 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace FPGAProjectExtension.DebugEngine
 {
+	class MipsDebugProgramNode
+		: IDebugProgramNode2
+	{
+		string m_name;
+		AD_PROCESS_ID m_pid;
+		public MipsDebugProgramNode(AD_PROCESS_ID pid, string name)
+		{
+			m_pid = pid;
+			m_name = name;
+		}
+		public int GetProgramName(out string pbstrProgramName)
+		{
+			pbstrProgramName = m_name;
+			return VSConstants.S_OK;
+		}
+
+		public int GetHostName(enum_GETHOSTNAME_TYPE dwHostNameType, out string pbstrHostName)
+		{
+			pbstrHostName = m_name;
+			return VSConstants.S_OK;
+		}
+
+		public int GetHostPid(AD_PROCESS_ID[] pHostProcessId)
+		{
+			pHostProcessId[0] = m_pid;
+			return VSConstants.S_OK;
+		}
+
+		public int GetHostMachineName_V7(out string pbstrHostMachineName)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int Attach_V7(IDebugProgram2 pMDMProgram, IDebugEventCallback2 pCallback, uint dwReason)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetEngineInfo(out string pbstrEngine, out Guid pguidEngine)
+		{
+			pbstrEngine = "MipsDebugger";
+			pguidEngine = MipsDEGuids.EngineGuid;
+			return VSConstants.S_OK;
+		}
+
+		public int DetachDebugger_V7()
+		{
+			throw new NotImplementedException();
+		}
+	}
 	[ComVisible(true)]
 	[Guid("972617D7-8244-4FB7-9870-4062B6086D5D")]
 	internal class MipsDebugProgram
-		: IDebugProgram2
+		: IDebugProgram2,
+		IDebugProgramNode2
 	{
 		MipsDebugProcess m_process = null;
 		string m_name = null;
 		Guid m_guid = Guid.Empty;
 
+		public MipsDebugProcess Process => m_process;
 		public MipsDebugThread Thread { get; private set; }
+
+		private List<MipsDebugModule> m_modules = new List<MipsDebugModule>();
+		public IEnumerable<MipsDebugModule> Modules => m_modules;
+		public MipsDebugModule LoadModule(string filepath)
+		{
+			MipsDebugModule m = new MipsDebugModule(this, filepath);
+			m_modules.Add(m);
+			return m;
+		}
 		public MipsDebugProgram(MipsDebugProcess process, string name)
 		{
 			m_process = process;
@@ -56,7 +117,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CanDetach()
 		{
-			throw new NotImplementedException();
+			return VSConstants.S_OK;
 		}
 
 		public int Detach()
@@ -92,12 +153,14 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CauseBreak()
 		{
-			throw new NotImplementedException();
+			return VSConstants.S_OK;
 		}
 
 		public int GetEngineInfo(out string pbstrEngine, out Guid pguidEngine)
 		{
-			throw new NotImplementedException();
+			pbstrEngine = "MipsDebugger";
+			pguidEngine = MipsDEGuids.EngineGuid;
+			return VSConstants.S_OK;
 		}
 
 		public int EnumCodeContexts(IDebugDocumentPosition2 pDocPos, out IEnumDebugCodeContexts2 ppEnum)
@@ -131,6 +194,48 @@ namespace FPGAProjectExtension.DebugEngine
 		}
 
 		public int WriteDump(enum_DUMPTYPE DUMPTYPE, string pszDumpUrl)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetProgramName(out string pbstrProgramName)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetHostName(enum_GETHOSTNAME_TYPE dwHostNameType, out string pbstrHostName)
+		{
+			pbstrHostName = null;
+			switch (dwHostNameType)
+			{
+				case enum_GETHOSTNAME_TYPE.GHN_FRIENDLY_NAME:
+					pbstrHostName = "localhost";
+					break;
+				case enum_GETHOSTNAME_TYPE.GHN_FILE_NAME:
+					pbstrHostName = "localhost";
+					break;
+				default:
+					return VSConstants.E_INVALIDARG;
+			}
+			return VSConstants.S_OK;
+		}
+
+		public int GetHostPid(AD_PROCESS_ID[] pHostProcessId)
+		{
+			return Process.GetPhysicalProcessId(pHostProcessId);
+		}
+
+		public int GetHostMachineName_V7(out string pbstrHostMachineName)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int Attach_V7(IDebugProgram2 pMDMProgram, IDebugEventCallback2 pCallback, uint dwReason)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int DetachDebugger_V7()
 		{
 			throw new NotImplementedException();
 		}

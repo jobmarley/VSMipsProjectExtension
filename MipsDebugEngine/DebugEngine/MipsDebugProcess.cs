@@ -13,21 +13,31 @@ namespace FPGAProjectExtension.DebugEngine
 	[ComVisible(true)]
 	[Guid("5F01F2FA-1A4B-4D32-AF99-BE3B67F1F162")]
 	internal class MipsDebugProcess
-		: IDebugProcess2
+		: IDebugProcess2,
+		//IDebugProcessEx2,
+		ICustomQueryInterface
 	{
 		string m_filepath;
 		DateTime m_creationTime;
 		Guid m_physicalProcessGuid;
 		Guid m_processGuid;
 		bool m_running = false;
-		public MipsDebugProgram Program { get; private set; }
-		public MipsDebugProcess(string filepath)
+		public IDebugPort2 Port { get; private set; } = null;
+
+		private List<MipsDebugProgram> m_programs = new List<MipsDebugProgram>();
+		public IEnumerable<MipsDebugProgram> Programs => m_programs;
+		public void AddProgram(MipsDebugProgram program)
+		{
+			m_programs.Add(program);
+		}
+		public string Filepath => m_filepath;
+		public MipsDebugProcess(string filepath, IDebugPort2 port)
 		{
 			m_filepath = filepath;
 			m_creationTime = DateTime.Now;
 			m_physicalProcessGuid = Guid.NewGuid();
 			m_processGuid = Guid.NewGuid();
-			Program = new MipsDebugProgram(this, System.IO.Path.GetFileName(filepath));
+			Port = port;
 		}
 		public int GetInfo(enum_PROCESS_INFO_FIELDS Fields, PROCESS_INFO[] pProcessInfo)
 		{
@@ -85,7 +95,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int EnumPrograms(out IEnumDebugPrograms2 ppEnum)
 		{
-			ppEnum = new EnumDebugPrograms2(new List<IDebugProgram2>() { Program });
+			ppEnum = new EnumDebugPrograms2(m_programs.Cast<IDebugProgram2>().ToArray());
 			return VSConstants.S_OK;
 		}
 
@@ -172,7 +182,28 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetPort(out IDebugPort2 ppPort)
 		{
-			throw new NotImplementedException();
+			ppPort = Port;
+			return VSConstants.S_OK;
 		}
+		public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
+		{
+			ppv = IntPtr.Zero;
+			return CustomQueryInterfaceResult.NotHandled;
+		}
+
+		//public int Attach(IDebugSession2 pSession)
+		//{
+		//	throw new NotImplementedException();
+		//}
+
+		//public int Detach(IDebugSession2 pSession)
+		//{
+		//	throw new NotImplementedException();
+		//}
+
+		//public int AddImplicitProgramNodes(ref Guid guidLaunchingEngine, Guid[] rgguidSpecificEngines, uint celtSpecificEngines)
+		//{
+		//	throw new NotImplementedException();
+		//}
 	}
 }

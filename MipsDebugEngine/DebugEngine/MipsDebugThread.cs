@@ -15,6 +15,8 @@ namespace FPGAProjectExtension.DebugEngine
 		string m_name = null;
 		MipsDebugProgram m_program = null;
 		uint m_threadId = 0;
+
+		public MipsDebugProgram Program => m_program;
 		public MipsDebugThread(string name, MipsDebugProgram program)
 		{
 			m_name = name;

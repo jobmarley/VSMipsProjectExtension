@@ -22,21 +22,163 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public const int E_PORTSUPPLIER_NO_PORT = unchecked((int)0x80040080);
 	}
-	[Guid("E5940649-4915-48BA-B14E-3FDC216C5496")]
-	internal class MipsDebugProcessCreateEvent
-		: IDebugProcessCreateEvent2,
-		IDebugEvent2
+	abstract class MipsDebugEvent
+		: IDebugEvent2
 	{
-		public MipsDebugProcessCreateEvent(uint attributes)
+		public MipsDebugEvent(Guid iid, uint attributes)
 		{
+			IID = iid;
 			Attributes = attributes;
 		}
-
-		public uint Attributes { get; set; }
-		public int GetAttributes(out uint pdwAttrib)
+		public Guid IID { get; }
+		public uint Attributes { get; }
+		int IDebugEvent2.GetAttributes(out uint eventAttributes)
 		{
-			pdwAttrib = Attributes;
+			eventAttributes = Attributes;
 			return VSConstants.S_OK;
+		}
+	}
+	abstract class MipsAsynchronousEvent
+		: MipsDebugEvent
+	{
+		public MipsAsynchronousEvent(Guid iid)
+			: base(iid, (uint)enum_EVENTATTRIBUTES.EVENT_ASYNCHRONOUS)
+		{
+
+		}
+	}
+
+	abstract class MipsStoppingEvent
+		: MipsDebugEvent
+	{
+		public MipsStoppingEvent(Guid iid)
+			: base(iid, (uint)enum_EVENTATTRIBUTES.EVENT_ASYNC_STOP)
+		{
+
+		}
+	}
+
+	abstract class MipsSynchronousEvent
+		: MipsDebugEvent
+	{
+		public MipsSynchronousEvent(Guid iid)
+			: base(iid, (uint)enum_EVENTATTRIBUTES.EVENT_SYNCHRONOUS)
+		{
+
+		}
+	}
+	abstract class MipsSynchronousStoppingEvent
+		: MipsDebugEvent
+	{
+		public MipsSynchronousStoppingEvent(Guid iid)
+			: base(iid, (uint)enum_EVENTATTRIBUTES.EVENT_STOPPING | (uint)enum_EVENTATTRIBUTES.EVENT_SYNCHRONOUS)
+		{
+
+		}
+	}
+
+	internal class MipsDebugProcessCreateEvent
+		: MipsAsynchronousEvent,
+		IDebugProcessCreateEvent2
+	{
+		public MipsDebugProcessCreateEvent()
+			: base(typeof(IDebugProcessCreateEvent2).GUID)
+		{
+		}
+	}
+	internal class MipsDebugProgramCreateEvent
+		: MipsAsynchronousEvent,
+		IDebugProgramCreateEvent2
+	{
+		public MipsDebugProgramCreateEvent()
+			: base(typeof(IDebugProgramCreateEvent2).GUID)
+		{
+		}
+	}
+	internal class MipsDebugProgramDestroyEvent
+		: MipsSynchronousEvent,
+		IDebugProgramDestroyEvent2
+	{
+		uint m_exitCode = 0;
+		public MipsDebugProgram Program { get; }
+		public MipsDebugProgramDestroyEvent(uint exitCode, MipsDebugProgram program)
+			: base(typeof(IDebugProgramDestroyEvent2).GUID)
+		{
+			m_exitCode = exitCode;
+			Program = program;
+		}
+
+		public int GetExitCode(out uint pdwExit)
+		{
+			pdwExit = m_exitCode;
+			return VSConstants.S_OK;
+		}
+	}
+	internal class MipsDebugEngineCreateEvent
+		: MipsAsynchronousEvent,
+		IDebugEngineCreateEvent2
+	{
+		private IDebugEngine2 m_debugEngine = null;
+		public MipsDebugEngineCreateEvent(IDebugEngine2 debugEngine)
+			: base(typeof(IDebugEngineCreateEvent2).GUID)
+		{
+			m_debugEngine = debugEngine;
+		}
+
+		public int GetEngine(out IDebugEngine2 pEngine)
+		{
+			pEngine = m_debugEngine;
+			return VSConstants.S_OK;
+		}
+	}
+	internal class MipsDebugThreadCreateEvent
+		: MipsAsynchronousEvent, 
+		IDebugThreadCreateEvent2
+	{
+		public MipsDebugThreadCreateEvent()
+			: base(typeof(IDebugThreadCreateEvent2).GUID)
+		{
+		}
+	}
+	internal class MipsDebugModuleLoadEvent
+		: MipsAsynchronousEvent,
+		IDebugModuleLoadEvent2
+	{
+		private bool m_loading = false;
+		public MipsDebugModule Module { get; } = null;
+		public MipsDebugModuleLoadEvent(MipsDebugModule module, bool loading)
+			: base(typeof(IDebugModuleLoadEvent2).GUID)
+		{
+			Module = module;
+			m_loading = loading;
+		}
+
+		public int GetModule(out IDebugModule2 pModule, ref string pbstrDebugMessage, ref int pbLoad)
+		{
+			pModule = Module;
+			//pbstrDebugMessage = "";
+			pbLoad = m_loading ? 1 : 0;
+			return VSConstants.S_OK;
+		}
+	}
+	internal class MipsDebugLoadCompleteEvent
+		: MipsStoppingEvent,
+		IDebugLoadCompleteEvent2,
+		IDebugEvent2
+	{
+		public MipsDebugLoadCompleteEvent()
+			: base(typeof(IDebugLoadCompleteEvent2).GUID)
+		{
+		}
+	}
+	internal class MipsDebugEntryPointEvent
+		: MipsAsynchronousEvent,
+		IDebugEntryPointEvent2,
+		IDebugEvent2
+	{
+		public MipsDebugEntryPointEvent()
+			: base(typeof(IDebugEntryPointEvent2).GUID)
+		{
 		}
 	}
 }
