@@ -35,14 +35,20 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public void Advise(object pUnkSink, out int pdwCookie)
 		{
-			int c = m_cookie++;
-			pdwCookie = c;
-			m_sinks[c] = (IDebugPortEvents2)pUnkSink;
+			lock (m_sinks)
+			{
+				int c = m_cookie++;
+				pdwCookie = c;
+				m_sinks[c] = (IDebugPortEvents2)pUnkSink;
+			}
 		}
 
 		public void Unadvise(int dwCookie)
 		{
-			m_sinks.Remove(dwCookie);
+			lock (m_sinks)
+			{
+				m_sinks.Remove(dwCookie);
+			}
 		}
 
 		public void EnumConnections(out IEnumConnections ppEnum)
