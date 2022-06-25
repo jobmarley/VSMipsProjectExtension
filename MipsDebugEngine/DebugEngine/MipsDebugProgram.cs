@@ -107,7 +107,13 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int Terminate()
 		{
-			throw new NotImplementedException();
+			// This must kill the program
+			//SendEvent(new MipsDebugProgramDestroyEvent(0, m_debuggedProgram));
+			IDebugDefaultPort2 ddp = (IDebugDefaultPort2)Process.Port;
+			IDebugPortNotify2 dpn;
+			ddp.GetPortNotify(out dpn);
+			dpn.RemoveProgramNode(this);
+			return VSConstants.S_OK;
 		}
 
 		public int Attach(IDebugEventCallback2 pCallback)

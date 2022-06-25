@@ -114,6 +114,17 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 	}
+	internal class MipsDebugProcessDestroyEvent
+		: MipsSynchronousEvent,
+		IDebugProcessDestroyEvent2
+	{
+		public MipsDebugProcess Process { get; }
+		public MipsDebugProcessDestroyEvent(MipsDebugProcess process)
+			: base(typeof(IDebugProcessDestroyEvent2).GUID)
+		{
+			Process = process;
+		}
+	}
 	internal class MipsDebugEngineCreateEvent
 		: MipsAsynchronousEvent,
 		IDebugEngineCreateEvent2

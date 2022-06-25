@@ -31,6 +31,16 @@ namespace FPGAProjectExtension.DebugEngine
 		MipsDebugProcess m_debuggedProcess = null;
 		MipsDebugProgram m_debuggedProgram = null;
 
+		void SendEvent(MipsDebugProcessDestroyEvent e)
+		{
+			m_callback.Event(this,
+				e.Process,
+				null,
+				null,
+				e,
+				e.IID,
+				e.Attributes);
+		}
 		void SendEvent(MipsDebugProgramDestroyEvent e)
 		{
 			m_callback.Event(this,
@@ -182,7 +192,14 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int DestroyProgram(IDebugProgram2 pProgram)
 		{
-			throw new NotImplementedException();
+			if (pProgram != m_debuggedProgram)
+				return VSConstants.E_FAIL;
+
+			// This is a notification.
+			// We should cleanup everything program related and send the event
+			SendEvent(new MipsDebugProgramDestroyEvent(0, m_debuggedProgram));
+			m_debuggedProgram = null;
+			return VSConstants.S_OK;
 		}
 		// Called by the SDM to indicate that a synchronous debug event, previously sent by the DE to the SDM,
 		// was received and processed. The only event the sample engine sends in this fashion is Program Destroy.
@@ -283,10 +300,12 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int TerminateProcess(IDebugProcess2 pProcess)
 		{
-			// do nothing for now
-			SendEvent(new MipsDebugProgramDestroyEvent(0, m_debuggedProgram));
+			if (pProcess != m_debuggedProcess)
+				return VSConstants.E_FAIL;
+
+			SendEvent(new MipsDebugProcessDestroyEvent(m_debuggedProcess));
+
 			m_debuggedProcess = null;
-			m_debuggedProgram = null;
 			return VSConstants.S_OK;
 		}
 	}

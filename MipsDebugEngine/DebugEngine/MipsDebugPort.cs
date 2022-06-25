@@ -103,6 +103,13 @@ namespace FPGAProjectExtension.DebugEngine
 			Guid iid = e.IID;
 			m_eventConnectionPoint.Event(m_server, this, program.Process, program, e, ref iid);
 		}
+		async Task SendProgramDestroyEventAsync(MipsDebugProgram program) => await Task.Run(() => SendProgramDestroyEvent(program));
+		void SendProgramDestroyEvent(MipsDebugProgram program)
+		{
+			MipsDebugProgramDestroyEvent e = new MipsDebugProgramDestroyEvent(0, program);
+			Guid iid = e.IID;
+			m_eventConnectionPoint.Event(m_server, this, program.Process, program, e, ref iid);
+		}
 		public int GetPortName(out string pbstrName)
 		{
 			pbstrName = m_name;
@@ -178,6 +185,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int RemoveProgramNode(IDebugProgramNode2 pProgramNode)
 		{
+			MipsDebugProgram program = pProgramNode as MipsDebugProgram;
+			SendProgramDestroyEventAsync(program);
 			return m_programPublisher.UnpublishProgramNode(pProgramNode);
 		}
 
