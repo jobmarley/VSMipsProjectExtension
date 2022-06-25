@@ -61,23 +61,21 @@ namespace FPGAProjectExtension.DebugEngine
 				e.IID,
 				e.Attributes);
 		}
-		void SendEvent(MipsDebugProcessCreateEvent e, MipsDebugProcess process)
+		void SendEvent(MipsDebugProcessCreateEvent e)
 		{
 			m_callback.Event(this,
-				process,
-				process?.Programs?.FirstOrDefault(),
-				process?.Programs?.FirstOrDefault()?.Thread,
+				e.Process,
+				null,
+				null,
 				e,
 				e.IID,
 				e.Attributes);
 		}
-		void SendEvent(MipsDebugProgramCreateEvent e, IDebugProgram2 program)
+		void SendEvent(MipsDebugProgramCreateEvent e)
 		{
-			IDebugProcess2 process = null;
-			program.GetProcess(out process);
 			m_callback.Event(this,
-				process,
-				program,
+				e.Program?.Process,
+				e.Program,
 				null,
 				e,
 				e.IID,
@@ -93,13 +91,11 @@ namespace FPGAProjectExtension.DebugEngine
 				e.IID,
 				e.Attributes);
 		}
-		void SendEvent(MipsDebugLoadCompleteEvent e, IDebugProgram2 program)
+		void SendEvent(MipsDebugLoadCompleteEvent e)
 		{
-			IDebugProcess2 process = null;
-			program.GetProcess(out process);
 			m_callback.Event(this,
-				process,
-				program,
+				e.Program?.Process,
+				e.Program,
 				null,
 				e,
 				e.IID,
@@ -150,8 +146,8 @@ namespace FPGAProjectExtension.DebugEngine
 			m_debuggedProgram = program;
 
 
-			SendEvent(new MipsDebugProgramCreateEvent(), program);
-			SendEvent(new MipsDebugLoadCompleteEvent(), program);
+			SendEvent(new MipsDebugProgramCreateEvent(program));
+			SendEvent(new MipsDebugLoadCompleteEvent(program));
 
 			//SendEvent(new MipsDebugModuleLoadEvent(program.LoadModule(program.Process.Filepath), true));
 			//SendEvent(new MipsDebugThreadCreateEvent(), program.Thread);

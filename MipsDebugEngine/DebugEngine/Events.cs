@@ -81,18 +81,22 @@ namespace FPGAProjectExtension.DebugEngine
 		: MipsAsynchronousEvent,
 		IDebugProcessCreateEvent2
 	{
-		public MipsDebugProcessCreateEvent()
+		public MipsDebugProcess Process { get; } = null;
+		public MipsDebugProcessCreateEvent(MipsDebugProcess process)
 			: base(typeof(IDebugProcessCreateEvent2).GUID)
 		{
+			Process = process;
 		}
 	}
 	internal class MipsDebugProgramCreateEvent
 		: MipsAsynchronousEvent,
 		IDebugProgramCreateEvent2
 	{
-		public MipsDebugProgramCreateEvent()
+		public MipsDebugProgram Program { get; } = null;
+		public MipsDebugProgramCreateEvent(MipsDebugProgram program)
 			: base(typeof(IDebugProgramCreateEvent2).GUID)
 		{
+			Program = program;
 		}
 	}
 	internal class MipsDebugProgramDestroyEvent
@@ -177,9 +181,11 @@ namespace FPGAProjectExtension.DebugEngine
 		IDebugLoadCompleteEvent2,
 		IDebugEvent2
 	{
-		public MipsDebugLoadCompleteEvent()
+		public MipsDebugProgram Program { get; } = null;
+		public MipsDebugLoadCompleteEvent(MipsDebugProgram program)
 			: base(typeof(IDebugLoadCompleteEvent2).GUID)
 		{
+			Program = program;
 		}
 	}
 	internal class MipsDebugEntryPointEvent

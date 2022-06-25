@@ -92,14 +92,14 @@ namespace FPGAProjectExtension.DebugEngine
 
 		void SendProcessCreateEvent(MipsDebugProcess process)
 		{
-			MipsDebugProcessCreateEvent e = new MipsDebugProcessCreateEvent();
+			MipsDebugProcessCreateEvent e = new MipsDebugProcessCreateEvent(process);
 			Guid iid = e.IID;
 			m_eventConnectionPoint.Event(m_server, this, process, null, e, ref iid);
 		}
 		async Task SendProgramCreateEventAsync(MipsDebugProgram program) => await Task.Run(() => SendProgramCreateEvent(program));
 		void SendProgramCreateEvent(MipsDebugProgram program)
 		{
-			MipsDebugProgramCreateEvent e = new MipsDebugProgramCreateEvent();
+			MipsDebugProgramCreateEvent e = new MipsDebugProgramCreateEvent(program);
 			Guid iid = e.IID;
 			m_eventConnectionPoint.Event(m_server, this, program.Process, program, e, ref iid);
 		}
