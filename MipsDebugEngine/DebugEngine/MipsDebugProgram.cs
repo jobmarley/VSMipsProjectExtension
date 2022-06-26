@@ -186,7 +186,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int EnumModules(out IEnumDebugModules2 ppEnum)
 		{
-			throw new NotImplementedException();
+			ppEnum = new EnumDebugModules2(m_modules.Cast<IDebugModule2>().ToArray());
+			return VSConstants.S_OK;
 		}
 
 		public int GetENCUpdate(out object ppUpdate)

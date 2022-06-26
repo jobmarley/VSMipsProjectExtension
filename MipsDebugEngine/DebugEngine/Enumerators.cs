@@ -10,7 +10,6 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace FPGAProjectExtension.DebugEngine
 {
-	[Guid("62FFF0E7-A804-4DB0-9A76-894722C3205E")]
 	class EnumDebugPrograms2
 		: IEnumDebugPrograms2
 	{
@@ -54,7 +53,6 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 	}
-	[Guid("6DFF9D64-1A04-4A3B-A481-B22D616A865E")]
 	class EnumDebugPorts2
 		: IEnumDebugPorts2
 	{
@@ -89,6 +87,49 @@ namespace FPGAProjectExtension.DebugEngine
 		public int Clone(out IEnumDebugPorts2 ppEnum)
 		{
 			ppEnum = new EnumDebugPorts2(m_l);
+			return VSConstants.S_OK;
+		}
+
+		public int GetCount(out uint pcelt)
+		{
+			pcelt = (uint)m_l.Count();
+			return VSConstants.S_OK;
+		}
+	}
+	class EnumDebugModules2
+		: IEnumDebugModules2
+	{
+		IList<IDebugModule2> m_l = null;
+		uint m_i = 0;
+		public EnumDebugModules2(IList<IDebugModule2> l)
+		{
+			m_l = l;
+		}
+		public int Next(uint celt, IDebugModule2[] rgelt, ref uint pceltFetched)
+		{
+			uint start = m_i;
+			uint count = (uint)Math.Min(m_l.Count, m_i + celt);
+			for (; m_i < count; ++m_i)
+				rgelt[m_i - start] = m_l[(int)m_i];
+			pceltFetched = count;
+			return VSConstants.S_OK;
+		}
+
+		public int Skip(uint celt)
+		{
+			m_i += celt;
+			return VSConstants.S_OK;
+		}
+
+		public int Reset()
+		{
+			m_i = 0;
+			return VSConstants.S_OK;
+		}
+
+		public int Clone(out IEnumDebugModules2 ppEnum)
+		{
+			ppEnum = new EnumDebugModules2(m_l);
 			return VSConstants.S_OK;
 		}
 

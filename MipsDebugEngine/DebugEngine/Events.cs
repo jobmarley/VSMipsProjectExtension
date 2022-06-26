@@ -171,7 +171,7 @@ namespace FPGAProjectExtension.DebugEngine
 		public int GetModule(out IDebugModule2 pModule, ref string pbstrDebugMessage, ref int pbLoad)
 		{
 			pModule = Module;
-			//pbstrDebugMessage = "";
+			pbstrDebugMessage = "";
 			pbLoad = m_loading ? 1 : 0;
 			return VSConstants.S_OK;
 		}

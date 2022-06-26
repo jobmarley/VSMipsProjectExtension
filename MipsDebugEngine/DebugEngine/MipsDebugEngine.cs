@@ -145,9 +145,13 @@ namespace FPGAProjectExtension.DebugEngine
 			//MipsDebugProgram program = rgpProgramNodes[0] as MipsDebugProgram;
 			m_debuggedProgram = program;
 
+			MipsDebugModule module = program.LoadModule(program.Process.Filepath);
+			SendEvent(new MipsDebugModuleLoadEvent(module, true));
 
 			SendEvent(new MipsDebugProgramCreateEvent(program));
 			SendEvent(new MipsDebugLoadCompleteEvent(program));
+
+
 
 			//SendEvent(new MipsDebugModuleLoadEvent(program.LoadModule(program.Process.Filepath), true));
 			//SendEvent(new MipsDebugThreadCreateEvent(), program.Thread);
