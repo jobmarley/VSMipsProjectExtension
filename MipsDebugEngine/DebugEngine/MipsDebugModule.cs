@@ -13,12 +13,12 @@ namespace FPGAProjectExtension.DebugEngine
 	internal class MipsDebugModule
 		: IDebugModule2
 	{
-		string m_filepath = null;
+		public string Filepath { get; } = null;
 		public MipsDebugProgram Program { get; } = null;
 		public MipsDebugModule(MipsDebugProgram program, string filepath)
 		{
 			Program = program;
-			m_filepath = filepath;
+			Filepath = filepath;
 		}
 		public int GetInfo(enum_MODULE_INFO_FIELDS dwFields, MODULE_INFO[] pinfo)
 		{
@@ -27,12 +27,12 @@ namespace FPGAProjectExtension.DebugEngine
 
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_NAME))
 			{
-				pinfo[0].m_bstrName = System.IO.Path.GetFileName(m_filepath);
+				pinfo[0].m_bstrName = System.IO.Path.GetFileName(Filepath);
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_NAME;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_URL))
 			{
-				pinfo[0].m_bstrUrl = m_filepath;
+				pinfo[0].m_bstrUrl = Filepath;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_URL;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_VERSION))
@@ -48,6 +48,7 @@ namespace FPGAProjectExtension.DebugEngine
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS))
 			{
 				pinfo[0].m_addrLoadAddress = 0x10000;
+				pinfo[0].m_addrPreferredLoadAddress = 0x10000;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_SIZE))

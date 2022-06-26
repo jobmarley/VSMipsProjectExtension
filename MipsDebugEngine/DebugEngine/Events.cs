@@ -150,9 +150,11 @@ namespace FPGAProjectExtension.DebugEngine
 		: MipsAsynchronousEvent, 
 		IDebugThreadCreateEvent2
 	{
-		public MipsDebugThreadCreateEvent()
+		public MipsDebugThread Thread { get; } = null;
+		public MipsDebugThreadCreateEvent(MipsDebugThread thread)
 			: base(typeof(IDebugThreadCreateEvent2).GUID)
 		{
+			Thread = thread;
 		}
 	}
 	internal class MipsDebugModuleLoadEvent
@@ -196,6 +198,18 @@ namespace FPGAProjectExtension.DebugEngine
 		public MipsDebugEntryPointEvent()
 			: base(typeof(IDebugEntryPointEvent2).GUID)
 		{
+		}
+	}
+	internal class MipsDebugBreakEvent
+		: MipsStoppingEvent,
+		IDebugBreakEvent2,
+		IDebugEvent2
+	{
+		public MipsDebugThread Thread { get; } = null;
+		public MipsDebugBreakEvent(MipsDebugThread thread)
+			: base(typeof(IDebugBreakEvent2).GUID)
+		{
+			Thread = thread;
 		}
 	}
 }

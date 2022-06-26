@@ -12,36 +12,52 @@ namespace FPGAProjectExtension.DebugEngine
 	internal class MipsDebugThread
 		: IDebugThread2
 	{
-		string m_name = null;
-		MipsDebugProgram m_program = null;
-		uint m_threadId = 0;
+		public string Name { get; private set; } = null;
+		public MipsDebugProgram Program { get; private set; } = null;
+		public uint ID { get; private set; } = 0;
+		private int m_state = (int)enum_THREADSTATE.THREADSTATE_FRESH;
+		public enum_THREADSTATE State => (enum_THREADSTATE)m_state;
 
-		public MipsDebugProgram Program => m_program;
+		List<MipsDebugStackFrame> m_stackFrames = new List<MipsDebugStackFrame>();
+		public IEnumerable<MipsDebugStackFrame> StackFrames => m_stackFrames;
+
+		public uint SuspendCount { get; private set; } = 0;
 		public MipsDebugThread(string name, MipsDebugProgram program)
 		{
-			m_name = name;
-			m_program = program;
+			Random r = new Random();
+			ID = (uint)r.Next();
+			Name = name;
+			Program = program;
+
+			m_stackFrames.Add(new MipsDebugStackFrame(this));
 		}
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
-			throw new NotImplementedException();
+			var fis = StackFrames.Select(x =>
+			{
+				FRAMEINFO[] fi = new FRAMEINFO[1];
+				x.GetInfo(dwFieldSpec, nRadix, fi);
+				return fi[0];
+			}).ToArray();
+			ppEnum = new EnumDebugFrameInfo2(fis);
+			return VSConstants.S_OK;
 		}
 
 		public int GetName(out string pbstrName)
 		{
-			pbstrName = m_name;
+			pbstrName = Name;
 			return VSConstants.S_OK;
 		}
 
 		public int SetThreadName(string pszName)
 		{
-			m_name = pszName;
+			Name = pszName;
 			return VSConstants.S_OK;
 		}
 
 		public int GetProgram(out IDebugProgram2 ppProgram)
 		{
-			ppProgram = m_program;
+			ppProgram = Program;
 			return VSConstants.S_OK;
 		}
 
@@ -57,23 +73,80 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetThreadId(out uint pdwThreadId)
 		{
-			pdwThreadId = m_threadId;
+			pdwThreadId = ID;
 			return VSConstants.S_OK;
 		}
 
 		public int Suspend(out uint pdwSuspendCount)
 		{
-			throw new NotImplementedException();
+			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_STOPPED, (int)enum_THREADSTATE.THREADSTATE_RUNNING)
+				== (int)enum_THREADSTATE.THREADSTATE_RUNNING)
+			{
+				pdwSuspendCount = ++SuspendCount;
+				return VSConstants.S_OK;
+			}
+			else
+			{
+				pdwSuspendCount = SuspendCount;
+				return VSConstants.E_FAIL;
+			}
 		}
 
 		public int Resume(out uint pdwSuspendCount)
 		{
-			throw new NotImplementedException();
+			pdwSuspendCount = SuspendCount;
+			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_STOPPED)
+				== (int)enum_THREADSTATE.THREADSTATE_STOPPED)
+			{
+				return VSConstants.S_OK;
+			}
+			else if(System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_FRESH)
+				== (int)enum_THREADSTATE.THREADSTATE_FRESH)
+			{
+				return VSConstants.S_OK;
+			}
+			else
+			{
+				return VSConstants.E_FAIL;
+			}
 		}
 
 		public int GetThreadProperties(enum_THREADPROPERTY_FIELDS dwFields, THREADPROPERTIES[] ptp)
 		{
-			throw new NotImplementedException();
+			if (ptp == null || ptp.Length != 1)
+				return VSConstants.E_INVALIDARG;
+
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_ID))
+			{
+				ptp[0].dwThreadId = ID;
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_ID;
+			}
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_SUSPENDCOUNT))
+			{
+				ptp[0].dwSuspendCount = 1;
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_SUSPENDCOUNT;
+			}
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_STATE))
+			{
+				ptp[0].dwThreadState = (uint)State;
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_STATE;
+			}
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_PRIORITY))
+			{
+				ptp[0].bstrPriority = "Normal";
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_PRIORITY;
+			}
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_NAME))
+			{
+				ptp[0].bstrName = Name;
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_NAME;
+			}
+			if (dwFields.HasFlag(enum_THREADPROPERTY_FIELDS.TPF_LOCATION))
+			{
+				ptp[0].bstrLocation = "";
+				ptp[0].dwFields |= enum_THREADPROPERTY_FIELDS.TPF_LOCATION;
+			}
+			return VSConstants.S_OK;
 		}
 
 		public int GetLogicalThread(IDebugStackFrame2 pStackFrame, out IDebugLogicalThread2 ppLogicalThread)

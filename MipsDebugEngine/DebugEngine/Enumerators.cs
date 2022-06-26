@@ -10,134 +10,220 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace FPGAProjectExtension.DebugEngine
 {
-	class EnumDebugPrograms2
-		: IEnumDebugPrograms2
+	abstract class EnumeratorBase<T>
 	{
-		IList<IDebugProgram2> m_l = null;
-		uint m_i = 0;
-		public EnumDebugPrograms2(IList<IDebugProgram2> l)
+		protected IEnumerable<T> m_l = null;
+		protected IEnumerator<T> m_current = null;
+		protected EnumeratorBase(IEnumerable<T> l)
 		{
 			m_l = l;
+			m_current = l.GetEnumerator();
 		}
-		public int Next(uint celt, IDebugProgram2[] rgelt, ref uint pceltFetched)
+		protected int Next(uint celt, T[] rgelt, ref uint pceltFetched)
 		{
-			uint start = m_i;
-			uint count = (uint)Math.Min(m_l.Count, m_i + celt);
-			for (; m_i < count; ++m_i)
-				rgelt[m_i - start] = m_l[(int)m_i];
-			pceltFetched = count;
+			pceltFetched = 0;
+			while (pceltFetched < celt)
+			{
+				if (!m_current.MoveNext())
+					break;
+				rgelt[pceltFetched++] = m_current.Current;
+			}
 			return VSConstants.S_OK;
 		}
 
-		public int Skip(uint celt)
+		protected int Skip(uint celt)
 		{
-			m_i += celt;
+			while (celt > 0)
+			{
+				if (!m_current.MoveNext())
+					return VSConstants.S_FALSE;
+				--celt;
+			}
 			return VSConstants.S_OK;
 		}
 
-		public int Reset()
+		protected int Reset()
 		{
-			m_i = 0;
+			m_current.Reset();
 			return VSConstants.S_OK;
 		}
 
-		public int Clone(out IEnumDebugPrograms2 ppEnum)
+		protected int GetCount(out uint pcelt)
+		{
+			pcelt = (uint)m_l.Count();
+			return VSConstants.S_OK;
+		}
+	}
+	class EnumDebugPrograms2
+		: EnumeratorBase<IDebugProgram2>,
+		IEnumDebugPrograms2
+	{
+		public EnumDebugPrograms2(IEnumerable<IDebugProgram2> l)
+			: base(l)
+		{
+		}
+		int IEnumDebugPrograms2.Next(uint celt, IDebugProgram2[] rgelt, ref uint pceltFetched)
+		{
+			return base.Next(celt, rgelt, ref pceltFetched);
+		}
+
+		int IEnumDebugPrograms2.Skip(uint celt)
+		{
+			return base.Skip(celt);
+		}
+
+		int IEnumDebugPrograms2.Reset()
+		{
+			return base.Reset();
+		}
+
+		int IEnumDebugPrograms2.Clone(out IEnumDebugPrograms2 ppEnum)
 		{
 			ppEnum = new EnumDebugPrograms2(m_l);
 			return VSConstants.S_OK;
 		}
 
-		public int GetCount(out uint pcelt)
+		int IEnumDebugPrograms2.GetCount(out uint pcelt)
 		{
-			pcelt = (uint)m_l.Count();
-			return VSConstants.S_OK;
+			return base.GetCount(out pcelt);
 		}
 	}
 	class EnumDebugPorts2
-		: IEnumDebugPorts2
+		: EnumeratorBase<IDebugPort2>,
+		IEnumDebugPorts2
 	{
-		IList<IDebugPort2> m_l = null;
-		uint m_i = 0;
-		public EnumDebugPorts2(IList<IDebugPort2> l)
+		public EnumDebugPorts2(IEnumerable<IDebugPort2> l)
+			: base(l)
 		{
-			m_l = l;
 		}
-		public int Next(uint celt, IDebugPort2[] rgelt, ref uint pceltFetched)
+		int IEnumDebugPorts2.Next(uint celt, IDebugPort2[] rgelt, ref uint pceltFetched)
 		{
-			uint start = m_i;
-			uint count = (uint)Math.Min(m_l.Count, m_i + celt);
-			for (; m_i < count; ++m_i)
-				rgelt[m_i - start] = m_l[(int)m_i];
-			pceltFetched = count;
-			return VSConstants.S_OK;
+			return base.Next(celt, rgelt, ref pceltFetched);
 		}
 
-		public int Skip(uint celt)
+		int IEnumDebugPorts2.Skip(uint celt)
 		{
-			m_i += celt;
-			return VSConstants.S_OK;
+			return base.Skip(celt);
 		}
 
-		public int Reset()
+		int IEnumDebugPorts2.Reset()
 		{
-			m_i = 0;
-			return VSConstants.S_OK;
+			return base.Reset();
 		}
 
-		public int Clone(out IEnumDebugPorts2 ppEnum)
+		int IEnumDebugPorts2.Clone(out IEnumDebugPorts2 ppEnum)
 		{
 			ppEnum = new EnumDebugPorts2(m_l);
 			return VSConstants.S_OK;
 		}
 
-		public int GetCount(out uint pcelt)
+		int IEnumDebugPorts2.GetCount(out uint pcelt)
 		{
-			pcelt = (uint)m_l.Count();
-			return VSConstants.S_OK;
+			return base.GetCount(out pcelt);
 		}
 	}
 	class EnumDebugModules2
-		: IEnumDebugModules2
+		: EnumeratorBase<IDebugModule2>,
+		IEnumDebugModules2
 	{
-		IList<IDebugModule2> m_l = null;
-		uint m_i = 0;
-		public EnumDebugModules2(IList<IDebugModule2> l)
+		public EnumDebugModules2(IEnumerable<IDebugModule2> l)
+			: base(l)
 		{
-			m_l = l;
 		}
-		public int Next(uint celt, IDebugModule2[] rgelt, ref uint pceltFetched)
+		int IEnumDebugModules2.Next(uint celt, IDebugModule2[] rgelt, ref uint pceltFetched)
 		{
-			uint start = m_i;
-			uint count = (uint)Math.Min(m_l.Count, m_i + celt);
-			for (; m_i < count; ++m_i)
-				rgelt[m_i - start] = m_l[(int)m_i];
-			pceltFetched = count;
-			return VSConstants.S_OK;
+			return base.Next(celt, rgelt, ref pceltFetched);
 		}
 
-		public int Skip(uint celt)
+		int IEnumDebugModules2.Skip(uint celt)
 		{
-			m_i += celt;
-			return VSConstants.S_OK;
+			return base.Skip(celt);
 		}
 
-		public int Reset()
+		int IEnumDebugModules2.Reset()
 		{
-			m_i = 0;
-			return VSConstants.S_OK;
+			return base.Reset();
 		}
 
-		public int Clone(out IEnumDebugModules2 ppEnum)
+		int IEnumDebugModules2.Clone(out IEnumDebugModules2 ppEnum)
 		{
 			ppEnum = new EnumDebugModules2(m_l);
 			return VSConstants.S_OK;
 		}
 
-		public int GetCount(out uint pcelt)
+		int IEnumDebugModules2.GetCount(out uint pcelt)
 		{
-			pcelt = (uint)m_l.Count();
+			return base.GetCount(out pcelt);
+		}
+	}
+	class EnumDebugFrameInfo2
+		: EnumeratorBase<FRAMEINFO>,
+		IEnumDebugFrameInfo2
+	{
+		public EnumDebugFrameInfo2(IEnumerable<FRAMEINFO> l)
+			: base(l)
+		{
+		}
+		int IEnumDebugFrameInfo2.Next(uint celt, FRAMEINFO[] rgelt, ref uint pceltFetched)
+		{
+			return base.Next(celt, rgelt, ref pceltFetched);
+		}
+
+		int IEnumDebugFrameInfo2.Skip(uint celt)
+		{
+			return base.Skip(celt);
+		}
+
+		int IEnumDebugFrameInfo2.Reset()
+		{
+			return base.Reset();
+		}
+
+		int IEnumDebugFrameInfo2.Clone(out IEnumDebugFrameInfo2 ppEnum)
+		{
+			ppEnum = new EnumDebugFrameInfo2(m_l);
 			return VSConstants.S_OK;
+		}
+
+		int IEnumDebugFrameInfo2.GetCount(out uint pcelt)
+		{
+			return base.GetCount(out pcelt);
+		}
+	}
+	class EnumDebugThreads2
+		: EnumeratorBase<IDebugThread2>,
+		IEnumDebugThreads2
+	{
+		public EnumDebugThreads2(IEnumerable<IDebugThread2> l)
+			: base(l)
+		{
+		}
+		int IEnumDebugThreads2.Next(uint celt, IDebugThread2[] rgelt, ref uint pceltFetched)
+		{
+			return base.Next(celt, rgelt, ref pceltFetched);
+		}
+
+		int IEnumDebugThreads2.Skip(uint celt)
+		{
+			return base.Skip(celt);
+		}
+
+		int IEnumDebugThreads2.Reset()
+		{
+			return base.Reset();
+		}
+
+		int IEnumDebugThreads2.Clone(out IEnumDebugThreads2 ppEnum)
+		{
+			ppEnum = new EnumDebugThreads2(m_l);
+			return VSConstants.S_OK;
+		}
+
+		int IEnumDebugThreads2.GetCount(out uint pcelt)
+		{
+			return base.GetCount(out pcelt);
 		}
 	}
 	
+
 }

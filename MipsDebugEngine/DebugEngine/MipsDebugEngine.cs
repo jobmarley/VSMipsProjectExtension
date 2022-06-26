@@ -10,12 +10,18 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace FPGAProjectExtension.DebugEngine
 {
+	interface IMipsEventCallback
+	{
+		void SendEvent(MipsDebugBreakEvent e);
+	}
+
 	[ComVisible(true)]
 	[Guid("AD8869A4-D013-4C71-ABDE-B33998A0CECA")]
 	public class MipsDebugEngine
 		: IDebugEngine2,
-		IDebugEngineLaunch2
-		//, ICustomQueryInterface
+		IDebugEngineLaunch2,
+		IMipsEventCallback
+	//, ICustomQueryInterface
 	{
 
 		string m_registryRoot;
@@ -30,7 +36,16 @@ namespace FPGAProjectExtension.DebugEngine
 
 		MipsDebugProcess m_debuggedProcess = null;
 		MipsDebugProgram m_debuggedProgram = null;
-
+		void IMipsEventCallback.SendEvent(MipsDebugBreakEvent e)
+		{
+			m_callback.Event(this,
+				e.Thread?.Program?.Process,
+				e.Thread?.Program,
+				e.Thread,
+				e,
+				e.IID,
+				e.Attributes);
+		}
 		void SendEvent(MipsDebugProcessDestroyEvent e)
 		{
 			m_callback.Event(this,
@@ -81,12 +96,12 @@ namespace FPGAProjectExtension.DebugEngine
 				e.IID,
 				e.Attributes);
 		}
-		void SendEvent(MipsDebugThreadCreateEvent e, MipsDebugThread thread)
+		void SendEvent(MipsDebugThreadCreateEvent e)
 		{
 			m_callback.Event(this,
-				thread.Program.Process,
-				thread.Program,
-				thread,
+				e.Thread?.Program?.Process,
+				e.Thread?.Program,
+				e.Thread,
 				e,
 				e.IID,
 				e.Attributes);
@@ -150,8 +165,6 @@ namespace FPGAProjectExtension.DebugEngine
 
 			SendEvent(new MipsDebugProgramCreateEvent(program));
 			SendEvent(new MipsDebugLoadCompleteEvent(program));
-
-
 
 			//SendEvent(new MipsDebugModuleLoadEvent(program.LoadModule(program.Process.Filepath), true));
 			//SendEvent(new MipsDebugThreadCreateEvent(), program.Thread);
@@ -229,7 +242,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CauseBreak()
 		{
-			throw new NotImplementedException();
+			return VSConstants.S_OK;
 		}
 
 		public int LaunchSuspended(string pszServer,
@@ -251,7 +264,7 @@ namespace FPGAProjectExtension.DebugEngine
 			ppProcess = process;
 			m_debuggedProcess = process;
 
-			MipsDebugProgram program = new MipsDebugProgram(process, "main program");
+			MipsDebugProgram program = new MipsDebugProgram(this, process, "main program");
 			process.AddProgram(program);
 
 			/*if (!m_createEventSent)
@@ -285,8 +298,12 @@ namespace FPGAProjectExtension.DebugEngine
 			pProcess.GetPhysicalProcessId(pid);
 			string name;
 			pProcess.GetName(enum_GETNAME_TYPE.GN_NAME, out name);
-			err = portNotify.AddProgramNode((pProcess as MipsDebugProcess).Programs.FirstOrDefault());
+
+			MipsDebugProgram program = (pProcess as MipsDebugProcess).Programs.FirstOrDefault();
+			err = portNotify.AddProgramNode(program);
 			//err = portNotify.AddProgramNode(new MipsDebugProgramNode(pid[0], name));//(pProcess as MipsDebugProcess).Programs.FirstOrDefault());
+
+			Task.Run(() => SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault())));
 
 			return VSConstants.S_OK;
 		}

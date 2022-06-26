@@ -415,6 +415,7 @@
     <Compile Include="DebugEngine\MipsDebugProcess.cs" />
     <Compile Include="DebugEngine\MipsDebugProgram.cs" />
     <Compile Include="DebugEngine\MipsDebugProgramProvider.cs" />
+    <Compile Include="DebugEngine\MipsDebugStackFrame.cs" />
     <Compile Include="DebugEngine\MipsDebugThread.cs" />
     <Compile Include="DebugEngine\MipsDEGuids.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

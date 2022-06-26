@@ -69,9 +69,11 @@ namespace FPGAProjectExtension.DebugEngine
 		MipsDebugProcess m_process = null;
 		string m_name = null;
 		Guid m_guid = Guid.Empty;
+		IMipsEventCallback m_eventCallback = null;
 
 		public MipsDebugProcess Process => m_process;
-		public MipsDebugThread Thread { get; private set; }
+		List<MipsDebugThread> m_threads = new List<MipsDebugThread>();
+		public IEnumerable<MipsDebugThread> Threads => m_threads;
 
 		private List<MipsDebugModule> m_modules = new List<MipsDebugModule>();
 		public IEnumerable<MipsDebugModule> Modules => m_modules;
@@ -81,16 +83,22 @@ namespace FPGAProjectExtension.DebugEngine
 			m_modules.Add(m);
 			return m;
 		}
-		public MipsDebugProgram(MipsDebugProcess process, string name)
+		public MipsDebugProgram(IMipsEventCallback eventCallback, MipsDebugProcess process, string name)
 		{
+			m_eventCallback = eventCallback;
 			m_process = process;
 			m_name = name;
 			m_guid = Guid.NewGuid();
-			Thread = new MipsDebugThread("main thread", this);
+
+			MipsDebugThread t = new MipsDebugThread("main thread", this);
+			uint suspendCount = 0;
+			t.Resume(out suspendCount);
+			m_threads.Add(t);
 		}
 		public int EnumThreads(out IEnumDebugThreads2 ppEnum)
 		{
-			throw new NotImplementedException();
+			ppEnum = new EnumDebugThreads2(Threads);
+			return VSConstants.S_OK;
 		}
 
 		public int GetName(out string pbstrName)
@@ -144,7 +152,13 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int Execute()
 		{
-			throw new NotImplementedException();
+			m_threads.ForEach(x =>
+			{
+				uint count;
+				x.Resume(out count);
+			});
+			//_ = Task.Run(() => m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault())));
+			return VSConstants.S_OK;
 		}
 
 		public int Continue(IDebugThread2 pThread)
@@ -159,6 +173,13 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CauseBreak()
 		{
+			// Not too sure there...
+			m_threads.ForEach(x =>
+			{
+				uint count;
+				x.Suspend(out count);
+			});
+			_ = Task.Run(() => m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault())));
 			return VSConstants.S_OK;
 		}
 
