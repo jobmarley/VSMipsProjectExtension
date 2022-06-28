@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
+  <TemplateData>
+    <Name>MipsProjectTemplate</Name>
+    <Description>MipsProjectTemplate</Description>
+    <Icon>MipsProjectTemplate.ico</Icon>
+    <ProjectType>C++</ProjectType>
+    <LanguageTag>C++</LanguageTag>
+    <SortOrder>1000</SortOrder>
+    <TemplateID>c7bb2cd1-9327-4e9a-a8e0-126f42da3595</TemplateID>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>MipsProjectTemplate</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="ProjectTemplate.vcxproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" OpenInEditor="true">main.cpp</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>
