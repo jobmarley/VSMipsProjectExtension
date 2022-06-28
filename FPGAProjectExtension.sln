@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsRemoteDebugger", "MipsR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsDebugEngine", "MipsDebugEngine\MipsDebugEngine.csproj", "{811231FC-10FE-4C5E-9C83-20FE71241BD4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsRemoteTest", "MipsRemoteTest\MipsRemoteTest.csproj", "{B64F9634-4D45-4E8A-94C0-2265B7A60975}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x64.Build.0 = Release|Any CPU
 		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x86.ActiveCfg = Release|Any CPU
 		{811231FC-10FE-4C5E-9C83-20FE71241BD4}.Release|x86.Build.0 = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|x64.Build.0 = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Debug|x86.Build.0 = Debug|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|x64.ActiveCfg = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|x64.Build.0 = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|x86.ActiveCfg = Release|Any CPU
+		{B64F9634-4D45-4E8A-94C0-2265B7A60975}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

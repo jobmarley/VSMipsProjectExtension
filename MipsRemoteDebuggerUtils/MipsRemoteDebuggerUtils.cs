@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MipsRemoteDebuggerUtils
@@ -14,6 +15,7 @@ namespace MipsRemoteDebuggerUtils
         Success = 0,
         InvalidArg = 1,
         Failure = 2,
+        AccessDenied = 3,
     }
     public enum md_event
         : uint
@@ -66,6 +68,8 @@ namespace MipsRemoteDebuggerUtils
     public enum PacketType
         : uint
     {
+        Unknown,
+
         ReadMemoryRequest,
         ReadMemoryResponse,
         WriteMemoryRequest,
@@ -78,6 +82,7 @@ namespace MipsRemoteDebuggerUtils
         ReadStateResponse,
         WriteStateRequest,
         WriteStateResponse,
+        EventNotificationPacket,
     }
     class BinaryDeserializer
 	{
@@ -90,31 +95,31 @@ namespace MipsRemoteDebuggerUtils
 		{
             if (t == typeof(string))
                 return m_reader.ReadString();
-            if (t == typeof(byte[]))
+            else if (t == typeof(byte[]))
 			{
                 uint count = m_reader.ReadUInt32();
                 return m_reader.ReadBytes((int)count);
             }
-            if (t == typeof(char))
+            else if (t == typeof(char))
                 return m_reader.ReadChar();
-            if (t == typeof(byte))
+            else if (t == typeof(byte))
                 return m_reader.ReadByte();
-            if (t == typeof(short))
+            else if (t == typeof(short))
                 return m_reader.ReadInt16();
-            if (t == typeof(ushort))
+            else if (t == typeof(ushort))
                 return m_reader.ReadUInt16();
-            if (t == typeof(int))
+            else if (t == typeof(int))
                 return m_reader.ReadInt32();
-            if (t == typeof(uint))
+            else if (t == typeof(uint))
                 return m_reader.ReadUInt32();
-            if (t == typeof(long))
+            else if (t == typeof(long))
                 return m_reader.ReadInt64();
-            if (t == typeof(ulong))
+            else if (t == typeof(ulong))
                 return m_reader.ReadUInt64();
-            if (t.IsEnum)
+            else if (t.IsEnum)
                 return Enum.ToObject(t, Deserialize(t.GetEnumUnderlyingType()));
-
-            throw new Exception("Unknown type");
+            else
+                throw new Exception("Unknown type");
         }
     }
     class BinarySerializer
@@ -128,35 +133,35 @@ namespace MipsRemoteDebuggerUtils
         {
             if (o is string s)
                 m_writer.Write(s);
-            if (o is byte[] ba)
+            else if (o is byte[] ba)
             {
                 m_writer.Write((uint)ba.Length);
                 m_writer.Write(ba);
             }
-            if (o is char c)
+            else if (o is char c)
                 m_writer.Write(c);
-            if (o is byte b)
+            else if (o is byte b)
                 m_writer.Write(b);
-            if (o is short sh)
+            else if (o is short sh)
                 m_writer.Write(sh);
-            if (o is ushort ush)
+            else if (o is ushort ush)
                 m_writer.Write(ush);
-            if (o is int i)
+            else if (o is int i)
                 m_writer.Write(i);
-            if (o is uint ui)
+            else if (o is uint ui)
                 m_writer.Write(ui);
-            if (o is long l)
+            else if (o is long l)
                 m_writer.Write(l);
-            if (o is ulong ul)
+            else if (o is ulong ul)
                 m_writer.Write(ul);
-            if (o.GetType().IsEnum)
+            else if (o.GetType().IsEnum)
                 Serialize(Convert.ChangeType(o, o.GetType().GetEnumUnderlyingType()));
-                    
-            throw new Exception("Unknown type");
+            else     
+                throw new Exception("Unknown type");
         }
     }
     
-    public class Packet
+    public abstract class Packet
     {
         // IDs generated on server have 0x80000000 to avoid collisions
         public uint ID { get; set; }
@@ -165,18 +170,21 @@ namespace MipsRemoteDebuggerUtils
         }
 
         public static T Deserialize<T>(BinaryReader reader)
-            where T : Packet, new()
+            where T : class, new()
         {
             T t = new T();
             BinaryDeserializer deserializer = new BinaryDeserializer(reader);
             foreach (System.Reflection.PropertyInfo pi in typeof(T).GetProperties())
             {
-                object o = deserializer.Deserialize(pi.PropertyType);
-                pi.SetValue(t, o);
+                if (pi.CanWrite)
+                {
+                    object o = deserializer.Deserialize(pi.PropertyType);
+                    pi.SetValue(t, o);
+                }
             }
             return t;
         }
-        public static byte[] Serialize(Packet p)
+        public static byte[] Serialize(object p)
         {
             MemoryStream ms = new MemoryStream(100);
             BinaryWriter bw = new BinaryWriter(ms);
@@ -187,6 +195,40 @@ namespace MipsRemoteDebuggerUtils
             }
             return ms.ToArray();
         }
+
+
+        PacketType GetPacketType(Packet packet)
+        {
+            if (packet is ReadMemoryRequestPacket)
+                return PacketType.ReadMemoryRequest;
+            if (packet is ReadMemoryResponsePacket)
+                return PacketType.ReadMemoryResponse;
+            if (packet is ReadRegisterRequestPacket)
+                return PacketType.ReadRegisterRequest;
+            if (packet is ReadRegisterResponsePacket)
+                return PacketType.ReadRegisterResponse;
+            if (packet is ReadStateRequestPacket)
+                return PacketType.ReadStateRequest;
+            if (packet is ReadStateResponsePacket)
+                return PacketType.ReadStateResponse;
+            if (packet is WriteMemoryRequestPacket)
+                return PacketType.WriteMemoryRequest;
+            if (packet is WriteMemoryResponsePacket)
+                return PacketType.WriteMemoryResponse;
+            if (packet is WriteRegisterRequestPacket)
+                return PacketType.WriteRegisterRequest;
+            if (packet is WriteRegisterResponsePacket)
+                return PacketType.WriteRegisterResponse;
+            if (packet is WriteStateRequestPacket)
+                return PacketType.WriteStateRequest;
+            if (packet is WriteStateResponsePacket)
+                return PacketType.WriteStateResponse;
+            if (packet is EventNotificationPacket)
+                return PacketType.EventNotificationPacket;
+
+            return PacketType.Unknown;
+        }
+        public PacketType Type => GetPacketType(this);
     }
     public class PacketHeader
     {
@@ -243,7 +285,6 @@ namespace MipsRemoteDebuggerUtils
     public class ReadStateRequestPacket
         : Packet
     {
-        public uint Value { get; set; }
     }
     public class ReadStateResponsePacket
         : Packet

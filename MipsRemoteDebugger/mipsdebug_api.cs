@@ -15,7 +15,7 @@ namespace MipsRemoteDebugger
 		public delegate void md_callback(md_event e);
 
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
-		public static extern IntPtr md_open();
+		public static extern md_status md_open(out IntPtr device);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
 		public static extern md_status md_register_callback(IntPtr device, md_callback c);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
