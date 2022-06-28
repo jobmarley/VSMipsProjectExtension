@@ -19,7 +19,21 @@
 		<Exec Command='$(RunCommand) "$(MSBuildProjectDirectory)\$(StartItem)" $(RunCommandArguments)' WorkingDirectory="$(RunWorkingDirectory)" />
 	</Target>
 
-	<Target Name="Build" >
+	<Target Name="Compile" Outputs="%(ClCompile.Identity)">
+		<Message Importance="High" Text="%(ClCompile.Identity)" />
+		<PropertyGroup>
+			<clang_path>"C:\Program Files\LLVM\bin\clang++"</clang_path>
+		</PropertyGroup>
+		<Exec Command="$(clang_path) -c --target=mipsel %(ClCompile.Identity) -g3 -o $(IntDir)\%(ClCompile.Filename).o" />
+	</Target>
+	<Target Name="Link" DependsOnTargets="Compile">
+		<PropertyGroup>
+			<lld_path>"C:\Program Files\LLVM\bin\ld.lld"</lld_path>
+		</PropertyGroup>
+		<Exec Command="$(lld_path) @(ClCompile -> '$(IntDir)%(Filename).o', ' ') -o $(OutDir)$(TargetName).elf --image-base=0x10000 --Map $(OutDir)$(TargetName).map --entry=main" />
+	</Target>
+	<Target Name="Build" DependsOnTargets="Link">
+		<Message Importance="High" Text="$(MSBuildProjectFile) -> $(OutDir)$(TargetName).elf" />
 	</Target>
 
 	<Target Name="Rebuild">
