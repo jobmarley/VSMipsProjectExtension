@@ -34,7 +34,7 @@ namespace MipsRemoteDebuggerUtils
 		ConcurrentDictionary<uint, TaskCompletionSource<Packet>> m_pendingPackets = new ConcurrentDictionary<uint, TaskCompletionSource<Packet>>();
 		public async Task ReceiveLoopAsync(CancellationToken cancellationToken)
 		{
-			while (true)
+			while (!cancellationToken.IsCancellationRequested)
 			{
 				Packet p = await ReceivePacketAsync(cancellationToken);
 				if (p is EventNotificationPacket enp)

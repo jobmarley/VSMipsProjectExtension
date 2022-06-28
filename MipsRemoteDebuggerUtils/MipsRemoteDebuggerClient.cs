@@ -22,6 +22,7 @@ namespace MipsRemoteDebuggerUtils
 	}
 	public class MipsRemoteDebuggerClient
 	{
+		TcpClient m_tcpClient = null;
 		ClientConnection m_clientConnection = null;
 		CancellationTokenSource m_cts = null;
 		Task m_receiveLoopTask = null;
@@ -34,9 +35,9 @@ namespace MipsRemoteDebuggerUtils
 		{
 			try
 			{
-				TcpClient tcpClient = new TcpClient();
-				tcpClient.Connect(IPAddress.Parse(hostname), port);
-				m_clientConnection = new ClientConnection(tcpClient);
+				m_tcpClient = new TcpClient();
+				m_tcpClient.Connect(IPAddress.Parse(hostname), port);
+				m_clientConnection = new ClientConnection(m_tcpClient);
 				m_cts = new CancellationTokenSource();
 				m_receiveLoopTask = m_clientConnection.ReceiveLoopAsync(m_cts.Token);
 				m_clientConnection.OnMipsEvent += (sender, e) => OnMipsEvent?.Invoke(sender, e);
@@ -96,5 +97,22 @@ namespace MipsRemoteDebuggerUtils
 		}
 
 		public event EventHandler<MipsEventArgs> OnMipsEvent;
+
+		public void Close()
+		{
+			m_cts.Cancel();
+			try
+			{
+				m_receiveLoopTask.Wait();
+			}
+			catch (Exception)
+			{
+
+			}
+			m_tcpClient.Close();
+			m_tcpClient = null;
+			m_cts = null;
+			m_clientConnection = null;
+		}
 	}
 }
