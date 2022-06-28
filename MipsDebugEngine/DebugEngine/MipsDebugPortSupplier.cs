@@ -96,7 +96,7 @@ namespace FPGAProjectExtension.DebugEngine
 	// NOTE: Not to sure about that, port suppliers seem to have a debug engine associated, it fails if the debug port is not in some kind of engine list
 	[ComVisible(true)]
 	[Guid("B473EA66-5824-4F62-97DB-7A57F01C0C7A")]
-	public class MipsDebugPortSupplier
+	public class MipsRemotePortSupplier
 		: IDebugPortSupplier2,
 		IConnectionPointContainer,
 		IDebugPortSupplierDescription2,
@@ -104,11 +104,11 @@ namespace FPGAProjectExtension.DebugEngine
 		IDebugPortSupplierEx2,
 		IDebugPortSupplierLocale2
 	{
-		List<MipsDebugPort> m_ports = new List<MipsDebugPort>();
+		List<MipsRemoteDebugPort> m_ports = new List<MipsRemoteDebugPort>();
 
 		IDebugProgramPublisher2 m_programPublisher = null;
 		IDebugCoreServer3 m_server = null;
-		public MipsDebugPortSupplier()
+		public MipsRemotePortSupplier()
 		{
 			Type type = Type.GetTypeFromCLSID(MipsDEGuids.CLSID_ProgramPublisher, true);
 			m_programPublisher = (IDebugProgramPublisher2)Activator.CreateInstance(type);
@@ -116,7 +116,7 @@ namespace FPGAProjectExtension.DebugEngine
 		}
 		public int GetPortSupplierName(out string pbstrName)
 		{
-			pbstrName = "MipsDebugPortSupplier";
+			pbstrName = "Mips Remote";
 			return VSConstants.S_OK;
 		}
 
@@ -152,8 +152,8 @@ namespace FPGAProjectExtension.DebugEngine
 			int err = pRequest.GetPortName(out name);
 			if (err != VSConstants.S_OK)
 				return err;
-			
-			MipsDebugPort port = new MipsDebugPort(name, this, pRequest, m_programPublisher, m_server);
+
+			MipsRemoteDebugPort port = new MipsRemoteDebugPort(name, this, pRequest, m_programPublisher, m_server);
 			ppPort = port;
 			m_ports.Add(port);
 
@@ -162,7 +162,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int RemovePort(IDebugPort2 pPort)
 		{
-			return m_ports.Remove(pPort as MipsDebugPort) ? VSConstants.S_OK : Constants.E_PORTSUPPLIER_NO_PORT;
+			return m_ports.Remove(pPort as MipsRemoteDebugPort) ? VSConstants.S_OK : Constants.E_PORTSUPPLIER_NO_PORT;
 		}
 
 		public void EnumConnectionPoints(out IEnumConnectionPoints ppEnum)
@@ -177,7 +177,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetDescription(enum_PORT_SUPPLIER_DESCRIPTION_FLAGS[] pdwFlags, out string pbstrText)
 		{
-			throw new NotImplementedException();
+			pbstrText = "The Mips Remote connection allows to debug programs on a computer that is running MipsRemoteDebugger";
+			return VSConstants.S_OK;
 		}
 		public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
 		{

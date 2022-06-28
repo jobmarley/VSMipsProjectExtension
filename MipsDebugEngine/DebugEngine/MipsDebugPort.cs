@@ -63,7 +63,7 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 	}
-	internal class MipsDebugPort
+	internal class MipsRemoteDebugPort
 		: IDebugPort2,
 		IDebugPortEx2,
 		IDebugPortNotify2,
@@ -73,13 +73,13 @@ namespace FPGAProjectExtension.DebugEngine
 	{
 		string m_name = null;
 		public Guid Guid { get; private set; } = Guid.Empty;
-		public MipsDebugPortSupplier PortSupplier { get; private set; } = null;
+		public MipsRemotePortSupplier PortSupplier { get; private set; } = null;
 		public IDebugPortRequest2 Request { get; private set; } = null;
 
 		MipsDebugPortEventsConnectionPoint m_eventConnectionPoint = null;
 		IDebugProgramPublisher2 m_programPublisher = null;
 		IDebugCoreServer3 m_server = null;
-		public MipsDebugPort(string name, MipsDebugPortSupplier supplier, IDebugPortRequest2 request, IDebugProgramPublisher2 programPublisher, IDebugCoreServer3 server)
+		public MipsRemoteDebugPort(string name, MipsRemotePortSupplier supplier, IDebugPortRequest2 request, IDebugProgramPublisher2 programPublisher, IDebugCoreServer3 server)
 		{
 			m_name = name;
 			Guid = Guid.NewGuid();
