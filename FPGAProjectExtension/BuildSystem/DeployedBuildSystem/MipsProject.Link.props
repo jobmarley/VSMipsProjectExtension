@@ -1,0 +1,12 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemDefinitionGroup>
+    <Link>
+	  <TargetMachine               Condition="'%(Link.TargetMachine)'               == ''">MIPS</TargetMachine>
+      <BaseAddress                 Condition="'%(Link.BaseAddress)'                 == ''">0x10000</BaseAddress>
+	  <AdditionalDependencies      Condition="'%(Link.BaseAddress)'                 == ''"></AdditionalDependencies>
+	  <GenerateDebugInformation    Condition="'%(Link.GenerateDebugInformation)'    == ''">g3</GenerateDebugInformation>
+    </Link>
+
+  </ItemDefinitionGroup>
+</Project>

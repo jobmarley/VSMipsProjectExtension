@@ -6,13 +6,12 @@
 		<!--<ProjectCapability Include="DisableBuiltInDebuggerServices" />-->
 	</ItemGroup>
 
-	<!--<ItemGroup>
-    <PropertyPageSchema Include="
-                        $(MSBuildThisFileDirectory)Rules\MyDebugger.xaml;
+	<ItemGroup>
+		<PropertyPageSchema Include="
+                        $(MSBuildThisFileDirectory)MipsProject.Link.xml;
                         ">
-      <Context>Project</Context>
-    </PropertyPageSchema>
-  </ItemGroup>-->
+		</PropertyPageSchema>
+	</ItemGroup>
 
 	<Target Name="Run">
 		<Message Text="$(RunCommandArguments)" />

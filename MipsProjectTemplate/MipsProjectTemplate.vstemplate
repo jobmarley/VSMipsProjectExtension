@@ -4,12 +4,11 @@
     <Name>MipsProjectTemplate</Name>
     <Description>MipsProjectTemplate</Description>
     <Icon>MipsProjectTemplate.ico</Icon>
-    <ProjectType>C++</ProjectType>
-    <LanguageTag>C++</LanguageTag>
+    <ProjectType>VC</ProjectType>
     <SortOrder>1000</SortOrder>
     <TemplateID>c7bb2cd1-9327-4e9a-a8e0-126f42da3595</TemplateID>
     <CreateNewFolder>true</CreateNewFolder>
-    <DefaultName>MipsProjectTemplate</DefaultName>
+    <DefaultName>MipsProject</DefaultName>
     <ProvideDefaultName>true</ProvideDefaultName>
   </TemplateData>
   <TemplateContent>

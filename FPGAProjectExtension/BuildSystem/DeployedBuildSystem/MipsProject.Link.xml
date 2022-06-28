@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Rule
+   Name="Link"
+   PageTemplate="tool"
+   DisplayName="Linker"
+   SwitchPrefix="/"
+   Order="20"
+   xmlns="http://schemas.microsoft.com/build/2009/properties"
+   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+   xmlns:sys="clr-namespace:System;assembly=mscorlib">
+	<Rule.Categories>
+		<Category
+		   Name="General"
+		   DisplayName="General" />
+		<Category
+		   Name="Input"
+		   DisplayName="Input" />
+		<Category
+		   Name="Debugging"
+		   DisplayName="Debugging" />
+	</Rule.Categories>
+	<Rule.DataSource>
+		<DataSource
+		   Persistence="ProjectFile"
+		   ItemType="Link"
+		   Label=""
+		   HasConfigurationCondition="true" />
+	</Rule.DataSource>
+	<StringProperty
+	   Subtype="file"
+	   Name="OutputFile"
+	   DisplayName="Output File"
+	   Description="The /OUT option overrides the default name and location of the program that the linker creates."
+	   Category="General"
+	   Switch="OUT"
+	   Separator=":"
+	   F1Keyword="VC.Project.VCLinkerTool.OutputFile">
+	</StringProperty>
+	<StringListProperty
+	   Subtype="file"
+	   Name="AdditionalDependencies"
+	   DisplayName="Additional Dependencies"
+	   Description="Specifies additional items to add to the link command line. [i.e. kernel32.lib] "
+	   Category="Input"
+	   F1Keyword="VC.Project.VCLinkerTool.AdditionalDependencies">
+	</StringListProperty>
+	<EnumProperty
+	   Name="GenerateDebugInformation"
+	   DisplayName="Generate Debug Info"
+	   Description="This option enables creation of debugging information for the .elf file."
+	   Category="Debugging"
+	   F1Keyword="VC.Project.VCLinkerTool.GenerateDebugInformation">
+		<EnumValue
+		   Name="No"
+		   Switch=""
+		   DisplayName="No"
+		   Description="Produces no debugging information.">
+		</EnumValue>
+		<EnumValue
+		   Name="g0"
+		   Switch="DEBUG:g0"
+		   DisplayName="g0"
+		   Description="Generate minimal debug information.">
+		</EnumValue>
+		<EnumValue
+		   Name="g1"
+		   Switch="DEBUG:g1"
+		   DisplayName="g1"
+		   Description="Generate more debug information. ">
+		</EnumValue>
+		<EnumValue
+		   Name="g2"
+		   Switch="DEBUG:g2"
+		   DisplayName="g2"
+		   Description="Generate debug information for all declarations. ">
+		</EnumValue>
+		<EnumValue
+		   Name="g3"
+		   Switch="DEBUG:g3"
+		   DisplayName="g3"
+		   Description="Generate full debug information. ">
+		</EnumValue>
+	</EnumProperty>
+	<BoolProperty
+	   Name="GenerateMapFile"
+	   DisplayName="Generate Map File"
+	   Description="The /MAP option tells the linker to create a mapfile."
+	   Category="Debugging"
+	   Switch="MAP"
+	   F1Keyword="VC.Project.VCLinkerTool.GenerateMapFile">
+		<Argument
+		   Property="MapFileName"
+		   IsRequired="false" />
+	</BoolProperty>
+	<StringProperty
+	   Subtype="file"
+	   Name="MapFileName"
+	   DisplayName="Map File Name"
+	   Description="A user-specified name for the mapfile. It replaces the default name."
+	   Category="Debugging"
+	   Separator=":"
+	   F1Keyword="VC.Project.VCLinkerTool.MapFileName">
+	</StringProperty>
+	<StringProperty
+	   Name="EntryPointSymbol"
+	   DisplayName="Entry Point"
+	   Description="The /ENTRY option specifies an entry point function as the starting address for an .elf file."
+	   Category="General"
+	   Switch="ENTRY"
+	   Separator=":"
+	   F1Keyword="VC.Project.VCLinkerTool.EntryPointSymbol">
+	</StringProperty>
+	<StringProperty
+	   Name="BaseAddress"
+	   DisplayName="Base Address"
+	   Description="Sets a base address for the program. (/BASE:{address[,size] | @filename,key})"
+	   Category="General"
+	   Switch="BASE"
+	   Separator=":"
+	   F1Keyword="VC.Project.VCLinkerTool.BaseAddress">
+	</StringProperty>
+	<EnumProperty
+	   Name="TargetMachine"
+	   DisplayName="Target Machine"
+	   Description="The /MACHINE option specifies the target platform for the program."
+	   Category="General"
+	   F1Keyword="VC.Project.VCLinkerTool.TargetMachine">
+		<EnumValue
+		   Name="NotSet"
+		   Switch=""
+		   DisplayName="Not Set">
+		</EnumValue>
+		<EnumValue
+		   Name="MachineARM"
+		   Switch="MACHINE:ARM"
+		   DisplayName="MachineARM">
+		</EnumValue>
+		<EnumValue
+		   Name="MachineARM64"
+		   Switch="MACHINE:ARM64"
+		   DisplayName="MachineARM64">
+		</EnumValue>
+		<EnumValue
+		   Name="MachineMIPS"
+		   Switch="MACHINE:MIPS"
+		   DisplayName="MachineMIPS">
+		</EnumValue>
+		<EnumValue
+		   Name="MachineX64"
+		   Switch="MACHINE:X64"
+		   DisplayName="MachineX64">
+		</EnumValue>
+		<EnumValue
+		   Name="MachineX86"
+		   Switch="MACHINE:X86"
+		   DisplayName="MachineX86">
+		</EnumValue>
+	</EnumProperty>
+	<IntProperty
+	   Name="SectionAlignment"
+	   DisplayName="SectionAlignment"
+	   Description="The /ALIGN option specifies the alignment of each section within the linear address space of the program. The number argument is in bytes and must be a power of two."
+	   Category="General"
+	   Switch="ALIGN"
+	   Separator=":"
+	   F1Keyword="VC.Project.VCLinkerTool.Alignment">
+	</IntProperty>
+	<!--<StringProperty
+	   Name="AdditionalOptions"
+	   DisplayName="Additional Options"
+	   Description="Additional Options."
+	   Category="Command Line"
+	   F1Keyword="vc.project.AdditionalOptionsPage">
+	</StringProperty>-->
+	<BoolProperty
+	   Name="BuildingInIde"
+	   Visible="false">
+	</BoolProperty>
+</Rule>
