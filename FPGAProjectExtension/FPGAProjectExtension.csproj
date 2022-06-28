@@ -55,7 +55,7 @@
     <Compile Include="FPGAProjectExtensionPackage.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="BuildSystem\DeployedBuildSystem\FPGAProject.targets" />
+    <None Include="BuildSystem\DeployedBuildSystem\MipsProject.targets" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
