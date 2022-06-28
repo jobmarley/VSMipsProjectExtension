@@ -410,8 +410,8 @@
     <Compile Include="DebugEngine\Events.cs" />
     <Compile Include="DebugEngine\MipsDebugEngine.cs" />
     <Compile Include="DebugEngine\MipsDebugModule.cs" />
-    <Compile Include="DebugEngine\MipsDebugPort.cs" />
-    <Compile Include="DebugEngine\MipsDebugPortSupplier.cs" />
+    <Compile Include="DebugEngine\MipsRemoteDebugPort.cs" />
+    <Compile Include="DebugEngine\MipsRemotePortSupplier.cs" />
     <Compile Include="DebugEngine\MipsDebugProcess.cs" />
     <Compile Include="DebugEngine\MipsDebugProgram.cs" />
     <Compile Include="DebugEngine\MipsDebugProgramProvider.cs" />
