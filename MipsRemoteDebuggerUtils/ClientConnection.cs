@@ -59,7 +59,7 @@ namespace MipsRemoteDebuggerUtils
 			buffer = Packet.Serialize(hdr).Concat(buffer).ToArray(); // concat so we send only 1 buffer
 
 			TaskCompletionSource<Packet> tcs = new TaskCompletionSource<Packet>();
-			CancellationTokenSource cts = new CancellationTokenSource(20000);
+			CancellationTokenSource cts = new CancellationTokenSource(2000);
 			if (!m_pendingPackets.TryAdd(packet.ID, tcs))
 				throw new Exception("Packet ID already exist");
 
