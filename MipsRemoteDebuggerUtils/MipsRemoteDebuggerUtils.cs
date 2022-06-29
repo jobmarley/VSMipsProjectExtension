@@ -62,6 +62,7 @@ namespace MipsRemoteDebuggerUtils
     public enum md_state
         : uint
     {
+        md_state_paused = 0x0,
         md_state_enabled = 0x1,
     }
 
