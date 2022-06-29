@@ -57,7 +57,7 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_SIZE))
 			{
-				pinfo[0].m_dwSize = m_size;
+				pinfo[0].m_dwSize = Size;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_SIZE;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADORDER))
