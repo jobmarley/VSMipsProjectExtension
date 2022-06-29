@@ -39,7 +39,8 @@ namespace MipsRemoteDebuggerUtils
 				m_tcpClient.Connect(IPAddress.Parse(hostname), port);
 				m_clientConnection = new ClientConnection(m_tcpClient);
 				m_cts = new CancellationTokenSource();
-				m_receiveLoopTask = m_clientConnection.ReceiveLoopAsync(m_cts.Token);
+				// Task.Run to make sure its scheduled on the pool, otherwise we might deadlock if we send a packet on the same thread
+				m_receiveLoopTask = Task.Run(async () => await m_clientConnection.ReceiveLoopAsync(m_cts.Token));
 				m_clientConnection.OnMipsEvent += (sender, e) => OnMipsEvent?.Invoke(sender, e);
 				return true;
 			}
