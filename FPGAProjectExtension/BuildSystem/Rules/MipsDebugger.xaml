@@ -13,5 +13,6 @@
 
     <!-- Add properties as needed to configure your debugger. These will appear on project properties. -->
     <StringProperty Name="ServerName" DisplayName="Remote Server Name" Default="" Description="Specifies a remote server name" />
-    <StringProperty Name="ServerPort" DisplayName="Remote Server Port" Default="94584" Description="Specifies a remote server port" />
+    <StringProperty Name="ServerPort" DisplayName="Remote Server Port" Default="" Description="Specifies a remote server port" />
+    <StringProperty Name="AdditionalFilesToLoad" DisplayName="Additional files to load" Default="" Description="Specifies additional files to load in memory when the debugger launches the application (the syntax is 'filepath:address')" />
 </Rule>

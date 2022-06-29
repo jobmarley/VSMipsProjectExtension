@@ -25,11 +25,35 @@
 		</PropertyGroup>
 		<Exec Command="$(clang_path) -c --target=mipsel %(ClCompile.Identity) -g3 -o $(IntDir)\%(ClCompile.Filename).o" />
 	</Target>
-	<Target Name="Link" DependsOnTargets="Compile">
+
+	<!-- that step is required to deal with SectionStart -->
+	<Target Name="CreateLinkItem" DependsOnTargets="Compile">
+		<ItemGroup>
+			<Link Include="$(TargetPath)">
+				<CommandLine></CommandLine>
+				<CommandLine Condition="%(Link.EntryPointSymbol) != ''">%(Link.CommandLine) --entry=%(Link.EntryPointSymbol)</CommandLine>
+				<CommandLine Condition="%(Link.BaseAddress) != ''">%(Link.CommandLine) --image-base=%(Link.BaseAddress)</CommandLine>
+				<CommandLine Condition="%(Link.GenerateMapFile) == 'true'">%(Link.CommandLine) --Map $(OutDir)%(Link.MapFileName)</CommandLine>
+				<CommandLine Condition="%(Link.OutputFormat) == 'binary'">%(Link.CommandLine) --oformat binary</CommandLine>
+				<CommandLine Condition="%(Link.SectionStart) != ''">%(Link.CommandLine) @(SectionStart -> '--section-start %(Identity)', ' ')</CommandLine>
+			</Link>
+		</ItemGroup>
+	</Target>
+	<Target Name="Link" DependsOnTargets="CreateLinkItem" Outputs="%(Link.Identity)">
 		<PropertyGroup>
 			<lld_path>"C:\Program Files\LLVM\bin\ld.lld"</lld_path>
 		</PropertyGroup>
-		<Exec Command="$(lld_path) @(ClCompile -> '$(IntDir)%(Filename).o', ' ') -o $(TargetPath) --image-base=0x10000 --Map $(OutDir)$(TargetName).map --entry=main" />
+
+		<ItemGroup>
+			<SectionStartItem Include="%(Link.SectionStart)" />
+		</ItemGroup>
+
+		<MakeDir Directories="$(OutDir)"/>
+		<PropertyGroup>
+			<cmd_line>$(lld_path) @(ClCompile -> '$(IntDir)%(Filename).o', ' ') -o $(TargetPath) %(Link.CommandLine) @(SectionStartItem -> '--section-start %(Identity)', ' ')</cmd_line>
+		</PropertyGroup>
+		<Message Importance="High" Text="cmd: $(cmd_line)" />
+		<Exec Command="$(cmd_line)" />
 	</Target>
 	<Target Name="Build" DependsOnTargets="Link">
 		<Message Importance="High" Text="$(MSBuildProjectFile) -> $(TargetPath)" />

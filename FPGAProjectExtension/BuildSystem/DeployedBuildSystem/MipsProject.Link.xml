@@ -81,6 +81,24 @@
 		   Description="Generate full debug information. ">
 		</EnumValue>
 	</EnumProperty>
+	<EnumProperty
+	   Name="OutputFormat"
+	   DisplayName="Output Format"
+	   Description="This option define the format of the output."
+	   Category="General">
+		<EnumValue
+		   Name="elf"
+		   Switch=""
+		   DisplayName="elf"
+		   Description="Generate a elf file.">
+		</EnumValue>
+		<EnumValue
+		   Name="binary"
+		   Switch=""
+		   DisplayName="binary"
+		   Description="Generate raw binary.">
+		</EnumValue>
+	</EnumProperty>
 	<BoolProperty
 	   Name="GenerateMapFile"
 	   DisplayName="Generate Map File"
@@ -158,13 +176,21 @@
 	</EnumProperty>
 	<IntProperty
 	   Name="SectionAlignment"
-	   DisplayName="SectionAlignment"
+	   DisplayName="Section Alignment"
 	   Description="The /ALIGN option specifies the alignment of each section within the linear address space of the program. The number argument is in bytes and must be a power of two."
 	   Category="General"
 	   Switch="ALIGN"
 	   Separator=":"
 	   F1Keyword="VC.Project.VCLinkerTool.Alignment">
 	</IntProperty>
+	<StringListProperty
+	   Name="SectionStart"
+	   DisplayName="Section Start"
+	   Description="Specifies the start addresses of the given sections"
+	   Category="General"
+	   Switch=""
+	   F1Keyword="">
+	</StringListProperty>
 	<!--<StringProperty
 	   Name="AdditionalOptions"
 	   DisplayName="Additional Options"

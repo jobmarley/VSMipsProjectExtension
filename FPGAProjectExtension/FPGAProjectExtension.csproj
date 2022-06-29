@@ -55,7 +55,26 @@
     <Compile Include="FPGAProjectExtensionPackage.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="BuildSystem\DeployedBuildSystem\MipsProject.targets" />
+    <Content Include="BuildSystem\DeployedBuildSystem\MipsProject.Link.xml">
+      <InstallRoot>MSBuild</InstallRoot>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>MipsProject</VSIXSubPath>
+    </Content>
+    <Content Include="BuildSystem\DeployedBuildSystem\MipsProject.targets">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>MipsProject</VSIXSubPath>
+    </Content>
+    <Content Include="BuildSystem\DeployedBuildSystem\MipsProject.Link.props">
+      <InstallRoot>MSBuild</InstallRoot>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>MipsProject</VSIXSubPath>
+    </Content>
+    <Content Include="BuildSystem\DeployedBuildSystem\MipsProject.Override.props">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>MipsProject</VSIXSubPath>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
