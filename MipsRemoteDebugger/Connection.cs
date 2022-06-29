@@ -140,10 +140,9 @@ namespace MipsRemoteDebugger
 		{
 			byte[] buffer = Packet.Serialize(packet);
 			PacketHeader hdr = new PacketHeader() { Length = (uint)buffer.Length + 8, Type = packet.Type };
-			byte[] hdrbuffer = Packet.Serialize(hdr);
+			buffer = Packet.Serialize(hdr).Concat(buffer).ToArray();
 			lock (m_sendLock)
 			{
-				m_client.GetStream().Write(hdrbuffer, 0, hdrbuffer.Length);
 				m_client.GetStream().Write(buffer, 0, buffer.Length);
 			}
 		}
