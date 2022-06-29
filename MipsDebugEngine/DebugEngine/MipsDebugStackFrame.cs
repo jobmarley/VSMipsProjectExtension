@@ -12,6 +12,7 @@ namespace FPGAProjectExtension.DebugEngine
 	internal class MipsDebugStackFrame
 		: IDebugStackFrame2
 	{
+		public uint Offset { get; set; } = 0;
 		public MipsDebugThread Thread { get; } = null;
 		public MipsDebugStackFrame(MipsDebugThread thread)
 		{
@@ -35,6 +36,10 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 
+		MipsDebugModule GetModuleFromAddress(uint address)
+		{
+			return Thread?.Program?.Modules.FirstOrDefault(x => (address >= x.Offset) && (address < x.Offset + x.Size));
+		}
 		public int GetInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, FRAMEINFO[] pFrameInfo)
 		{
 			if (pFrameInfo == null || pFrameInfo.Length != 1)
@@ -43,15 +48,18 @@ namespace FPGAProjectExtension.DebugEngine
 			FRAMEINFO fi = new FRAMEINFO();
 			if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_FUNCNAME))
 			{
+				MipsDebugModule module = null;;
 				if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_FUNCNAME_MODULE))
+					module = GetModuleFromAddress(Offset);
+
+				if (module != null)
 				{
-					string moduleName = System.IO.Path.GetFileName(Thread?.Program?.Modules?.FirstOrDefault()?.Filepath);
-					fi.m_bstrFuncName = moduleName + "!00010000()";
+					fi.m_bstrFuncName = string.Format("{0}!{1:X8}()", System.IO.Path.GetFileName(module.Filepath), Offset);
 					fi.m_dwValidFields |= enum_FRAMEINFO_FLAGS.FIF_FUNCNAME;
 				}
 				else
 				{
-					fi.m_bstrFuncName = "00010000()";
+					fi.m_bstrFuncName = string.Format("{0:X8}()", Offset);
 					fi.m_dwValidFields |= enum_FRAMEINFO_FLAGS.FIF_FUNCNAME;
 				}
 			}

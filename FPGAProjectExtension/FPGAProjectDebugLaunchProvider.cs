@@ -78,21 +78,24 @@ namespace FPGAProjectExtension
 			settings.LaunchDebugEngineGuid = MipsDebugEngineGuid;
 			//settings.LaunchDebugEngineGuid = Guid.Empty;
 
-			string serverName;
-			string port;
+			string targetPath = "";
+			string serverName = "";
+			string port = "";
+			string additionalFilesToLoad = "";
+
 			// I think this is the right way to get evaluated properties
 			await ConfiguredProject.Services.ProjectLockService.ReadLockAsync(
 				async access =>
 				{
 					Microsoft.Build.Evaluation.Project project = await access.GetProjectAsync(ConfiguredProject);
 					// Executable & CurrentDirectory should never be null, or the engine isnt launched
-					settings.Executable = project.GetPropertyValue("TargetPath");
-					settings.CurrentDirectory = System.IO.Path.GetDirectoryName(settings.Executable);
+					targetPath = project.GetPropertyValue("TargetPath");
 					serverName = project.GetPropertyValue("ServerName");
 					port = project.GetPropertyValue("ServerPort");
-
+					additionalFilesToLoad = project.GetPropertyValue("AdditionalFilesToLoad");
 				});
 
+			settings.Executable = additionalFilesToLoad;
 			/*
 			 * If using a PortSupplier, LaunchDebugEngineGuid must be empty.
 			 * If you use DebuggerEngines.NativeOnlyEngine, the IDebugPort2 implementation
@@ -106,7 +109,7 @@ namespace FPGAProjectExtension
 			settings.LaunchOperation = DebugLaunchOperation.CreateProcess;
 			settings.LaunchOptions = launchOptions;
 			settings.Options = "";
-			settings.PortName = "baba";
+			settings.PortName = serverName + ":" + port;
 			//settings.PortSupplierGuid = Guid.Empty;
 			settings.PortSupplierGuid = MipsDebugPortSupplierGuid;
 			settings.ProcessId = 0;

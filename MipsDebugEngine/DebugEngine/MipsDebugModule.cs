@@ -15,10 +15,14 @@ namespace FPGAProjectExtension.DebugEngine
 	{
 		public string Filepath { get; } = null;
 		public MipsDebugProgram Program { get; } = null;
-		public MipsDebugModule(MipsDebugProgram program, string filepath)
+		public uint Offset { get; } = 0;
+		public uint Size { get; } = 0;
+		public MipsDebugModule(MipsDebugProgram program, string filepath, uint offset)
 		{
 			Program = program;
 			Filepath = filepath;
+			Offset = offset;
+			Size = (uint)new System.IO.FileInfo(filepath).Length;
 		}
 		public int GetInfo(enum_MODULE_INFO_FIELDS dwFields, MODULE_INFO[] pinfo)
 		{
@@ -47,13 +51,13 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS))
 			{
-				pinfo[0].m_addrLoadAddress = 0x10000;
-				pinfo[0].m_addrPreferredLoadAddress = 0x10000;
+				pinfo[0].m_addrLoadAddress = Offset;
+				pinfo[0].m_addrPreferredLoadAddress = Offset;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_SIZE))
 			{
-				pinfo[0].m_dwSize = 0x10000;
+				pinfo[0].m_dwSize = m_size;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_SIZE;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADORDER))

@@ -4,9 +4,12 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
+
+using MipsRemoteDebuggerUtils;
 
 namespace FPGAProjectExtension.DebugEngine
 {
@@ -70,27 +73,30 @@ namespace FPGAProjectExtension.DebugEngine
 		string m_name = null;
 		Guid m_guid = Guid.Empty;
 		IMipsEventCallback m_eventCallback = null;
+		MipsRemoteDebuggerClient m_remoteClient = null;
 
 		public MipsDebugProcess Process => m_process;
 		List<MipsDebugThread> m_threads = new List<MipsDebugThread>();
 		public IEnumerable<MipsDebugThread> Threads => m_threads;
 
-		private List<MipsDebugModule> m_modules = new List<MipsDebugModule>();
+		private ConcurrentBag<MipsDebugModule> m_modules = new ConcurrentBag<MipsDebugModule>();
 		public IEnumerable<MipsDebugModule> Modules => m_modules;
-		public MipsDebugModule LoadModule(string filepath)
+		public MipsDebugModule LoadModule(string filepath, uint offset)
 		{
-			MipsDebugModule m = new MipsDebugModule(this, filepath);
+			MipsDebugModule m = new MipsDebugModule(this, filepath, offset);
 			m_modules.Add(m);
 			return m;
 		}
-		public MipsDebugProgram(IMipsEventCallback eventCallback, MipsDebugProcess process, string name)
+		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsEventCallback eventCallback, MipsDebugProcess process, string name)
 		{
+			m_remoteClient = client;
+
 			m_eventCallback = eventCallback;
 			m_process = process;
 			m_name = name;
 			m_guid = Guid.NewGuid();
 
-			MipsDebugThread t = new MipsDebugThread("main thread", this);
+			MipsDebugThread t = new MipsDebugThread(m_remoteClient, "main thread", this);
 			uint suspendCount = 0;
 			t.Resume(out suspendCount);
 			m_threads.Add(t);
@@ -152,6 +158,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int Execute()
 		{
+			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_enabled));
+
 			m_threads.ForEach(x =>
 			{
 				uint count;
@@ -174,6 +182,8 @@ namespace FPGAProjectExtension.DebugEngine
 		public int CauseBreak()
 		{
 			// Not too sure there...
+			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_paused));
+
 			m_threads.ForEach(x =>
 			{
 				uint count;

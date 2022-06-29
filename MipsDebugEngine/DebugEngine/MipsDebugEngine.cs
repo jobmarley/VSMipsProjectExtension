@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 
+using MipsRemoteDebuggerUtils;
+
 namespace FPGAProjectExtension.DebugEngine
 {
 	interface IMipsEventCallback
@@ -36,6 +38,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		MipsDebugProcess m_debuggedProcess = null;
 		MipsDebugProgram m_debuggedProgram = null;
+
+		MipsRemoteDebuggerClient m_client = null;
 		void IMipsEventCallback.SendEvent(MipsDebugBreakEvent e)
 		{
 			m_callback.Event(this,
@@ -156,15 +160,20 @@ namespace FPGAProjectExtension.DebugEngine
 				m_createEventSent = true;
 			}
 
+
 			MipsDebugProgram program = rgpPrograms[0] as MipsDebugProgram;
 			//MipsDebugProgram program = rgpProgramNodes[0] as MipsDebugProgram;
 			m_debuggedProgram = program;
 
-			MipsDebugModule module = program.LoadModule(program.Process.Filepath);
-			SendEvent(new MipsDebugModuleLoadEvent(module, true));
+			m_client.OnMipsEvent += OnMipsEvent;
+
+			//MipsDebugModule module = program.LoadModule(program.Process.Filepath);
+			//SendEvent(new MipsDebugModuleLoadEvent(module, true));
 
 			SendEvent(new MipsDebugProgramCreateEvent(program));
 			SendEvent(new MipsDebugLoadCompleteEvent(program));
+
+
 
 			//SendEvent(new MipsDebugModuleLoadEvent(program.LoadModule(program.Process.Filepath), true));
 			//SendEvent(new MipsDebugThreadCreateEvent(), program.Thread);
@@ -177,6 +186,20 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 
+		void OnMipsEvent(object sender, MipsEventArgs e)
+		{
+			MipsDebugProgram program = m_debuggedProgram;
+			if (program == null)
+				return;
+
+			if (e.Event == md_event.Breakpoint)
+			{
+				MipsDebugThread thread = program.Threads.FirstOrDefault();
+				uint suspendCount = 0;
+				thread.Suspend(out suspendCount);
+				((IMipsEventCallback)this).SendEvent(new MipsDebugBreakEvent(thread));
+			}
+		}
 		public int CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
 		{
 			throw new NotImplementedException();
@@ -245,6 +268,25 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 
+		async Task<int> LoadFileInMemoryAsync(string filepath, uint offset)
+		{
+			try
+			{
+				System.IO.FileStream fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+				byte[] buffer = new byte[fs.Length];
+				if (await fs.ReadAsync(buffer, 0, buffer.Length) != buffer.Length)
+					return VSConstants.E_FAIL;
+
+				// We load the .elf at 0x10000, then the bootloader launches it
+				if (await m_client.WriteMemoryAsync(buffer, offset) != buffer.Length)
+					return VSConstants.E_FAIL;
+			}
+			catch (Exception)
+			{
+				return VSConstants.E_FAIL;
+			}
+			return VSConstants.S_OK;
+		}
 		public int LaunchSuspended(string pszServer,
 			IDebugPort2 pPort,
 			string pszExe,
@@ -259,25 +301,64 @@ namespace FPGAProjectExtension.DebugEngine
 			IDebugEventCallback2 pCallback,
 			out IDebugProcess2 ppProcess)
 		{
+			ppProcess = null;
+
 			m_callback = pCallback;
-			MipsDebugProcess process = new MipsDebugProcess(pszExe, pPort);
+
+			// Delegate to port because its remote
+			MipsRemoteDebugPort port = pPort as MipsRemoteDebugPort;
+			m_client = port.Client;
+
+			Func<string, uint> parseUInt = (s) => s.StartsWith("0x") ? uint.Parse(s.Substring(2), System.Globalization.NumberStyles.HexNumber) : uint.Parse(s);
+			var filesToLoad = pszExe.Split(';').Select(x =>
+			{
+				var p = x.Split('|');
+				return Tuple.Create(p[0], parseUInt(p[1]));
+			}).ToArray();
+			if (filesToLoad.Count() < 1)
+				return VSConstants.E_INVALIDARG;
+
+			int result = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+			{
+				try
+				{
+					// Stop the processor if it's running
+					await m_client.SetStateAsync(md_state.md_state_paused);
+
+					// Load each file in memory at the given offset
+					// Maybe we should check for overlap but...
+					foreach (var (filepath, offset) in filesToLoad)
+					{
+						int r = await LoadFileInMemoryAsync(filepath, offset);
+						if (r != VSConstants.S_OK)
+							return r;
+					}
+
+					return VSConstants.S_OK;
+				}
+				catch (Exception)
+				{
+					return VSConstants.E_FAIL;
+				}
+			});
+
+			if (result != VSConstants.S_OK)
+				return result;
+
+			// Create the process with the name of the first file
+			MipsDebugProcess process = new MipsDebugProcess(filesToLoad.First().Item1, pPort);
 			ppProcess = process;
 			m_debuggedProcess = process;
 
-			MipsDebugProgram program = new MipsDebugProgram(this, process, "main program");
+			MipsDebugProgram program = new MipsDebugProgram(m_client, this, process, "main program");
 			process.AddProgram(program);
 
-			/*if (!m_createEventSent)
+			// Load all modules asynchronously
+			_ = Task.Run(() =>
 			{
-				SendEvent(new MipsDebugEngineCreateEvent(this));
-				m_createEventSent = true;
-			}*/
-
-			// This doesnt do anything because the event sink in the port is not connected yet
-			//MipsDebugPort mipsDebugPort = (MipsDebugPort)pPort;
-			//mipsDebugPort.OnCreateProcess(process);
-
-			//SendEvent(new MipsDebugProcessCreateEvent(), process);
+				foreach (var (fp, ofs) in filesToLoad)
+					program.LoadModule(fp, ofs);
+			});
 
 			return VSConstants.S_OK;
 		}
@@ -287,25 +368,40 @@ namespace FPGAProjectExtension.DebugEngine
 			if (pProcess != m_debuggedProcess)
 				return VSConstants.E_FAIL;
 
-			IDebugPort2 port;
-			int err = pProcess.GetPort(out port);
-			IDebugDefaultPort2 defaultPort = (IDebugDefaultPort2)port;
+			try
+			{
+				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+				{
+					await m_client.SetStateAsync(md_state.md_state_enabled);
+				});
 
-			IDebugPortNotify2 portNotify;
-			err = defaultPort.GetPortNotify(out portNotify);
+				IDebugPort2 port;
+				int err = pProcess.GetPort(out port);
+				IDebugDefaultPort2 defaultPort = (IDebugDefaultPort2)port;
 
-			AD_PROCESS_ID[] pid = new AD_PROCESS_ID[1];
-			pProcess.GetPhysicalProcessId(pid);
-			string name;
-			pProcess.GetName(enum_GETNAME_TYPE.GN_NAME, out name);
+				IDebugPortNotify2 portNotify;
+				err = defaultPort.GetPortNotify(out portNotify);
 
-			MipsDebugProgram program = (pProcess as MipsDebugProcess).Programs.FirstOrDefault();
-			err = portNotify.AddProgramNode(program);
-			//err = portNotify.AddProgramNode(new MipsDebugProgramNode(pid[0], name));//(pProcess as MipsDebugProcess).Programs.FirstOrDefault());
+				AD_PROCESS_ID[] pid = new AD_PROCESS_ID[1];
+				pProcess.GetPhysicalProcessId(pid);
+				string name;
+				pProcess.GetName(enum_GETNAME_TYPE.GN_NAME, out name);
 
-			Task.Run(() => SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault())));
+				MipsDebugProgram program = (pProcess as MipsDebugProcess).Programs.FirstOrDefault();
+				// Notify port of program creation
+				// Not too sure how to do that, but the port need to send a program created event
+				// This is done asynchronously otherwise Attach is called before ResumeProcess returns, but who knows...
+				// maybe its better to do it synchronously, so we can attach before we resume the program
+				err = portNotify.AddProgramNode(program);
 
-			return VSConstants.S_OK;
+				// Create a thread
+				_ = Task.Run(() => SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault())));
+				return VSConstants.S_OK;
+			}
+			catch (Exception)
+			{
+				return VSConstants.E_FAIL;
+			}
 		}
 
 		public int CanTerminateProcess(IDebugProcess2 pProcess)

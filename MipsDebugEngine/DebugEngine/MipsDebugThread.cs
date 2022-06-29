@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
+
+using MipsRemoteDebuggerUtils;
 
 namespace FPGAProjectExtension.DebugEngine
 {
@@ -22,14 +25,15 @@ namespace FPGAProjectExtension.DebugEngine
 		public IEnumerable<MipsDebugStackFrame> StackFrames => m_stackFrames;
 
 		public uint SuspendCount { get; private set; } = 0;
-		public MipsDebugThread(string name, MipsDebugProgram program)
+
+		MipsRemoteDebuggerClient m_remoteClient = null;
+		public MipsDebugThread(MipsRemoteDebuggerClient remoteClient, string name, MipsDebugProgram program)
 		{
+			m_remoteClient = remoteClient;
 			Random r = new Random();
 			ID = (uint)r.Next();
 			Name = name;
 			Program = program;
-
-			m_stackFrames.Add(new MipsDebugStackFrame(this));
 		}
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
@@ -79,36 +83,43 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int Suspend(out uint pdwSuspendCount)
 		{
+			// Just change the state
 			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_STOPPED, (int)enum_THREADSTATE.THREADSTATE_RUNNING)
 				== (int)enum_THREADSTATE.THREADSTATE_RUNNING)
 			{
 				pdwSuspendCount = ++SuspendCount;
-				return VSConstants.S_OK;
 			}
 			else
 			{
 				pdwSuspendCount = SuspendCount;
 				return VSConstants.E_FAIL;
 			}
+			uint pc = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc));
+			MipsDebugStackFrame stackFrame = new MipsDebugStackFrame(this);
+			stackFrame.Offset = pc;
+			m_stackFrames.Add(stackFrame);
+			return VSConstants.S_OK;
 		}
 
 		public int Resume(out uint pdwSuspendCount)
 		{
+			// Just change the state
 			pdwSuspendCount = SuspendCount;
 			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_STOPPED)
 				== (int)enum_THREADSTATE.THREADSTATE_STOPPED)
 			{
-				return VSConstants.S_OK;
 			}
 			else if(System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_FRESH)
 				== (int)enum_THREADSTATE.THREADSTATE_FRESH)
 			{
-				return VSConstants.S_OK;
 			}
 			else
 			{
 				return VSConstants.E_FAIL;
 			}
+
+			m_stackFrames.Clear();
+			return VSConstants.S_OK;
 		}
 
 		public int GetThreadProperties(enum_THREADPROPERTY_FIELDS dwFields, THREADPROPERTIES[] ptp)

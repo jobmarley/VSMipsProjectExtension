@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 
+using MipsRemoteDebuggerUtils;
+
 namespace FPGAProjectExtension.DebugEngine
 {
 	class MipsDebugPortEventsConnectionPoint
@@ -79,8 +81,23 @@ namespace FPGAProjectExtension.DebugEngine
 		MipsDebugPortEventsConnectionPoint m_eventConnectionPoint = null;
 		IDebugProgramPublisher2 m_programPublisher = null;
 		IDebugCoreServer3 m_server = null;
+
+		MipsRemoteDebuggerClient m_client = null;
+		public MipsRemoteDebuggerClient Client => m_client;
+
 		public MipsRemoteDebugPort(string name, MipsRemotePortSupplier supplier, IDebugPortRequest2 request, IDebugProgramPublisher2 programPublisher, IDebugCoreServer3 server)
 		{
+			string[] parts = name.Split(':');
+			if (parts.Length != 2)
+				throw new Exception();
+
+			string address = parts[0];
+			ushort port = ushort.Parse(parts[1]);
+
+			m_client = new MipsRemoteDebuggerClient();
+			if (!m_client.Connect(address, port))
+				throw new Exception();
+
 			m_name = name;
 			Guid = Guid.NewGuid();
 			PortSupplier = supplier;
@@ -145,7 +162,8 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int LaunchSuspended(string pszExe, string pszArgs, string pszDir, string bstrEnv, uint hStdInput, uint hStdOutput, uint hStdError, out IDebugProcess2 ppPortProcess)
 		{
-			throw new NotImplementedException();
+			ppPortProcess = null;
+			return VSConstants.E_NOTIMPL;
 		}
 
 		public int ResumeProcess(IDebugProcess2 pPortProcess)
