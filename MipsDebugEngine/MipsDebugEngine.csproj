@@ -418,6 +418,7 @@
     <Compile Include="DebugEngine\MipsDebugStackFrame.cs" />
     <Compile Include="DebugEngine\MipsDebugThread.cs" />
     <Compile Include="DebugEngine\MipsDEGuids.cs" />
+    <Compile Include="ElfUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

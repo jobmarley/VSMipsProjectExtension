@@ -32,7 +32,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetName(out string pbstrName)
 		{
-			pbstrName = "stackframe name";
+			pbstrName = string.Format("{0:X8}", Offset);
 			return VSConstants.S_OK;
 		}
 
@@ -48,7 +48,7 @@ namespace FPGAProjectExtension.DebugEngine
 			FRAMEINFO fi = new FRAMEINFO();
 			if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_FUNCNAME))
 			{
-				MipsDebugModule module = null;;
+				MipsDebugModule module = null;
 				if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_FUNCNAME_MODULE))
 					module = GetModuleFromAddress(Offset);
 

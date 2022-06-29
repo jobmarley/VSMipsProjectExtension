@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
@@ -16,13 +17,42 @@ namespace FPGAProjectExtension.DebugEngine
 		public string Filepath { get; } = null;
 		public MipsDebugProgram Program { get; } = null;
 		public uint Offset { get; } = 0;
-		public uint Size { get; } = 0;
+		public uint Size { get; private set; } = 0;
+
+		uint CalculateSize()
+		{
+			try
+			{
+				uint lower = uint.MaxValue;
+				uint upper = uint.MinValue;
+				FileStream fs = new FileStream(Filepath, FileMode.Open, FileAccess.Read);
+				var header = ElfUtils.RawDeserialize<ElfHeader>(fs);
+				if (header.magic == ElfUtils.ELF_MAGIC)
+				{
+					for (uint i = 0; i < header.e_phnum; i++)
+					{
+						uint ofs = header.e_phoff + i * header.e_phentsize;
+						if (fs.Seek(ofs, SeekOrigin.Begin) != ofs)
+							throw new Exception();
+						var ph = ElfUtils.RawDeserialize<ElfProgramHeader>(fs);
+						lower = Math.Min(lower, ph.p_vaddr);
+						upper = Math.Max(upper, ph.p_vaddr + ph.p_memsz);
+					}
+					return upper - lower;
+				}
+			}
+			catch (Exception)
+			{
+
+			}
+			return (uint)new FileInfo(Filepath).Length;
+		}
 		public MipsDebugModule(MipsDebugProgram program, string filepath, uint offset)
 		{
 			Program = program;
 			Filepath = filepath;
 			Offset = offset;
-			Size = (uint)new System.IO.FileInfo(filepath).Length;
+			Size = CalculateSize();
 		}
 		public int GetInfo(enum_MODULE_INFO_FIELDS dwFields, MODULE_INFO[] pinfo)
 		{
