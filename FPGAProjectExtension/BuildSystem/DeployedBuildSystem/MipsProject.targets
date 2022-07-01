@@ -8,7 +8,7 @@
 
 	<ItemGroup>
 		<PropertyPageSchema Include="
-                        $(MSBuildThisFileDirectory)MipsProject.Link.xml;
+                        $(MSBuildThisFileDirectory)Rules\MipsProject.Link.xaml;
                         ">
 		</PropertyPageSchema>
 	</ItemGroup>

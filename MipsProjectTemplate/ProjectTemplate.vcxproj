@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<Import Project="$(MSBuildExtensionsPath)\MipsProject\MipsProject.Link.props" />
+	<PropertyGroup Label="Globals">
+		<CustomProjectExtensionsPath Condition="Exists('$(LocalAppData)\CustomProjectSystems\MipsProject\MipsProject.targets')">$(LocalAppData)\CustomProjectSystems\MipsProject\</CustomProjectExtensionsPath>
+		<CustomProjectExtensionsPath Condition="'$(CustomProjectExtensionsPath)' == ''">$(MSBuildExtensionsPath)\CustomProjectSystems\MipsProject\</CustomProjectExtensionsPath>
+	</PropertyGroup>
+	<Import Project="$(CustomProjectExtensionsPath)\MipsProject.Link.props" />
 	<ItemGroup Label="ProjectConfigurations">
 		<ProjectConfiguration Include="Debug|Win32">
 			<Configuration>Debug</Configuration>
@@ -54,7 +58,7 @@
 		<CharacterSet>Unicode</CharacterSet>
 	</PropertyGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-	<Import Project="$(MSBuildExtensionsPath)\MipsProject\MipsProject.Override.props" />
+	<Import Project="$(CustomProjectExtensionsPath)\MipsProject.Override.props" />
 	<ImportGroup Label="ExtensionSettings">
 	</ImportGroup>
 	<ImportGroup Label="Shared">
@@ -133,6 +137,6 @@
 	</ItemGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets">
-		<Import Project="$(MSBuildExtensionsPath)\MipsProject\MipsProject.targets" />
+		<Import Project="$(CustomProjectExtensionsPath)\MipsProject.targets" />
 	</ImportGroup>
 </Project>
