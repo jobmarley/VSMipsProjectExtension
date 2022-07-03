@@ -81,22 +81,27 @@ namespace FPGAProjectExtension.DebugEngine
 
 		private ConcurrentBag<MipsDebugModule> m_modules = new ConcurrentBag<MipsDebugModule>();
 		public IEnumerable<MipsDebugModule> Modules => m_modules;
-		public MipsDebugModule LoadModule(string filepath, uint offset)
+		IElfSymbolProvider m_symbolProvider = null;
+		bool m_loaded = false;
+		object m_eventLock = new object();
+		public MipsDebugModule LoadModule(string filepath, uint address)
 		{
-			MipsDebugModule m = new MipsDebugModule(this, filepath, offset);
+			MipsDebugModule m = new MipsDebugModule(this, filepath, address);
 			m_modules.Add(m);
+			int hr = m_symbolProvider.LoadModule(filepath, address);
+			m_loaded = (hr == VSConstants.S_OK);
 			return m;
 		}
-		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsEventCallback eventCallback, MipsDebugProcess process, string name)
+		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsEventCallback eventCallback, MipsDebugProcess process, string name, IElfSymbolProvider symbolProvider)
 		{
 			m_remoteClient = client;
-
 			m_eventCallback = eventCallback;
 			m_process = process;
 			m_name = name;
 			m_guid = Guid.NewGuid();
+			m_symbolProvider = symbolProvider;
 
-			MipsDebugThread t = new MipsDebugThread(m_remoteClient, "main thread", this);
+			MipsDebugThread t = new MipsDebugThread(m_remoteClient, "main thread", this, m_symbolProvider);
 			uint suspendCount = 0;
 			t.Resume(out suspendCount);
 			m_threads.Add(t);
@@ -158,15 +163,17 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int Execute()
 		{
-			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_enabled));
-
-			m_threads.ForEach(x =>
+			lock (m_eventLock)
 			{
-				uint count;
-				x.Resume(out count);
-			});
-			//_ = Task.Run(() => m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault())));
-			return VSConstants.S_OK;
+				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_enabled));
+
+				m_threads.ForEach(x =>
+				{
+					uint count;
+					x.Resume(out count);
+				});
+				return VSConstants.S_OK;
+			}
 		}
 
 		public int Continue(IDebugThread2 pThread)
@@ -181,16 +188,25 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CauseBreak()
 		{
-			// Not too sure there...
-			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_paused));
-
-			m_threads.ForEach(x =>
+			// This is required to avoid race condition between resume/break
+			// otherwise, thread.Suspend/Resume could execute on the wrong order
+			lock (m_eventLock)
 			{
-				uint count;
-				x.Suspend(out count);
-			});
-			_ = Task.Run(() => m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault())));
-			return VSConstants.S_OK;
+				// Not too sure there...
+				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+				{
+					await m_remoteClient.SetStateAsync(md_state.md_state_paused);
+					await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+					m_threads.ForEach(x =>
+					{
+						uint count;
+						x.Suspend(out count);
+					});
+					m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault()));
+				});
+
+				return VSConstants.S_OK;
+			}
 		}
 
 		public int GetEngineInfo(out string pbstrEngine, out Guid pguidEngine)
@@ -276,6 +292,24 @@ namespace FPGAProjectExtension.DebugEngine
 		public int DetachDebugger_V7()
 		{
 			throw new NotImplementedException();
+		}
+
+		public int OnBreak()
+		{
+			lock (m_eventLock)
+			{
+				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+				{
+					await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+					m_threads.ForEach(x =>
+					{
+						uint count;
+						x.Suspend(out count);
+					});
+					m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault()));
+				});
+				return VSConstants.S_OK;
+			}
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace FPGAProjectExtension.DebugEngine
 	{
 		public string Filepath { get; } = null;
 		public MipsDebugProgram Program { get; } = null;
-		public uint Offset { get; } = 0;
+		public uint Address { get; } = 0;
 		public uint Size { get; private set; } = 0;
 
 		uint CalculateSize()
@@ -34,11 +34,19 @@ namespace FPGAProjectExtension.DebugEngine
 						uint ofs = header.e_phoff + i * header.e_phentsize;
 						if (fs.Seek(ofs, SeekOrigin.Begin) != ofs)
 							throw new Exception();
+
 						var ph = ElfUtils.RawDeserialize<ElfProgramHeader>(fs);
+
+						if ((ph.p_type & ElfUtils.PT_LOAD) == 0)
+							continue;
+
+						if (ph.p_memsz == 0)
+							continue;
+
 						lower = Math.Min(lower, ph.p_vaddr);
 						upper = Math.Max(upper, ph.p_vaddr + ph.p_memsz);
 					}
-					return upper - lower;
+					return (upper >= lower) ? (upper - lower) : 0;
 				}
 			}
 			catch (Exception)
@@ -47,11 +55,11 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			return (uint)new FileInfo(Filepath).Length;
 		}
-		public MipsDebugModule(MipsDebugProgram program, string filepath, uint offset)
+		public MipsDebugModule(MipsDebugProgram program, string filepath, uint address)
 		{
 			Program = program;
 			Filepath = filepath;
-			Offset = offset;
+			Address = address;
 			Size = CalculateSize();
 		}
 		public int GetInfo(enum_MODULE_INFO_FIELDS dwFields, MODULE_INFO[] pinfo)
@@ -81,8 +89,8 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS))
 			{
-				pinfo[0].m_addrLoadAddress = Offset;
-				pinfo[0].m_addrPreferredLoadAddress = Offset;
+				pinfo[0].m_addrLoadAddress = Address;
+				pinfo[0].m_addrPreferredLoadAddress = Address;
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_SIZE))

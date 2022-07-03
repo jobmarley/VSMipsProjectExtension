@@ -37,3 +37,9 @@
 "Assembly"="MipsDebugEngine"
 "Class"="FPGAProjectExtension.DebugEngine.MipsRemotePortSupplier"
 "CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
+
+[$RootKey$\CLSID\{305ae8e3-ce4d-4a0b-889c-9836bf4ddedf}]
+@="ElfSymbolProvider"
+[$RootKey$\CLSID\{305ae8e3-ce4d-4a0b-889c-9836bf4ddedf}\InprocServer32]
+@="$PackageFolder$\ElfSymbolProvider.dll"
+"ThreadingModel"="Apartment"

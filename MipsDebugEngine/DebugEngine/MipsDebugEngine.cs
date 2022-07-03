@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,12 +18,68 @@ namespace FPGAProjectExtension.DebugEngine
 		void SendEvent(MipsDebugBreakEvent e);
 	}
 
+	[ComImport]
+	[Guid("c8b40372-81f0-45f5-8532-02f8443dd2a6")]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	interface IElfSymbolProvider
+		: IDebugSymbolProvider
+	{
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int Initialize([In][MarshalAs(UnmanagedType.Interface)] IDebugEngineSymbolProviderServices pServices);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int Uninitialize();
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetContainerField([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, [MarshalAs(UnmanagedType.Interface)] out IDebugContainerField ppContainerField);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetField([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, [In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddressCur, [MarshalAs(UnmanagedType.Interface)] out IDebugField ppField);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetAddressesFromPosition([In][MarshalAs(UnmanagedType.Interface)] IDebugDocumentPosition2 pDocPos, [In] int fStatmentOnly, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugAddresses ppEnumBegAddresses, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugAddresses ppEnumEndAddresses);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetAddressesFromContext([In][MarshalAs(UnmanagedType.Interface)] IDebugDocumentContext2 pDocContext, [In] int fStatmentOnly, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugAddresses ppEnumBegAddresses, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugAddresses ppEnumEndAddresses);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetContextFromAddress([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, [MarshalAs(UnmanagedType.Interface)] out IDebugDocumentContext2 ppDocContext);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetLanguage([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, out Guid pguidLanguage, out Guid pguidLanguageVendor);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetGlobalContainer([MarshalAs(UnmanagedType.Interface)] out IDebugContainerField pField);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetMethodFieldsByName([In][MarshalAs(UnmanagedType.LPWStr)] string pszFullName, [In][ComAliasName("Microsoft.VisualStudio.Debugger.Interop.NAME_MATCH")] NAME_MATCH nameMatch, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugFields ppEnum);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetClassTypeByName([In][MarshalAs(UnmanagedType.LPWStr)] string pszClassName, [In][ComAliasName("Microsoft.VisualStudio.Debugger.Interop.NAME_MATCH")] NAME_MATCH nameMatch, [MarshalAs(UnmanagedType.Interface)] out IDebugClassField ppField);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetNamespacesUsedAtAddress([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, [MarshalAs(UnmanagedType.Interface)] out IEnumDebugFields ppEnum);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetTypeByName([In][MarshalAs(UnmanagedType.LPWStr)] string pszClassName, [In][ComAliasName("Microsoft.VisualStudio.Debugger.Interop.NAME_MATCH")] NAME_MATCH nameMatch, [MarshalAs(UnmanagedType.Interface)] out IDebugField ppField);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		new int GetNextAddress([In][MarshalAs(UnmanagedType.Interface)] IDebugAddress pAddress, [In] int fStatmentOnly, [MarshalAs(UnmanagedType.Interface)] out IDebugAddress ppAddress);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int GetAddressFromMemory(uint memAddr, out IDebugAddress ppAddress);
+
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int LoadModule(string pszFilepath, uint address);
+    }
+
 	[ComVisible(true)]
 	[Guid("AD8869A4-D013-4C71-ABDE-B33998A0CECA")]
 	public class MipsDebugEngine
 		: IDebugEngine2,
 		IDebugEngineLaunch2,
-		IMipsEventCallback
+		IMipsEventCallback,
+		IDebugIDECallback
 	//, ICustomQueryInterface
 	{
 
@@ -40,6 +97,9 @@ namespace FPGAProjectExtension.DebugEngine
 		MipsDebugProgram m_debuggedProgram = null;
 
 		MipsRemoteDebuggerClient m_client = null;
+		IDebugExpressionEvaluator2 m_expressionEvaluator = null;
+		IElfSymbolProvider m_symbolProvider = null;
+
 		void IMipsEventCallback.SendEvent(MipsDebugBreakEvent e)
 		{
 			m_callback.Event(this,
@@ -194,10 +254,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 			if (e.Event == md_event.Breakpoint)
 			{
-				MipsDebugThread thread = program.Threads.FirstOrDefault();
-				uint suspendCount = 0;
-				thread.Suspend(out suspendCount);
-				((IMipsEventCallback)this).SendEvent(new MipsDebugBreakEvent(thread));
+				program.OnBreak();
 			}
 		}
 		public int CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
@@ -244,9 +301,10 @@ namespace FPGAProjectExtension.DebugEngine
 		{
 			return VSConstants.S_OK;
 		}
-
+		ushort m_wLangID;
 		public int SetLocale(ushort wLangID)
 		{
+			m_wLangID = wLangID;
 			return VSConstants.S_OK;
 		}
 
@@ -265,7 +323,7 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int CauseBreak()
 		{
-			return VSConstants.S_OK;
+			return VSConstants.E_NOTIMPL;
 		}
 
 		async Task<int> LoadFileInMemoryAsync(string filepath, uint offset)
@@ -287,6 +345,26 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			return VSConstants.S_OK;
 		}
+		Guid GetEECppCLSID()
+		{
+			string EECppGuid = "{3A12D0B7-C26C-11D0-B442-00A0244A1DD2}";
+			string EEVendorGuid = "{994B45C4-E6E9-11D2-903F-00C04FA302A1}";
+			Microsoft.Win32.RegistryKey EEKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(string.Format("{0}\\AD7Metrics\\ExpressionEvaluator\\{1}\\{2}", m_registryRoot, EECppGuid, EEVendorGuid));
+			return new Guid((string)EEKey.GetValue("CLSID"));
+		}
+		IDebugExpressionEvaluator2 CreateExpressionEvaluator()
+		{
+			Guid eeCppCLSID = GetEECppCLSID();
+			var qzdqd = VSComHelper.CreateFromCLSID<IDebugExpressionEvaluator2>(m_registryRoot, eeCppCLSID);
+			Type type = Type.GetTypeFromCLSID(eeCppCLSID, true);
+			object o = Activator.CreateInstance(type);
+			IDebugExpressionEvaluator2 expressionEvaluator = (IDebugExpressionEvaluator2)o;
+			expressionEvaluator.SetRegistryRoot(m_registryRoot);
+			expressionEvaluator.SetLocale(m_wLangID);
+			expressionEvaluator.SetIDebugIDECallback(this);
+			return expressionEvaluator;
+		}
+		
 		public int LaunchSuspended(string pszServer,
 			IDebugPort2 pPort,
 			string pszExe,
@@ -304,6 +382,9 @@ namespace FPGAProjectExtension.DebugEngine
 			ppProcess = null;
 
 			m_callback = pCallback;
+
+			m_symbolProvider = VSComHelper.CreateFromCLSID<IElfSymbolProvider>(m_registryRoot, new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
+			//m_expressionEvaluator = CreateExpressionEvaluator();
 
 			// Delegate to port because its remote
 			MipsRemoteDebugPort port = pPort as MipsRemoteDebugPort;
@@ -350,12 +431,14 @@ namespace FPGAProjectExtension.DebugEngine
 			ppProcess = process;
 			m_debuggedProcess = process;
 
-			MipsDebugProgram program = new MipsDebugProgram(m_client, this, process, "main program");
+			MipsDebugProgram program = new MipsDebugProgram(m_client, this, process, "main program", m_symbolProvider);
 			process.AddProgram(program);
 
 			// Load all modules asynchronously
-			_ = Task.Run(() =>
+			_ = Task.Run(async () =>
 			{
+				// the symbol provider is apartment and is not in the registry so it can only be accessed from the main thread
+				await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 				foreach (var (fp, ofs) in filesToLoad)
 					program.LoadModule(fp, ofs);
 			});
@@ -370,11 +453,6 @@ namespace FPGAProjectExtension.DebugEngine
 
 			try
 			{
-				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
-				{
-					await m_client.SetStateAsync(md_state.md_state_enabled);
-				});
-
 				IDebugPort2 port;
 				int err = pProcess.GetPort(out port);
 				IDebugDefaultPort2 defaultPort = (IDebugDefaultPort2)port;
@@ -393,6 +471,8 @@ namespace FPGAProjectExtension.DebugEngine
 				// This is done asynchronously otherwise Attach is called before ResumeProcess returns, but who knows...
 				// maybe its better to do it synchronously, so we can attach before we resume the program
 				err = portNotify.AddProgramNode(program);
+
+				program.Execute();
 
 				// Create a thread
 				_ = Task.Run(() => SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault())));
@@ -419,6 +499,11 @@ namespace FPGAProjectExtension.DebugEngine
 			SendEvent(new MipsDebugProcessDestroyEvent(m_debuggedProcess));
 
 			m_debuggedProcess = null;
+			return VSConstants.S_OK;
+		}
+
+		public int DisplayMessage(string szMessage)
+		{
 			return VSConstants.S_OK;
 		}
 	}

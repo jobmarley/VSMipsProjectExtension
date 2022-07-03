@@ -1,0 +1,16 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {305ae8e3-ce4d-4a0b-889c-9836bf4ddedf} = s 'ElfSymbolProvider class'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{d58c5021-1e35-4bde-854c-80217cada2ae}'
+			Version = s '1.0'
+		}
+	}
+}

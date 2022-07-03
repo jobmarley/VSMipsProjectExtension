@@ -55,6 +55,16 @@
     <Compile Include="FPGAProjectExtensionPackage.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\ElfSymbolProvider\libdwarf.dll">
+      <Link>libdwarf\libdwarf.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>.</VSIXSubPath>
+    </Content>
+    <Content Include="..\ElfSymbolProvider\zlib1.dll">
+      <Link>libdwarf\zlib1.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>.</VSIXSubPath>
+    </Content>
     <Content Include="BuildSystem\Rules\MipsProject.Link.xaml">
       <InstallRoot>MSBuild</InstallRoot>
       <VSIXSubPath>MipsProject\Rules</VSIXSubPath>
@@ -123,6 +133,12 @@
     <Content Include="Resources\Command1.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ElfSymbolProvider\ElfSymbolProvider.vcxproj">
+      <Project>{1FFDAD0A-8539-431C-8B34-701345B6A047}</Project>
+      <Name>ElfSymbolProvider</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
+    </ProjectReference>
     <ProjectReference Include="..\MipsDebugEngine\MipsDebugEngine.csproj">
       <Project>{811231fc-10fe-4c5e-9c83-20fe71241bd4}</Project>
       <Name>MipsDebugEngine</Name>

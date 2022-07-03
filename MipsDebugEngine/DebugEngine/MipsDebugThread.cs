@@ -18,7 +18,7 @@ namespace FPGAProjectExtension.DebugEngine
 		public string Name { get; private set; } = null;
 		public MipsDebugProgram Program { get; private set; } = null;
 		public uint ID { get; private set; } = 0;
-		private int m_state = (int)enum_THREADSTATE.THREADSTATE_FRESH;
+		private enum_THREADSTATE m_state = enum_THREADSTATE.THREADSTATE_FRESH;
 		public enum_THREADSTATE State => (enum_THREADSTATE)m_state;
 
 		List<MipsDebugStackFrame> m_stackFrames = new List<MipsDebugStackFrame>();
@@ -27,13 +27,15 @@ namespace FPGAProjectExtension.DebugEngine
 		public uint SuspendCount { get; private set; } = 0;
 
 		MipsRemoteDebuggerClient m_remoteClient = null;
-		public MipsDebugThread(MipsRemoteDebuggerClient remoteClient, string name, MipsDebugProgram program)
+		IElfSymbolProvider m_symbolProvider = null;
+		public MipsDebugThread(MipsRemoteDebuggerClient remoteClient, string name, MipsDebugProgram program, IElfSymbolProvider symbolProvider)
 		{
 			m_remoteClient = remoteClient;
 			Random r = new Random();
 			ID = (uint)r.Next();
 			Name = name;
 			Program = program;
+			m_symbolProvider = symbolProvider;
 		}
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
@@ -81,22 +83,21 @@ namespace FPGAProjectExtension.DebugEngine
 			return VSConstants.S_OK;
 		}
 
+		// NOTE: It doesnt really makes sense to thread safe this. It should be synchronized at the application level
 		public int Suspend(out uint pdwSuspendCount)
 		{
 			// Just change the state
-			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_STOPPED, (int)enum_THREADSTATE.THREADSTATE_RUNNING)
-				== (int)enum_THREADSTATE.THREADSTATE_RUNNING)
-			{
-				pdwSuspendCount = ++SuspendCount;
-			}
-			else
+			if (m_state != enum_THREADSTATE.THREADSTATE_RUNNING)
 			{
 				pdwSuspendCount = SuspendCount;
 				return VSConstants.E_FAIL;
 			}
+
+			m_state = enum_THREADSTATE.THREADSTATE_STOPPED;
+			pdwSuspendCount = ++SuspendCount;
 			uint pc = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc));
-			MipsDebugStackFrame stackFrame = new MipsDebugStackFrame(this);
-			stackFrame.Offset = pc;
+			pc = pc - 4;
+			MipsDebugStackFrame stackFrame = new MipsDebugStackFrame(this, pc, m_symbolProvider);
 			m_stackFrames.Add(stackFrame);
 			return VSConstants.S_OK;
 		}
@@ -105,19 +106,13 @@ namespace FPGAProjectExtension.DebugEngine
 		{
 			// Just change the state
 			pdwSuspendCount = SuspendCount;
-			if (System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_STOPPED)
-				== (int)enum_THREADSTATE.THREADSTATE_STOPPED)
-			{
-			}
-			else if(System.Threading.Interlocked.CompareExchange(ref m_state, (int)enum_THREADSTATE.THREADSTATE_RUNNING, (int)enum_THREADSTATE.THREADSTATE_FRESH)
-				== (int)enum_THREADSTATE.THREADSTATE_FRESH)
-			{
-			}
-			else
+			if (m_state != enum_THREADSTATE.THREADSTATE_STOPPED &&
+				m_state != enum_THREADSTATE.THREADSTATE_FRESH)
 			{
 				return VSConstants.E_FAIL;
 			}
 
+			m_state = enum_THREADSTATE.THREADSTATE_RUNNING;
 			m_stackFrames.Clear();
 			return VSConstants.S_OK;
 		}

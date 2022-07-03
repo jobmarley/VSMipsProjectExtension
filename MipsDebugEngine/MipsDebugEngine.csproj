@@ -410,6 +410,7 @@
     <Compile Include="DebugEngine\Events.cs" />
     <Compile Include="DebugEngine\MipsDebugEngine.cs" />
     <Compile Include="DebugEngine\MipsDebugModule.cs" />
+    <Compile Include="DebugEngine\MipsDebugSymbolProvider.cs" />
     <Compile Include="DebugEngine\MipsRemoteDebugPort.cs" />
     <Compile Include="DebugEngine\MipsRemotePortSupplier.cs" />
     <Compile Include="DebugEngine\MipsDebugProcess.cs" />
@@ -420,6 +421,7 @@
     <Compile Include="DebugEngine\MipsDEGuids.cs" />
     <Compile Include="ElfUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VSComHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="TextTemplate.ico" />

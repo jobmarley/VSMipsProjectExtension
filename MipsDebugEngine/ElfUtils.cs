@@ -49,6 +49,15 @@ namespace FPGAProjectExtension
 	internal class ElfUtils
 	{
 		public const uint ELF_MAGIC = 0x464C457F;
+		public const uint PT_NULL = 0;
+		public const uint PT_LOAD = 1;
+		public const uint PT_DYNAMIC = 2;
+		public const uint PT_INTERP = 3;
+		public const uint PT_NOTE = 4;
+		public const uint PT_SHLIB = 5;
+		public const uint PT_PHDR = 6;
+		public const uint PT_LOPROC = 0x70000000;
+		public const uint PT_HIPROC = 0x7fffffff;
 		public static T RawDeserialize<T>(byte[] rawData)
 		{
 			int rawsize = Marshal.SizeOf(typeof(T));

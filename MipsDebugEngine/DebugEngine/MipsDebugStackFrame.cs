@@ -9,14 +9,91 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace FPGAProjectExtension.DebugEngine
 {
+	class MipsDebugExpression
+		: IDebugExpression2
+	{
+		IDebugParsedExpression m_parsedExpression = null;
+		public MipsDebugExpression(IDebugParsedExpression parsedExpression)
+		{
+			m_parsedExpression = parsedExpression;
+		}
+		public int EvaluateAsync(enum_EVALFLAGS dwFlags, IDebugEventCallback2 pExprCallback)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int Abort()
+		{
+			throw new NotImplementedException();
+		}
+
+		public int EvaluateSync(enum_EVALFLAGS dwFlags, uint dwTimeout, IDebugEventCallback2 pExprCallback, out IDebugProperty2 ppResult)
+		{
+			throw new NotImplementedException();
+		}
+	}
+	class MipsDebugAddress
+		: IDebugAddress
+	{
+		public MipsDebugAddress()
+		{
+
+		}
+		public int GetAddress(DEBUG_ADDRESS[] pAddress)
+		{
+			throw new NotImplementedException();
+		}
+	}
+	class MipsDebugExpressionContext
+		: IDebugExpressionContext2
+	{
+		IDebugExpressionEvaluator2 m_expressionEvaluator = null;
+		public MipsDebugExpressionContext(IDebugExpressionEvaluator2 expressionEvaluator)
+		{
+			m_expressionEvaluator = expressionEvaluator;
+		}
+		public int GetName(out string pbstrName)
+		{
+			pbstrName = "";
+			return VSConstants.S_OK;
+		}
+
+		public int ParseText(string pszCode, enum_PARSEFLAGS dwFlags, uint nRadix, out IDebugExpression2 ppExpr, out string pbstrError, out uint pichError)
+		{
+			ppExpr = null;
+			pbstrError = "";
+			pichError = 0;
+			IDebugExpressionEvaluator3 ee3 = (IDebugExpressionEvaluator3)m_expressionEvaluator;
+			IDebugParsedExpression parsedExpression = null;
+			int err = ee3.Parse2(pszCode, dwFlags, nRadix, new MipsDebugSymbolProvider(), new MipsDebugAddress(), out pbstrError, out pichError, out parsedExpression);
+			if (err != VSConstants.S_OK)
+				return err;
+
+			ppExpr = new MipsDebugExpression(parsedExpression);
+			return VSConstants.S_OK;
+		}
+	}
 	internal class MipsDebugStackFrame
 		: IDebugStackFrame2
 	{
-		public uint Offset { get; set; } = 0;
+		public uint Address { get; } = 0;
 		public MipsDebugThread Thread { get; } = null;
-		public MipsDebugStackFrame(MipsDebugThread thread)
+		IElfSymbolProvider m_symbolProvider = null;
+		IDebugDocumentContext2 m_documentContext = null;
+		public MipsDebugStackFrame(MipsDebugThread thread, uint address, IElfSymbolProvider symbolProvider)
 		{
 			Thread = thread;
+			Address = address;
+			m_symbolProvider = symbolProvider;
+
+			IDebugAddress debugAddress = null;
+			int hr = m_symbolProvider.GetAddressFromMemory(Address, out debugAddress);
+			if (hr != VSConstants.S_OK)
+				throw new Exception();
+
+			hr = m_symbolProvider.GetContextFromAddress(debugAddress, out m_documentContext);
+			if (hr != VSConstants.S_OK)
+				throw new Exception();
 		}
 		public int GetCodeContext(out IDebugCodeContext2 ppCodeCxt)
 		{
@@ -26,19 +103,19 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetDocumentContext(out IDebugDocumentContext2 ppCxt)
 		{
-			ppCxt = null;
-			return VSConstants.E_FAIL;
+			ppCxt = m_documentContext;
+			return VSConstants.S_OK;
 		}
 
 		public int GetName(out string pbstrName)
 		{
-			pbstrName = string.Format("{0:X8}", Offset);
+			pbstrName = string.Format("{0:X8}", Address);
 			return VSConstants.S_OK;
 		}
 
 		MipsDebugModule GetModuleFromAddress(uint address)
 		{
-			return Thread?.Program?.Modules.FirstOrDefault(x => (address >= x.Offset) && (address < x.Offset + x.Size));
+			return Thread?.Program?.Modules.FirstOrDefault(x => (address >= x.Address) && (address < x.Address + x.Size));
 		}
 		public int GetInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, FRAMEINFO[] pFrameInfo)
 		{
@@ -50,16 +127,16 @@ namespace FPGAProjectExtension.DebugEngine
 			{
 				MipsDebugModule module = null;
 				if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_FUNCNAME_MODULE))
-					module = GetModuleFromAddress(Offset);
+					module = GetModuleFromAddress(Address);
 
 				if (module != null)
 				{
-					fi.m_bstrFuncName = string.Format("{0}!{1:X8}()", System.IO.Path.GetFileName(module.Filepath), Offset);
+					fi.m_bstrFuncName = string.Format("{0}!{1:X8}()", System.IO.Path.GetFileName(module.Filepath), Address);
 					fi.m_dwValidFields |= enum_FRAMEINFO_FLAGS.FIF_FUNCNAME;
 				}
 				else
 				{
-					fi.m_bstrFuncName = string.Format("{0:X8}()", Offset);
+					fi.m_bstrFuncName = string.Format("{0:X8}()", Address);
 					fi.m_dwValidFields |= enum_FRAMEINFO_FLAGS.FIF_FUNCNAME;
 				}
 			}
@@ -75,7 +152,9 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_LANGUAGE))
 			{
-				fi.m_bstrLanguage = "Unknown";
+				Guid langGuid = Guid.Empty;
+				if (GetLanguageInfo(ref fi.m_bstrLanguage, ref langGuid) != VSConstants.S_OK)
+					fi.m_bstrLanguage = "Unknown";
 				fi.m_dwValidFields |= enum_FRAMEINFO_FLAGS.FIF_LANGUAGE;
 			}
 			if (dwFieldSpec.HasFlag(enum_FRAMEINFO_FLAGS.FIF_MODULE))
@@ -120,11 +199,15 @@ namespace FPGAProjectExtension.DebugEngine
 
 		public int GetExpressionContext(out IDebugExpressionContext2 ppExprCxt)
 		{
-			throw new NotImplementedException();
+			ppExprCxt = null;
+			return VSConstants.E_NOTIMPL;
 		}
 
 		public int GetLanguageInfo(ref string pbstrLanguage, ref Guid pguidLanguage)
 		{
+			if (m_documentContext != null)
+				return m_documentContext.GetLanguageInfo(ref pbstrLanguage, ref pguidLanguage);
+
 			pbstrLanguage = "Unknown";
 			pguidLanguage = Guid.Empty;
 			return VSConstants.S_OK;

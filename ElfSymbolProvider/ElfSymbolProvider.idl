@@ -1,0 +1,66 @@
+// ElfSymbolProvider.idl : IDL source for ElfSymbolProvider
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (ElfSymbolProvider.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "msdbg.idl";
+
+[
+	object,
+	uuid(c8b40372-81f0-45f5-8532-02f8443dd2a6),
+	pointer_default(unique)
+]
+interface IElfSymbolProvider : IDebugSymbolProvider
+{
+	HRESULT GetAddressFromMemory(DWORD memAddr, IDebugAddress** ppAddress);
+	HRESULT LoadModule(LPCOLESTR pszFilepath, DWORD address);
+};
+[
+	object,
+	uuid(7fe412c4-4202-4173-a8fd-d74d2007db5e),
+	pointer_default(unique)
+]
+interface IElfDebugAddress : IDebugAddress
+{
+	HRESULT SetAddress(DEBUG_ADDRESS* pAddress);
+	HRESULT GetAddress(DEBUG_ADDRESS* pAddress);
+};
+[
+	uuid(d58c5021-1e35-4bde-854c-80217cada2ae),
+	version(1.0),
+]
+library ElfSymbolProviderLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(305ae8e3-ce4d-4a0b-889c-9836bf4ddedf)
+	]
+	coclass ElfSymbolProvider
+	{
+		[default] interface IElfSymbolProvider;
+	};
+	[
+		uuid(a40ab257-221d-4db3-8618-f7e2cfb16355)
+	]
+	coclass ElfDebugAddress
+	{
+		[default] interface IElfDebugAddress;
+	};
+	[
+		uuid(546d6384-97ab-428b-9be2-5e287080ce93)
+	]
+	coclass ElfDebugDocumentContext
+	{
+		[default] interface IDebugDocumentContext2;
+	};
+};
+
+import "shobjidl.idl";
+import "shobjidl.idl";
+import "shobjidl.idl";
+import "shobjidl.idl";
+import "shobjidl.idl";
+import "shobjidl.idl";
