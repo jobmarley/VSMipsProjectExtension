@@ -7,6 +7,15 @@
 // CElfDebugCodeContext
 
 
+HRESULT CElfDebugCodeContext::Init(ElfModule* pModule, IDebugAddress* pAddress, IDebugDocumentContext2* pDocumentContext)
+{
+	m_pModule = pModule;
+	m_pAddress = pAddress;
+	m_pDocumentContext = pDocumentContext;
+
+	m_function = pModule->GetFunction(pAddress);
+	return S_OK;
+}
 HRESULT CElfDebugCodeContext::GetDocumentContext(
 	/* [out] */ __RPC__deref_out_opt IDebugDocumentContext2** ppSrcCxt)
 {
@@ -23,7 +32,7 @@ HRESULT CElfDebugCodeContext::GetLanguageInfo(
 HRESULT CElfDebugCodeContext::GetName(
 	/* [out] */ __RPC__deref_out_opt BSTR* pbstrName)
 {
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 HRESULT CElfDebugCodeContext::GetInfo(
@@ -32,6 +41,41 @@ HRESULT CElfDebugCodeContext::GetInfo(
 {
 	if (!pInfo)
 		return E_INVALIDARG;
+
+	DEBUG_ADDRESS da = {};
+	m_pAddress->GetAddress(&da);
+
+	std::wstringstream ss;
+	ss << std::hex << std::setfill(L'0') << std::setw(8) << da.addr.addr.addrNative.unknown;
+
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS)
+	{
+		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
+	}
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESSABSOLUTE)
+	{
+		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
+	}
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESSOFFSET)
+	{
+		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
+	}
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION)
+	{
+		 pInfo->bstrFunction = SysAllocString(CA2W(m_function.Name()));
+		 pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION;
+	}
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET)
+	{
+	}
+	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_MODULEURL)
+	{
+		pInfo->bstrModuleUrl = SysAllocString(CA2W(m_pModule->GetFilepath()));
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_MODULEURL;
+	}
 
 	return S_OK;
 }

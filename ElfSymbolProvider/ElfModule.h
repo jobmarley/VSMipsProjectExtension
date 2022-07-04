@@ -89,7 +89,6 @@ class ElfModule
     //ElfModule() = delete;
     ElfModule& operator=(const ElfModule&) = delete;
     Dwarf_Debug m_dbg = nullptr;
-    Dwarf_Unsigned m_lang = 0;
     uint32_t m_virtualSize = 0;
 
     struct cu_info
@@ -118,4 +117,6 @@ public:
 
     inline const char* GetFilepath() { return m_filepath.c_str(); }
     inline IDebugModule2* GetDebugModule() { return m_pDebugModule; }
+
+    ElfFunction GetFunction(IDebugAddress* pAddress);
 };

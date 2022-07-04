@@ -5,6 +5,7 @@
 template<class IEnumerator>
 class SimpleEnumerator
 	: public CComObjectRootEx<CComSingleThreadModel>,
+	public CComCoClass<SimpleEnumerator<IEnumerator>, &CLSID_ElfDebugAddress>,
 	public IEnumerator
 {
 	template<typename T>
@@ -25,11 +26,13 @@ class SimpleEnumerator
 
 
 	std::vector<ATL::CComPtr<IElement>> m_elements;
-	typename decltype(m_elements)::iterator m_current;
+	size_t m_currentIndex = 0;
 
 	typedef ATL::CComObject<SimpleEnumerator<IEnumerator>> ComObjectType;
 public:
-
+	SimpleEnumerator()
+	{
+	}
 	BEGIN_COM_MAP(SimpleEnumerator)
 		COM_INTERFACE_ENTRY(IEnumerator)
 	END_COM_MAP()
@@ -48,10 +51,10 @@ public:
 	HRESULT Next(ULONG celt, IElement** rgelt, ULONG* pceltFetched)
 	{
 		*pceltFetched = 0;
-		while (celt > 0 && m_current != m_elements.end())
+		while (celt > 0 && m_currentIndex < m_elements.size())
 		{
-			m_current->QueryInterface(rgelt);
-			++m_current;
+			m_elements[m_currentIndex]->QueryInterface(rgelt);
+			++m_currentIndex;
 			--celt;
 			++(*pceltFetched);
 			++rgelt;
@@ -61,12 +64,12 @@ public:
 	HRESULT Skip(ULONG celt)
 	{
 		for (ULONG i = 0; i < celt; ++i)
-			++m_current;
+			++m_currentIndex;
 		return S_OK;
 	}
 	HRESULT Reset(void)
 	{
-		m_current = m_elements.begin();
+		m_currentIndex = 0;
 		return S_OK;
 	}
 	HRESULT Clone(IEnumerator** ppEnum)
@@ -87,10 +90,16 @@ public:
 	template <typename Range>
 	static HRESULT Create(Range r, IEnumerator** ppEnumerator)
 	{
-		CComPtr<ATL::CComObject<SimpleEnumerator<IEnumerator>>> pEnumerator;
-		CSimpleEnumerator<IEnumerator>::CreateInstance(&pEnumerator);
+		CComPtr<CSimpleEnumerator<IEnumerator>> pEnumerator;
+		// this doesnt call SimpleEnumerator::CreateInstance but CComObject::CreateInstance
+		HRESULT hr = CSimpleEnumerator<IEnumerator>::CreateInstance(&pEnumerator);
+		if (FAILED(hr))
+			return hr;
+
 		pEnumerator->Add(r);
-		return pEnumerator.QueryInterface(ppEnumerator);
+		pEnumerator.QueryInterface(ppEnumerator);
+		pEnumerator.Detach(); // CComObject, as opposed to CComCoClass, doesnt AddRef, so we have to detach
+		return S_OK;
 	}
 };
 

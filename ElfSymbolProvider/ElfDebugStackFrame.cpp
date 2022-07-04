@@ -14,12 +14,24 @@ HRESULT CElfDebugStackFrame::Init(IDebugAddress* pAddress, IDebugThread2* pThrea
 	m_pModule = pModule;
 
 	HRESULT hr = pModule->GetContextFromAddress(m_pAddress, &m_pDocumentContext);
+
+	CComPtr<IEnumDebugCodeContexts2> pEnumerator;
+	hr = m_pDocumentContext->EnumCodeContexts(&pEnumerator);
+	if (FAILED(hr))
+		return hr;
+
+	ULONG celtFetched = 0;
+	hr = pEnumerator->Next(1, &m_pCodeContext, &celtFetched);
+	if (FAILED(hr))
+		return hr;
+	if (celtFetched != 1)
+		return E_FAIL;
 	return S_OK;
 }
 HRESULT CElfDebugStackFrame::GetCodeContext(
     /* [out] */ __RPC__deref_out_opt IDebugCodeContext2** ppCodeCxt)
 {
-    return E_NOTIMPL;
+	return m_pCodeContext.QueryInterface(ppCodeCxt);
 }
 
 HRESULT CElfDebugStackFrame::GetDocumentContext(
@@ -31,19 +43,35 @@ HRESULT CElfDebugStackFrame::GetDocumentContext(
 HRESULT CElfDebugStackFrame::GetName(
     /* [out] */ __RPC__deref_out_opt BSTR* pbstrName)
 {
-	DEBUG_ADDRESS ad = {};
-	HRESULT hr = m_pAddress->GetAddress(&ad);
+	FRAMEINFO fi = {};
+	HRESULT hr = GetInfo(enum_FRAMEINFO_FLAGS::FIF_FUNCNAME |
+		enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_ARGS |
+		enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_LINES |
+		enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_MODULE, 16, &fi);
 	if (FAILED(hr))
 		return hr;
-	DWORD address = ad.addr.addr.addrNative.unknown;
+	CComBSTR funcName;
+	funcName.Attach(fi.m_bstrFuncName);
 
-	std::wstringstream ss;
-	ss << std::hex << std::setfill(L'0') << std::setw(8) << address;
-
-	*pbstrName = SysAllocString(ss.str().c_str());
+	*pbstrName = funcName.Copy();
     return S_OK;
 }
 
+CComBSTR CElfDebugStackFrame::GetFunctionName()
+{
+	if (m_pCodeContext)
+	{
+		CONTEXT_INFO info = {};
+		HRESULT hr = m_pCodeContext->GetInfo(enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION, &info);
+		if (SUCCEEDED(hr))
+		{
+			CComBSTR s;
+			s.Attach(info.bstrFunction);
+			return s;
+		}
+	}
+	return nullptr;
+}
 HRESULT CElfDebugStackFrame::GetInfo(
     /* [in] */ FRAMEINFO_FLAGS dwFieldSpec,
     /* [in] */ UINT nRadix,
@@ -55,25 +83,38 @@ HRESULT CElfDebugStackFrame::GetInfo(
 	*pFrameInfo = {};
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_FUNCNAME)
 	{
+		CComBSTR funcName = GetFunctionName();
+
 		DEBUG_ADDRESS ad = {};
 		m_pAddress->GetAddress(&ad);
 		DWORD address = ad.addr.addr.addrNative.unknown;
 
+		std::wstringstream ss;
+
 		if (m_pModule && (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_MODULE))
 		{
-			std::wstringstream ss;
 			std::filesystem::path p = m_pModule->GetFilepath();
-			ss << p.filename().wstring() << L"!" << std::hex << std::setfill(L'0') << std::setw(8) << address;
-			pFrameInfo->m_bstrFuncName = SysAllocString(ss.str().c_str());
-			pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_FUNCNAME;
+			ss << p.filename().wstring() << L"!";
 		}
+		if (funcName)
+			ss << (LPWSTR)funcName;
 		else
-		{
-			std::wstringstream ss;
 			ss << std::hex << std::setfill(L'0') << std::setw(8) << address;
-			pFrameInfo->m_bstrFuncName = SysAllocString(ss.str().c_str());
-			pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_FUNCNAME;
+
+		if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_ARGS)
+			ss << "()";
+
+		if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_LINES && m_pDocumentContext)
+		{
+			TEXT_POSITION begin = {};
+			TEXT_POSITION end = {};
+			HRESULT hr = m_pDocumentContext->GetSourceRange(&begin, &end);
+			if (SUCCEEDED(hr))
+				ss << " Line " << begin.dwLine + 1;
 		}
+
+		pFrameInfo->m_bstrFuncName = SysAllocString(ss.str().c_str());
+		pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_FUNCNAME;
 	}
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_RETURNTYPE)
 	{

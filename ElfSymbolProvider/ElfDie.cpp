@@ -47,6 +47,16 @@ Dwarf_Addr ElfDie::GetLowPc()
     SafeThrowOnError(m_dbg, err);
     return addr;
 }
+Dwarf_Addr ElfDie::GetHiPc()
+{
+    Dwarf_Error err = nullptr;
+    Dwarf_Addr addr = 0;
+    Dwarf_Half form;
+    Dwarf_Form_Class cl;
+    int result = dwarf_highpc_b(m_die, &addr, &form, &cl, &err);
+    SafeThrowOnError(m_dbg, err);
+    return addr;
+}
 ElfDie* ElfDie::GetParent()
 {
     return m_parent;

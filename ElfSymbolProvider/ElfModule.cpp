@@ -178,7 +178,7 @@ HRESULT ElfModule::GetContextFromAddress(IDebugAddress* pAddress, IDebugDocument
     if (FAILED(hr))
         return hr;
 
-    hr = pDocumentContext->Init(m_dbg, line, m_lang);
+    hr = pDocumentContext->Init(this, pAddress, m_dbg, line, cu_info->die->GetLang());
     if (FAILED(hr))
         return hr;
 
@@ -202,4 +202,22 @@ HRESULT ElfModule::GetStackFrame(IDebugAddress* pAddress, IDebugThread2* pThread
         return hr;
 
     return pStackFrame.QueryInterface(ppStackFrame);
+}
+ElfFunction ElfModule::GetFunction(IDebugAddress* pAddress)
+{
+    DEBUG_ADDRESS ad = {};
+    HRESULT hr = pAddress->GetAddress(&ad);
+    if (FAILED(hr))
+        throw std::exception();
+
+    DWORD address = ad.addr.addr.addrNative.unknown;
+
+    auto found = m_subprograms.upper_bound(address);
+
+    // This gets the first bigger than, so if 0, miss
+    if (found == m_subprograms.begin())
+        throw std::exception();
+
+    --found;
+    return ElfFunction(found->second);
 }

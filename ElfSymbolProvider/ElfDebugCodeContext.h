@@ -3,7 +3,8 @@
 #pragma once
 #include "resource.h"       // main symbols
 #include "ElfDebugDocumentContext.h"
-
+#include "ElfDie.h"
+#include "ElfModule.h"
 
 #include "ElfSymbolProvider_i.h"
 
@@ -21,6 +22,7 @@ MIDL_INTERFACE("388d8dc0-e693-494e-b7e1-d71e00b8b8db")
 IElfDebugCodeContext : public IDebugCodeContext2
 {
 public:
+	virtual HRESULT Init(ElfModule* pModule, IDebugAddress* pAddress, IDebugDocumentContext2* pDocumentContext) = 0;
 };
 
 // CElfDebugCodeContext
@@ -30,9 +32,11 @@ class ATL_NO_VTABLE CElfDebugCodeContext :
 	public CComCoClass<CElfDebugCodeContext, &CLSID_ElfDebugCodeContext>,
 	public IElfDebugCodeContext
 {
-	Dwarf_Debug m_dbg = nullptr;
-	Dwarf_Line m_line = nullptr;
-	CComPtr<IElfDebugCodeContext> m_pDocumentContext;
+	ElfModule* m_pModule = nullptr;
+	ElfFunction m_function;
+
+	CComPtr<IDebugAddress> m_pAddress;
+	CComPtr<IDebugDocumentContext2> m_pDocumentContext;
 public:
 	CElfDebugCodeContext()
 	{
@@ -47,6 +51,7 @@ BEGIN_COM_MAP(CElfDebugCodeContext)
 	COM_INTERFACE_ENTRY(IDebugMemoryContext2)
 END_COM_MAP()
 
+STDMETHOD(Init)(ElfModule* pModule, IDebugAddress* pAddress, IDebugDocumentContext2* pDocumentContext);
 
 STDMETHOD(GetDocumentContext)(
 	/* [out] */ __RPC__deref_out_opt IDebugDocumentContext2** ppSrcCxt);

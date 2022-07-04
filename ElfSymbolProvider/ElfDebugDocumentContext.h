@@ -2,8 +2,7 @@
 
 #pragma once
 #include "resource.h"       // main symbols
-
-
+#include "ElfModule.h"
 
 #include "ElfSymbolProvider_i.h"
 
@@ -21,7 +20,7 @@ MIDL_INTERFACE("A5DF09CD-EE52-44D7-A70F-9769AD41D0A1")
 IElfDebugDocumentContext : public IDebugDocumentContext2
 {
 public:
-	virtual HRESULT STDMETHODCALLTYPE Init(Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang) = 0;
+	virtual HRESULT STDMETHODCALLTYPE Init(ElfModule* pModule, IDebugAddress* pAddress, Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang) = 0;
 
 };
 
@@ -35,6 +34,9 @@ class ATL_NO_VTABLE CElfDebugDocumentContext :
 	Dwarf_Debug m_dbg = nullptr;
 	Dwarf_Line m_line = nullptr;
 	Dwarf_Unsigned m_lang = 0; // eg. DW_LANG_C
+
+	ElfModule* m_pModule = nullptr;
+	CComPtr<IDebugCodeContext2> m_pCodeContext;
 public:
 	CElfDebugDocumentContext()
 	{
@@ -49,7 +51,7 @@ BEGIN_COM_MAP(CElfDebugDocumentContext)
 END_COM_MAP()
 
 
-	STDMETHOD(Init)(Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang);
+	STDMETHOD(Init)(ElfModule* pModule, IDebugAddress* pAddress, Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang);
 
 	STDMETHOD(GetDocument)(
 		/* [out] */ __RPC__deref_out_opt IDebugDocument2** ppDocument);

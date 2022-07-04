@@ -2,16 +2,29 @@
 
 #include "pch.h"
 #include "ElfDebugDocumentContext.h"
+#include "ElfDebugCodeContext.h"
 #include "Utils.h"
 #include "SimpleEnumerator.h"
 
 // CElfDebugDocumentContext
 
-HRESULT CElfDebugDocumentContext::Init(Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang)
+HRESULT CElfDebugDocumentContext::Init(ElfModule* pModule, IDebugAddress* pAddress, Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang)
 {
+	m_pModule = pModule;
 	m_dbg = dbg;
 	m_line = line;
 	m_lang = lang;
+
+	CComPtr<IElfDebugCodeContext> pCodeContext;
+	HRESULT hr = CElfDebugCodeContext::CreateInstance(&pCodeContext);
+	if (FAILED(hr))
+		return hr;
+
+	hr = pCodeContext->Init(m_pModule, pAddress, this);
+	if (FAILED(hr))
+		return hr;
+
+	m_pCodeContext = pCodeContext;
 	return S_OK;
 }
 HRESULT CElfDebugDocumentContext::GetDocument(
@@ -37,7 +50,7 @@ HRESULT CElfDebugDocumentContext::GetName(
 HRESULT CElfDebugDocumentContext::EnumCodeContexts(
 	/* [out] */ __RPC__deref_out_opt IEnumDebugCodeContexts2** ppEnumCodeCxts)
 {
-	std::vector<IDebugCodeContext2*> v;
+	std::vector<IDebugCodeContext2*> v = { m_pCodeContext };
 	return SimpleEnumerator<IEnumDebugCodeContexts2>::Create(v, ppEnumCodeCxts);
 }
 
@@ -82,6 +95,7 @@ HRESULT CElfDebugDocumentContext::GetStatementRange(
 	Dwarf_Unsigned col = 0;
 	result = dwarf_lineoff_b(m_line, &col, &err);
 	SafeThrowOnError(m_dbg, err);
+	--col;
 
 	if (pBegPosition)
 	{

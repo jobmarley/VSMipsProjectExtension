@@ -35,6 +35,10 @@ class ATL_NO_VTABLE CElfDebugStackFrame :
     ElfModule* m_pModule = nullptr;
     CComPtr<IDebugAddress> m_pAddress;
     CComPtr<IDebugDocumentContext2> m_pDocumentContext;
+    CComPtr<IDebugCodeContext2> m_pCodeContext;
+
+
+    CComBSTR GetFunctionName();
 public:
 	CElfDebugStackFrame()
 	{

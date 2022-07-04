@@ -22,9 +22,27 @@ public:
     Dwarf_Unsigned GetLang();
 
     Dwarf_Addr GetLowPc();
+    Dwarf_Addr GetHiPc();
 
     ElfDie* GetParent();
     inline std::vector<std::unique_ptr<ElfDie>>& GetChildrens() { return m_children; }
     inline Dwarf_Debug Dbg() { return m_dbg; }
     inline Dwarf_Die Die() { return m_die; }
+};
+
+
+class ElfFunction
+{
+    ElfDie* m_pDie = nullptr;
+public:
+    ElfFunction() {}
+    ElfFunction(ElfDie* die)
+    {
+        m_pDie = die;
+    }
+
+    inline const char* Name() { return m_pDie->GetName(); }
+
+    inline DWORD LowPC() { return m_pDie->GetLowPc(); }
+    inline DWORD HighPC() { return m_pDie->GetHiPc();}
 };
