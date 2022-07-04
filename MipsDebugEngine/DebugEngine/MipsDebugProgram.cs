@@ -88,7 +88,7 @@ namespace FPGAProjectExtension.DebugEngine
 		{
 			MipsDebugModule m = new MipsDebugModule(this, filepath, address);
 			m_modules.Add(m);
-			int hr = m_symbolProvider.LoadModule(filepath, address);
+			int hr = m_symbolProvider.LoadModule(m, filepath, address);
 			m_loaded = (hr == VSConstants.S_OK);
 			return m;
 		}
@@ -102,8 +102,6 @@ namespace FPGAProjectExtension.DebugEngine
 			m_symbolProvider = symbolProvider;
 
 			MipsDebugThread t = new MipsDebugThread(m_remoteClient, "main thread", this, m_symbolProvider);
-			uint suspendCount = 0;
-			t.Resume(out suspendCount);
 			m_threads.Add(t);
 		}
 		public int EnumThreads(out IEnumDebugThreads2 ppEnum)

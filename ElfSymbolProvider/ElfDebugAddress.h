@@ -16,6 +16,20 @@
 using namespace ATL;
 
 
+EXTERN_C const IID IID_IElfDebugAddress;
+
+MIDL_INTERFACE("7fe412c4-4202-4173-a8fd-d74d2007db5e")
+IElfDebugAddress : public IDebugAddress
+{
+public:
+	virtual HRESULT STDMETHODCALLTYPE SetAddress(
+		DEBUG_ADDRESS * pAddress) = 0;
+
+	virtual HRESULT STDMETHODCALLTYPE GetAddress(
+		DEBUG_ADDRESS* pAddress) = 0;
+
+};
+
 // CElfDebugAddress
 
 class ATL_NO_VTABLE CElfDebugAddress :

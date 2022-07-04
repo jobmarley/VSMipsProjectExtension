@@ -59,13 +59,6 @@ typedef interface IElfSymbolProvider IElfSymbolProvider;
 #endif 	/* __IElfSymbolProvider_FWD_DEFINED__ */
 
 
-#ifndef __IElfDebugAddress_FWD_DEFINED__
-#define __IElfDebugAddress_FWD_DEFINED__
-typedef interface IElfDebugAddress IElfDebugAddress;
-
-#endif 	/* __IElfDebugAddress_FWD_DEFINED__ */
-
-
 #ifndef __ElfSymbolProvider_FWD_DEFINED__
 #define __ElfSymbolProvider_FWD_DEFINED__
 
@@ -102,11 +95,34 @@ typedef struct ElfDebugDocumentContext ElfDebugDocumentContext;
 #endif 	/* __ElfDebugDocumentContext_FWD_DEFINED__ */
 
 
+#ifndef __ElfDebugCodeContext_FWD_DEFINED__
+#define __ElfDebugCodeContext_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class ElfDebugCodeContext ElfDebugCodeContext;
+#else
+typedef struct ElfDebugCodeContext ElfDebugCodeContext;
+#endif /* __cplusplus */
+
+#endif 	/* __ElfDebugCodeContext_FWD_DEFINED__ */
+
+
+#ifndef __ElfDebugStackFrame_FWD_DEFINED__
+#define __ElfDebugStackFrame_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class ElfDebugStackFrame ElfDebugStackFrame;
+#else
+typedef struct ElfDebugStackFrame ElfDebugStackFrame;
+#endif /* __cplusplus */
+
+#endif 	/* __ElfDebugStackFrame_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "oaidl.h"
 #include "ocidl.h"
 #include "msdbg.h"
-#include "shobjidl.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -133,8 +149,14 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IDebugAddress **ppAddress) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE LoadModule( 
+            IDebugModule2 *pDebugModule,
             LPCOLESTR pszFilepath,
             DWORD address) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE GetStackFrame( 
+            IDebugAddress *pAddress,
+            IDebugThread2 *pThread,
+            IDebugStackFrame2 **ppStackFrame) = 0;
         
     };
     
@@ -259,8 +281,16 @@ EXTERN_C const IID IID_IElfSymbolProvider;
         DECLSPEC_XFGVIRT(IElfSymbolProvider, LoadModule)
         HRESULT ( STDMETHODCALLTYPE *LoadModule )( 
             IElfSymbolProvider * This,
+            IDebugModule2 *pDebugModule,
             LPCOLESTR pszFilepath,
             DWORD address);
+        
+        DECLSPEC_XFGVIRT(IElfSymbolProvider, GetStackFrame)
+        HRESULT ( STDMETHODCALLTYPE *GetStackFrame )( 
+            IElfSymbolProvider * This,
+            IDebugAddress *pAddress,
+            IDebugThread2 *pThread,
+            IDebugStackFrame2 **ppStackFrame);
         
         END_INTERFACE
     } IElfSymbolProviderVtbl;
@@ -331,8 +361,11 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 #define IElfSymbolProvider_GetAddressFromMemory(This,memAddr,ppAddress)	\
     ( (This)->lpVtbl -> GetAddressFromMemory(This,memAddr,ppAddress) ) 
 
-#define IElfSymbolProvider_LoadModule(This,pszFilepath,address)	\
-    ( (This)->lpVtbl -> LoadModule(This,pszFilepath,address) ) 
+#define IElfSymbolProvider_LoadModule(This,pDebugModule,pszFilepath,address)	\
+    ( (This)->lpVtbl -> LoadModule(This,pDebugModule,pszFilepath,address) ) 
+
+#define IElfSymbolProvider_GetStackFrame(This,pAddress,pThread,ppStackFrame)	\
+    ( (This)->lpVtbl -> GetStackFrame(This,pAddress,pThread,ppStackFrame) ) 
 
 #endif /* COBJMACROS */
 
@@ -343,110 +376,6 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 
 
 #endif 	/* __IElfSymbolProvider_INTERFACE_DEFINED__ */
-
-
-#ifndef __IElfDebugAddress_INTERFACE_DEFINED__
-#define __IElfDebugAddress_INTERFACE_DEFINED__
-
-/* interface IElfDebugAddress */
-/* [unique][uuid][object] */ 
-
-
-EXTERN_C const IID IID_IElfDebugAddress;
-
-#if defined(__cplusplus) && !defined(CINTERFACE)
-    
-    MIDL_INTERFACE("7fe412c4-4202-4173-a8fd-d74d2007db5e")
-    IElfDebugAddress : public IDebugAddress
-    {
-    public:
-        virtual HRESULT STDMETHODCALLTYPE SetAddress( 
-            DEBUG_ADDRESS *pAddress) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetAddress( 
-            DEBUG_ADDRESS *pAddress) = 0;
-        
-    };
-    
-    
-#else 	/* C style interface */
-
-    typedef struct IElfDebugAddressVtbl
-    {
-        BEGIN_INTERFACE
-        
-        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
-            IElfDebugAddress * This,
-            /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
-            _COM_Outptr_  void **ppvObject);
-        
-        DECLSPEC_XFGVIRT(IUnknown, AddRef)
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
-            IElfDebugAddress * This);
-        
-        DECLSPEC_XFGVIRT(IUnknown, Release)
-        ULONG ( STDMETHODCALLTYPE *Release )( 
-            IElfDebugAddress * This);
-        
-        DECLSPEC_XFGVIRT(IDebugAddress, GetAddress)
-        HRESULT ( STDMETHODCALLTYPE *GetAddress )( 
-            IElfDebugAddress * This,
-            /* [out] */ DEBUG_ADDRESS *pAddress);
-        
-        DECLSPEC_XFGVIRT(IElfDebugAddress, SetAddress)
-        HRESULT ( STDMETHODCALLTYPE *SetAddress )( 
-            IElfDebugAddress * This,
-            DEBUG_ADDRESS *pAddress);
-        
-        DECLSPEC_XFGVIRT(IElfDebugAddress, GetAddress)
-        HRESULT ( STDMETHODCALLTYPE *GetAddress )( 
-            IElfDebugAddress * This,
-            DEBUG_ADDRESS *pAddress);
-        
-        END_INTERFACE
-    } IElfDebugAddressVtbl;
-
-    interface IElfDebugAddress
-    {
-        CONST_VTBL struct IElfDebugAddressVtbl *lpVtbl;
-    };
-
-    
-
-#ifdef COBJMACROS
-
-
-#define IElfDebugAddress_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
-
-#define IElfDebugAddress_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
-
-#define IElfDebugAddress_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
-
-
-#define IElfDebugAddress_GetAddress(This,pAddress)	\
-    ( (This)->lpVtbl -> GetAddress(This,pAddress) ) 
-
-
-#define IElfDebugAddress_SetAddress(This,pAddress)	\
-    ( (This)->lpVtbl -> SetAddress(This,pAddress) ) 
-
-#define IElfDebugAddress_GetAddress(This,pAddress)	\
-    ( (This)->lpVtbl -> GetAddress(This,pAddress) ) 
-
-#endif /* COBJMACROS */
-
-
-#endif 	/* C style interface */
-
-
-
-
-#endif 	/* __IElfDebugAddress_INTERFACE_DEFINED__ */
 
 
 
@@ -481,6 +410,22 @@ EXTERN_C const CLSID CLSID_ElfDebugDocumentContext;
 
 class DECLSPEC_UUID("546d6384-97ab-428b-9be2-5e287080ce93")
 ElfDebugDocumentContext;
+#endif
+
+EXTERN_C const CLSID CLSID_ElfDebugCodeContext;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("d8762730-223e-4616-9d72-236321bbfb9a")
+ElfDebugCodeContext;
+#endif
+
+EXTERN_C const CLSID CLSID_ElfDebugStackFrame;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("ab1a8bf8-f8b7-4681-bdc8-5c389f9835fe")
+ElfDebugStackFrame;
 #endif
 #endif /* __ElfSymbolProviderLib_LIBRARY_DEFINED__ */
 

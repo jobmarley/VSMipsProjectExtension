@@ -32,6 +32,10 @@
 #include <string_view>
 #include <mutex>
 #include <fstream>
+#include <type_traits>
+#include <tuple>
+#include <ranges>
+#include <sstream>
 
 #include <msdbg.h> 
 #include <dbgmetric.h> 

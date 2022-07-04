@@ -15,12 +15,14 @@
 
 using namespace ATL;
 
+EXTERN_C const IID IID_IElfDebugDocumentContext;
 
-MIDL_INTERFACE("59b873de-29b0-44c2-be5b-5f514fc3f7b8")
+MIDL_INTERFACE("A5DF09CD-EE52-44D7-A70F-9769AD41D0A1")
 IElfDebugDocumentContext : public IDebugDocumentContext2
 {
 public:
-	virtual HRESULT Init(Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang) = 0;
+	virtual HRESULT STDMETHODCALLTYPE Init(Dwarf_Debug dbg, Dwarf_Line line, Dwarf_Unsigned lang) = 0;
+
 };
 
 // CElfDebugDocumentContext

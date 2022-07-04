@@ -15,18 +15,19 @@ import "msdbg.idl";
 ]
 interface IElfSymbolProvider : IDebugSymbolProvider
 {
-	HRESULT GetAddressFromMemory(DWORD memAddr, IDebugAddress** ppAddress);
-	HRESULT LoadModule(LPCOLESTR pszFilepath, DWORD address);
-};
-[
-	object,
-	uuid(7fe412c4-4202-4173-a8fd-d74d2007db5e),
-	pointer_default(unique)
-]
-interface IElfDebugAddress : IDebugAddress
-{
-	HRESULT SetAddress(DEBUG_ADDRESS* pAddress);
-	HRESULT GetAddress(DEBUG_ADDRESS* pAddress);
+	HRESULT GetAddressFromMemory(
+		DWORD memAddr,
+		IDebugAddress** ppAddress);
+
+	HRESULT LoadModule(
+		IDebugModule2* pDebugModule,
+		LPCOLESTR pszFilepath,
+		DWORD address);
+
+	HRESULT GetStackFrame(
+		IDebugAddress* pAddress,
+		IDebugThread2* pThread,
+		IDebugStackFrame2** ppStackFrame);
 };
 [
 	uuid(d58c5021-1e35-4bde-854c-80217cada2ae),
@@ -47,7 +48,7 @@ library ElfSymbolProviderLib
 	]
 	coclass ElfDebugAddress
 	{
-		[default] interface IElfDebugAddress;
+		[default] interface IDebugAddress;
 	};
 	[
 		uuid(546d6384-97ab-428b-9be2-5e287080ce93)
@@ -56,11 +57,18 @@ library ElfSymbolProviderLib
 	{
 		[default] interface IDebugDocumentContext2;
 	};
+	[
+		uuid(d8762730-223e-4616-9d72-236321bbfb9a)
+	]
+	coclass ElfDebugCodeContext
+	{
+		[default] interface IDebugCodeContext2;
+	};
+	[
+		uuid(ab1a8bf8-f8b7-4681-bdc8-5c389f9835fe)
+	]
+	coclass ElfDebugStackFrame
+	{
+		[default] interface IDebugStackFrame2;
+	};
 };
-
-import "shobjidl.idl";
-import "shobjidl.idl";
-import "shobjidl.idl";
-import "shobjidl.idl";
-import "shobjidl.idl";
-import "shobjidl.idl";

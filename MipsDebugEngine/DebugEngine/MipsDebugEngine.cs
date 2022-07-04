@@ -70,7 +70,9 @@ namespace FPGAProjectExtension.DebugEngine
 		int GetAddressFromMemory(uint memAddr, out IDebugAddress ppAddress);
 
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
-		int LoadModule(string pszFilepath, uint address);
+		int LoadModule(IDebugModule2 debugModule, string pszFilepath, uint address);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int GetStackFrame(IDebugAddress pAddress, IDebugThread2 pThread, out IDebugStackFrame2 ppStackFrame);
     }
 
 	[ComVisible(true)]
@@ -242,7 +244,6 @@ namespace FPGAProjectExtension.DebugEngine
 			{
 				//SendEvent(new MipsDebugEntryPointEvent(), program.Thread);
 			}
-
 			return VSConstants.S_OK;
 		}
 

@@ -20,6 +20,24 @@
     <Filter Include="Src">
       <UniqueIdentifier>{de0dacdf-1d90-4b35-bbc5-a85f48d2a096}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src\CodeContext">
+      <UniqueIdentifier>{e5b8dd0e-b23e-43b5-bce2-c195abf019cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\DocumentContext">
+      <UniqueIdentifier>{3fe3d4b8-c01f-4278-b487-dce4c907fc10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\StackFrame">
+      <UniqueIdentifier>{93b5d0be-bcc0-4759-addc-1f5ad9e5b832}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Module">
+      <UniqueIdentifier>{eff07e55-233a-4f6a-a00f-7753bf585d32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\SymbolProvider">
+      <UniqueIdentifier>{02e02079-ebd8-4d89-b6d3-09ced7081467}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\DebugAddress">
+      <UniqueIdentifier>{d61d0ab3-7bcd-4c10-bc00-02d866299f93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -40,26 +58,35 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CElfSymbolProvider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ElfDebugAddress.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ElfDie.h">
       <Filter>Src</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Src</Filter>
     </ClInclude>
-    <ClInclude Include="ElfDebugDocumentContext.h">
+    <ClInclude Include="SimpleEnumerator.h">
       <Filter>Src</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugCodeContext.h">
+      <Filter>Src\CodeContext</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugDocumentContext.h">
+      <Filter>Src\DocumentContext</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugStackFrame.h">
+      <Filter>Src\StackFrame</Filter>
     </ClInclude>
     <ClInclude Include="ElfModule.h">
-      <Filter>Src</Filter>
+      <Filter>Src\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="CElfSymbolProvider.h">
+      <Filter>Src\SymbolProvider</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugAddress.h">
+      <Filter>Src\DebugAddress</Filter>
     </ClInclude>
     <ClInclude Include="ElfUtils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -75,23 +102,32 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CElfSymbolProvider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ElfDebugAddress.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="ElfDie.cpp">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="ElfDebugCodeContext.cpp">
+      <Filter>Src\CodeContext</Filter>
+    </ClCompile>
     <ClCompile Include="ElfDebugDocumentContext.cpp">
-      <Filter>Src</Filter>
+      <Filter>Src\DocumentContext</Filter>
+    </ClCompile>
+    <ClCompile Include="ElfDebugStackFrame.cpp">
+      <Filter>Src\StackFrame</Filter>
     </ClCompile>
     <ClCompile Include="ElfModule.cpp">
-      <Filter>Src</Filter>
+      <Filter>Src\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="CElfSymbolProvider.cpp">
+      <Filter>Src\SymbolProvider</Filter>
+    </ClCompile>
+    <ClCompile Include="ElfDebugAddress.cpp">
+      <Filter>Src\DebugAddress</Filter>
+    </ClCompile>
+    <ClCompile Include="guids.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -113,6 +149,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="ElfDebugDocumentContext.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ElfDebugCodeContext.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ElfDebugStackFrame.rgs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

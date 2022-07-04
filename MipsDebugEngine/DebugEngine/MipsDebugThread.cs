@@ -21,8 +21,8 @@ namespace FPGAProjectExtension.DebugEngine
 		private enum_THREADSTATE m_state = enum_THREADSTATE.THREADSTATE_FRESH;
 		public enum_THREADSTATE State => (enum_THREADSTATE)m_state;
 
-		List<MipsDebugStackFrame> m_stackFrames = new List<MipsDebugStackFrame>();
-		public IEnumerable<MipsDebugStackFrame> StackFrames => m_stackFrames;
+		List<IDebugStackFrame2> m_stackFrames = new List<IDebugStackFrame2>();
+		public IEnumerable<IDebugStackFrame2> StackFrames => m_stackFrames;
 
 		public uint SuspendCount { get; private set; } = 0;
 
@@ -97,8 +97,17 @@ namespace FPGAProjectExtension.DebugEngine
 			pdwSuspendCount = ++SuspendCount;
 			uint pc = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc));
 			pc = pc - 4;
-			MipsDebugStackFrame stackFrame = new MipsDebugStackFrame(this, pc, m_symbolProvider);
-			m_stackFrames.Add(stackFrame);
+
+			// We cannot return an error there, the thread is stopped already
+			IDebugAddress address = null;
+			int hr = m_symbolProvider.GetAddressFromMemory(pc, out address);
+			if (hr == VSConstants.S_OK)
+			{
+				IDebugStackFrame2 stackFrame = null;
+				hr = m_symbolProvider.GetStackFrame(address, this, out stackFrame);
+				if (hr == VSConstants.S_OK)
+					m_stackFrames.Add(stackFrame);
+			}
 			return VSConstants.S_OK;
 		}
 

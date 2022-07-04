@@ -7,6 +7,36 @@
 
 // CElfSymbolProvider
 
+HRESULT CElfSymbolProvider::GetModuleFromAddress(DWORD address, GUID* pGuid)
+{
+    if (!pGuid)
+        return E_INVALIDARG;
+
+    *pGuid = {};
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        auto found = std::upper_bound(
+            m_modulesByAddress.begin(),
+            m_modulesByAddress.end(),
+            address, [](DWORD v, const std::pair<DWORD, GUID>& p) { return v < p.first; });
+
+        // The result is the first element bigger, so we want the one just before
+        if (found != m_modulesByAddress.begin())
+        {
+            --found;
+            auto pModule = m_modulesByGuid[found->second];
+            // Check if the address is in the modules boundaries
+            DWORD base = found->first;
+            if (base <= address && address <= base + pModule->VirtualSize() - 4)
+            {
+                *pGuid = found->second;
+                return S_OK;
+            }
+        }
+    }
+
+    return E_FAIL;
+}
 HRESULT CElfSymbolProvider::GetAddressFromMemory(
     DWORD memAddr,
     IDebugAddress** ppAddress)
@@ -20,36 +50,21 @@ HRESULT CElfSymbolProvider::GetAddressFromMemory(
     da.addr.dwKind = enum_ADDRESS_KIND::ADDRESS_KIND_NATIVE;
     da.addr.addr.addrNative.unknown = memAddr;
 
-    {
-        std::lock_guard<std::mutex> guard(m_mutex);
-        auto found = std::upper_bound(
-            m_modulesByAddress.begin(),
-            m_modulesByAddress.end(),
-            memAddr, [](DWORD v, const std::pair<DWORD, GUID>& p) { return v < p.first; });
-
-        // The result is the first element bigger, so we want the one just before
-        if (found != m_modulesByAddress.begin())
-        {
-            --found;
-            auto pModule = m_modulesByGuid[found->second];
-            // Check if the address is in the modules boundaries
-            DWORD base = found->first;
-            if (base <= memAddr && memAddr <= base + pModule->VirtualSize() - 4)
-                da.guidModule = found->second;
-        }
-    }
+    // dont care about error, empty if not found
+    hr = GetModuleFromAddress(memAddr, &da.guidModule);
 
     hr = pAddress->SetAddress(&da);
     if (FAILED(hr))
         return hr;
 
-    *ppAddress = pAddress.Detach();
-    return S_OK;
+    return pAddress.QueryInterface(ppAddress);
 }
 
 
 HRESULT CElfSymbolProvider::LoadModule(
-    LPCOLESTR pszFilepath, DWORD address)
+    IDebugModule2* pDebugModule,
+    LPCOLESTR pszFilepath,
+    DWORD address)
 {
     try
     {
@@ -58,7 +73,7 @@ HRESULT CElfSymbolProvider::LoadModule(
             return E_FAIL;
 
         auto pModule = std::make_unique<ElfModule>();
-        pModule->Load(szFilepathA.m_psz);
+        pModule->Load(pDebugModule, szFilepathA.m_psz);
 
         GUID guid = {};
         HRESULT hr = CoCreateGuid(&guid);
@@ -82,6 +97,23 @@ HRESULT CElfSymbolProvider::LoadModule(
     {
         return E_FAIL;
     }
+}
+HRESULT CElfSymbolProvider::GetStackFrame(IDebugAddress* pAddress, IDebugThread2* pThread, IDebugStackFrame2** ppStackFrame)
+{
+    if (!ppStackFrame)
+        return E_INVALIDARG;
+
+    DEBUG_ADDRESS ad = {};
+    HRESULT hr = pAddress->GetAddress(&ad);
+    if (FAILED(hr))
+        return hr;
+
+    auto found = m_modulesByGuid.find(ad.guidModule);
+    if (found == m_modulesByGuid.end())
+        return E_FAIL;
+
+    ElfModule* pModule = found->second;
+    return pModule->GetStackFrame(pAddress, pThread, ppStackFrame);
 }
 
 HRESULT CElfSymbolProvider::Initialize(
@@ -135,13 +167,8 @@ HRESULT CElfSymbolProvider::GetContextFromAddress(
     // Identify module from address
     // Get line from libdwarf
     // create debug document
-    CComPtr<IElfDebugAddress> pElfDebugAddress;
-    HRESULT hr = pAddress->QueryInterface<IElfDebugAddress>(&pElfDebugAddress);
-    if (FAILED(hr))
-        return hr;
-
     DEBUG_ADDRESS da = {};
-    hr = pElfDebugAddress->GetAddress(&da);
+    HRESULT hr = pAddress->GetAddress(&da);
     if (FAILED(hr))
         return hr;
 
@@ -152,7 +179,7 @@ HRESULT CElfSymbolProvider::GetContextFromAddress(
             return E_FAIL;
 
         ElfModule* pModule = found->second;
-        return pModule->GetContextFromAddress(&da, ppDocContext);
+        return pModule->GetContextFromAddress(pAddress, ppDocContext);
     }
 }
 

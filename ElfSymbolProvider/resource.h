@@ -10,6 +10,8 @@
 #define IDR_DEBUGADDRESS                110
 #define IDR_ELFDEBUGADDRESS             111
 #define IDR_ELFDEBUGDOCUMENTCONTEXT     112
+#define IDR_ELFDEBUGCODECONTEXT         113
+#define IDR_ELFDEBUGSTACKFRAME          114
 
 // Next default values for new objects
 // 
@@ -18,6 +20,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        201
 #define _APS_NEXT_COMMAND_VALUE         32768
 #define _APS_NEXT_CONTROL_VALUE         201
-#define _APS_NEXT_SYMED_VALUE           113
+#define _APS_NEXT_SYMED_VALUE           115
 #endif
 #endif

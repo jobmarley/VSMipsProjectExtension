@@ -7,6 +7,24 @@ using System.Threading.Tasks;
 
 namespace FPGAProjectExtension
 {
+	/*
+	 * That shit is ugly, but thats a way to load a non registered COM component.
+	 * I tried to use it as multithreaded and it didnt work (IID not registered in combase when calling functions on the component)
+	 * Maybe because it doesnt have the registry settings.
+	 * Another way would be to use Side-by-side + activation context, this should allow to set the settings properly
+	 */
+
+	//// Create an activation context
+	//Type actCtxType = System.Type.GetTypeFromProgID("Microsoft.Windows.ActCtx");
+	//dynamic actCtx = System.Activator.CreateInstance(actCtxType);
+	//actCtx.Manifest = @"Path\To\COMClient.manifest";
+
+	//// Create the object you want, using the activation context
+	//dynamic obj = actCtx.CreateObject("COMTestService.COMTestObject");
+
+	//// Now use it!
+	//var question = obj.GetQuestionFromAnswer(42);
+
 	public class VSComHelper
 	{
 		[DllImport("Kernel32.dll", CharSet = CharSet.Unicode)]

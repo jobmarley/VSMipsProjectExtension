@@ -15,7 +15,6 @@
 
 using namespace ATL;
 
-
 // CElfSymbolProvider
 
 class ATL_NO_VTABLE CElfSymbolProvider :
@@ -44,13 +43,18 @@ BEGIN_COM_MAP(CElfSymbolProvider)
 	COM_INTERFACE_ENTRY(IDebugSymbolProvider)
 END_COM_MAP()
 
+    STDMETHOD(GetModuleFromAddress)(DWORD address, GUID* pGuid);
+
     STDMETHOD(GetAddressFromMemory)(
         DWORD memAddr,
         IDebugAddress** ppAddress);
 
     STDMETHOD(LoadModule)(
+        IDebugModule2* pDebugModule,
         LPCOLESTR pszFilepath,
         DWORD address);
+
+    STDMETHOD(GetStackFrame)(IDebugAddress* pAddress, IDebugThread2* pThread, IDebugStackFrame2** ppStackFrame);
 
     STDMETHOD(Initialize)(
         /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices);

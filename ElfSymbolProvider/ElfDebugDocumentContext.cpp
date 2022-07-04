@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "ElfDebugDocumentContext.h"
 #include "Utils.h"
+#include "SimpleEnumerator.h"
 
 // CElfDebugDocumentContext
 
@@ -36,7 +37,8 @@ HRESULT CElfDebugDocumentContext::GetName(
 HRESULT CElfDebugDocumentContext::EnumCodeContexts(
 	/* [out] */ __RPC__deref_out_opt IEnumDebugCodeContexts2** ppEnumCodeCxts)
 {
-	return S_OK;
+	std::vector<IDebugCodeContext2*> v;
+	return SimpleEnumerator<IEnumDebugCodeContexts2>::Create(v, ppEnumCodeCxts);
 }
 
 HRESULT CElfDebugDocumentContext::GetLanguageInfo(

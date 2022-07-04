@@ -1,0 +1,15 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {d8762730-223e-4616-9d72-236321bbfb9a} = s 'ElfDebugCodeContext class'
+		{
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{d58c5021-1e35-4bde-854c-80217cada2ae}'
+			Version = s '1.0'
+		}
+	}
+}
