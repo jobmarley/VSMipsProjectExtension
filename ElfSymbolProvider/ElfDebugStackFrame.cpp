@@ -253,7 +253,7 @@ HRESULT CElfDebugStackFrame::GetPhysicalStackRange(
 		*paddrMin = m_registers.values[29]; // sp
 	if (paddrMax)
 		*paddrMax = m_registers.values[30]; // fp
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT CElfDebugStackFrame::GetExpressionContext(
