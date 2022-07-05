@@ -18,6 +18,7 @@ namespace FPGAProjectExtension.DebugEngine
 		public MipsDebugProgram Program { get; } = null;
 		public uint Address { get; } = 0;
 		public uint Size { get; private set; } = 0;
+		public bool SymbolsLoaded { get; set; } = false;
 
 		uint CalculateSize()
 		{
@@ -84,7 +85,10 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_DEBUGMESSAGE))
 			{
-				pinfo[0].m_bstrDebugMessage = "Symbols cannot be loaded";
+				if (SymbolsLoaded)
+					pinfo[0].m_bstrDebugMessage = "Symbols loaded";
+				else
+					pinfo[0].m_bstrDebugMessage = "Symbols cannot be loaded";
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_DEBUGMESSAGE;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_LOADADDRESS))
@@ -111,7 +115,10 @@ namespace FPGAProjectExtension.DebugEngine
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_URLSYMBOLLOCATION))
 			{
-				pinfo[0].m_bstrUrlSymbolLocation = "";//@".\";
+				if (SymbolsLoaded)
+					pinfo[0].m_bstrUrlSymbolLocation = Filepath;
+				else
+					pinfo[0].m_bstrUrlSymbolLocation = "";
 				pinfo[0].dwValidFields |= enum_MODULE_INFO_FIELDS.MIF_URLSYMBOLLOCATION;
 			}
 			if (dwFields.HasFlag(enum_MODULE_INFO_FIELDS.MIF_FLAGS))

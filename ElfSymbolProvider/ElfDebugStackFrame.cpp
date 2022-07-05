@@ -2,47 +2,125 @@
 
 #include "pch.h"
 #include "ElfDebugStackFrame.h"
-
-
+#include "ElfDebugAddress.h"
+#include "CElfSymbolProvider.h"
 // CElfDebugStackFrame
 
 
-HRESULT CElfDebugStackFrame::Init(IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule)
+HRESULT CElfDebugStackFrame::GetFirstCodeContext(IDebugCodeContext2** ppCodeContext)
 {
-	m_pAddress = pAddress;
-	m_pThread = pThread;
-	m_pModule = pModule;
-
-	HRESULT hr = pModule->GetContextFromAddress(m_pAddress, &m_pDocumentContext);
+	if (!m_pDocumentContext)
+		return E_FAIL;
 
 	CComPtr<IEnumDebugCodeContexts2> pEnumerator;
-	hr = m_pDocumentContext->EnumCodeContexts(&pEnumerator);
+	HRESULT hr = m_pDocumentContext->EnumCodeContexts(&pEnumerator);
 	if (FAILED(hr))
 		return hr;
 
 	ULONG celtFetched = 0;
-	hr = pEnumerator->Next(1, &m_pCodeContext, &celtFetched);
+	hr = pEnumerator->Next(1, ppCodeContext, &celtFetched);
 	if (FAILED(hr))
 		return hr;
 	if (celtFetched != 1)
 		return E_FAIL;
 	return S_OK;
 }
+HRESULT CElfDebugStackFrame::Init(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters)
+{
+	m_pSymbolProvider = pSymbolProvider;
+	m_pAddress = pAddress;
+	m_pThread = pThread;
+	m_pModule = pModule;
+	m_pMemoryOp = pMemoryOp;
+	m_registers = *pRegisters;
+
+	// we can create a stackframe if we dont have debug info
+	if (pModule)
+	{
+		pModule->GetContextFromAddress(m_pAddress, &m_pDocumentContext);
+		GetFirstCodeContext(&m_pCodeContext);
+	}
+
+	return S_OK;
+}
+HRESULT CElfDebugStackFrame::GetPreviousStackFrame(IDebugStackFrame2** ppStackFrame)
+{
+	if (!ppStackFrame)
+		return E_INVALIDARG;
+
+	*ppStackFrame = nullptr;
+
+	MipsRegisters previousRegisters = m_registers;
+
+	// if we dont have debug info we cannot unwind the stackframe
+	if (!m_pModule)
+		return E_FAIL;
+
+	try
+	{
+		m_pModule->UnwindRegisters(&previousRegisters, m_pMemoryOp);
+	}
+	catch (std::exception)
+	{
+		return E_FAIL;
+	}
+
+	// We need to acquire it through the symbol provider because it can be in another module
+	CComPtr<IDebugAddress> pAddress;
+	HRESULT hr = m_pSymbolProvider->GetAddressFromMemory(previousRegisters.values[0], &pAddress);
+	if (FAILED(hr))
+		return hr;
+
+	CComPtr<IElfDebugStackFrame> pStackFrame;
+	hr = CElfDebugStackFrame::CreateInstance(&pStackFrame);
+	if (FAILED(hr))
+		return hr;
+
+	CComPtr<ISymbolProviderInternal> pSPI;
+	hr = m_pSymbolProvider->QueryInterface(&pSPI);
+	if (FAILED(hr))
+		return hr;
+
+	// non critical empty if not found
+	ElfModule* pModule = nullptr;
+	hr = pSPI->GetModuleFromDebugAddress(pAddress, &pModule);
+
+	hr = pStackFrame->Init(m_pSymbolProvider, pAddress, m_pThread, pModule, m_pMemoryOp, &previousRegisters);
+	if (FAILED(hr))
+		return hr;
+
+	return pStackFrame.QueryInterface(ppStackFrame);
+}
 HRESULT CElfDebugStackFrame::GetCodeContext(
     /* [out] */ __RPC__deref_out_opt IDebugCodeContext2** ppCodeCxt)
 {
+	if (!ppCodeCxt)
+		return E_INVALIDARG;
+
+	*ppCodeCxt = nullptr;
+	if (!m_pCodeContext)
+		return E_FAIL;
 	return m_pCodeContext.QueryInterface(ppCodeCxt);
 }
 
 HRESULT CElfDebugStackFrame::GetDocumentContext(
     /* [out] */ __RPC__deref_out_opt IDebugDocumentContext2** ppCxt)
 {
+	if (!ppCxt)
+		return E_INVALIDARG;
+
+	*ppCxt = nullptr;
+	if (!m_pDocumentContext)
+		return E_FAIL;
     return m_pDocumentContext.QueryInterface(ppCxt);
 }
 
 HRESULT CElfDebugStackFrame::GetName(
     /* [out] */ __RPC__deref_out_opt BSTR* pbstrName)
 {
+	if (!pbstrName)
+		return E_INVALIDARG;
+
 	FRAMEINFO fi = {};
 	HRESULT hr = GetInfo(enum_FRAMEINFO_FLAGS::FIF_FUNCNAME |
 		enum_FRAMEINFO_FLAGS::FIF_FUNCNAME_ARGS |
@@ -137,15 +215,14 @@ HRESULT CElfDebugStackFrame::GetInfo(
 		pFrameInfo->m_bstrModule = SysAllocString(CA2W(m_pModule->GetFilepath()));
 		pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_MODULE;
 	}
-	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_DEBUG_MODULEP)
+	if (m_pModule && (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_DEBUG_MODULEP))
 	{
 		m_pModule->GetDebugModule()->QueryInterface(&pFrameInfo->m_pModule);
 		pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_DEBUG_MODULEP;
 	}
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_STACKRANGE)
 	{
-		pFrameInfo->m_addrMin = 0;
-		pFrameInfo->m_addrMax = 0x100;
+		GetPhysicalStackRange(&pFrameInfo->m_addrMin, &pFrameInfo->m_addrMax);
 		pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_STACKRANGE;
 	}
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_FRAME)
@@ -155,7 +232,7 @@ HRESULT CElfDebugStackFrame::GetInfo(
 	}
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_DEBUGINFO)
 	{
-		pFrameInfo->m_fHasDebugInfo = TRUE;
+		pFrameInfo->m_fHasDebugInfo = m_pDocumentContext ? TRUE : FALSE;
 		pFrameInfo->m_dwValidFields |= enum_FRAMEINFO_FLAGS::FIF_DEBUGINFO;
 	}
 	if (dwFieldSpec & enum_FRAMEINFO_FLAGS::FIF_STALECODE)
@@ -170,6 +247,12 @@ HRESULT CElfDebugStackFrame::GetPhysicalStackRange(
     /* [out] */ __RPC__out UINT64* paddrMin,
     /* [out] */ __RPC__out UINT64* paddrMax)
 {
+	// Not sure about that
+	// Does this include prologue? depend what its used for I guess
+	if (paddrMin)
+		*paddrMin = m_registers.values[29]; // sp
+	if (paddrMax)
+		*paddrMax = m_registers.values[30]; // fp
     return E_NOTIMPL;
 }
 

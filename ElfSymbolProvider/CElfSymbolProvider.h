@@ -15,12 +15,32 @@
 
 using namespace ATL;
 
+
+
+// {3CE0C34E-A639-42EB-854B-6C35FE73352A}
+DEFINE_GUID(IID_IRegisterOperation,
+    0x3ce0c34e, 0xa639, 0x42eb, 0x85, 0x4b, 0x6c, 0x35, 0xfe, 0x73, 0x35, 0x2a);
+
+MIDL_INTERFACE("3CE0C34E-A639-42EB-854B-6C35FE73352A")
+ISymbolProviderInternal : public IUnknown
+{
+public:
+    virtual HRESULT STDMETHODCALLTYPE GetModuleFromGUID(
+        const GUID& guid,
+        ElfModule** ppModule) = 0;
+    virtual HRESULT STDMETHODCALLTYPE GetModuleFromDebugAddress(
+        IDebugAddress* pAddress,
+        ElfModule** ppModule) = 0;
+
+};
+
 // CElfSymbolProvider
 
 class ATL_NO_VTABLE CElfSymbolProvider :
 	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfSymbolProvider, &CLSID_ElfSymbolProvider>,
-	public IElfSymbolProvider
+	public IElfSymbolProvider,
+    public ISymbolProviderInternal
 {
     std::unordered_map<std::string, std::unique_ptr<ElfModule>> m_modules;
     // Map because of lowerbound
@@ -40,8 +60,16 @@ DECLARE_REGISTRY_RESOURCEID(107)
 
 BEGIN_COM_MAP(CElfSymbolProvider)
 	COM_INTERFACE_ENTRY(IElfSymbolProvider)
-	COM_INTERFACE_ENTRY(IDebugSymbolProvider)
+    COM_INTERFACE_ENTRY(IDebugSymbolProvider)
+    COM_INTERFACE_ENTRY(ISymbolProviderInternal)
 END_COM_MAP()
+
+    STDMETHOD(GetModuleFromDebugAddress)(
+        IDebugAddress* pAddress,
+        ElfModule** ppModule);
+    STDMETHOD(GetModuleFromGUID)(
+        const GUID& guid,
+        ElfModule** ppModule);
 
     STDMETHOD(GetModuleFromAddress)(DWORD address, GUID* pGuid);
 
@@ -54,7 +82,14 @@ END_COM_MAP()
         LPCOLESTR pszFilepath,
         DWORD address);
 
-    STDMETHOD(GetStackFrame)(IDebugAddress* pAddress, IDebugThread2* pThread, IDebugStackFrame2** ppStackFrame);
+    STDMETHOD(GetStackFrame)(
+        IDebugAddress* pAddress,
+        IDebugThread2* pThread,
+        IMemoryOperation* pMemoryOp,
+        IRegisterOperation* pRegisterOp,
+        IDebugStackFrame2** ppStackFrame);
+
+    STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
 
     STDMETHOD(Initialize)(
         /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices);

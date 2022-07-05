@@ -1,6 +1,7 @@
 #pragma once
 #include "framework.h"
 #include "ElfDie.h"
+#include "ElfSymbolProvider_i.h"
 
 using namespace ATL;
 
@@ -56,34 +57,13 @@ public:
     }
 };
 
-//class ElfSubprogram
-//	: public ElfDie
-//{
-//	ElfSubprogram() = delete;
-//	ElfSubprogram& operator=(const ElfSubprogram&) = delete;
-//public:
-//	ElfSubprogram(Dwarf_Debug dbg, Dwarf_Die die, ElfDie* parent)
-//		: ElfDie(dbg, die, parent)
-//	{
-//
-//	}
-//};
-//class ElfCompilationUnit
-//	: public ElfDie
-//{
-//	ElfCompilationUnit() = delete;
-//	ElfCompilationUnit& operator=(const ElfCompilationUnit&) = delete;
-//public:
-//	ElfCompilationUnit(Dwarf_Debug dbg, Dwarf_Die die)
-//		: ElfDie(dbg, die, nullptr)
-//	{
-//	}
-//
-//	ElfSubprogram* GetSubprogram(DWORD address)
-//	{
-//
-//	}
-//};
+struct MipsRegisters
+{
+    DWORD values[32];
+};
+
+struct IElfSymbolProvider;
+
 class ElfModule
 {
     //ElfModule() = delete;
@@ -100,11 +80,20 @@ class ElfModule
     std::map<DWORD, ElfDie*> m_subprograms;
     std::string m_filepath;
     CComPtr<IDebugModule2> m_pDebugModule;
+    IElfSymbolProvider* m_pSymbolProvider = nullptr;
+
+    Dwarf_Cie* m_cieTable = nullptr;
+    Dwarf_Signed m_cieCount = 0;
+    Dwarf_Fde* m_fdeTable = nullptr;
+    Dwarf_Signed m_fdeCount = 0;
 
     cu_info* CUFromAddress(DWORD address);
     void LoadChildren(ElfDie* die);
+    void LoadFrames();
+    Dwarf_Fde FdeFromAddress(DWORD address);
+    void GetRegisters(DWORD address);
 public:
-    ElfModule();
+    ElfModule(IElfSymbolProvider* pSymbolProvider);
     ~ElfModule();
 
     void Load(IDebugModule2* pDebugModule, const char* filepath);
@@ -113,10 +102,21 @@ public:
 
     DWORD VirtualSize();
 
-    HRESULT GetStackFrame(IDebugAddress* pAddress, IDebugThread2* pThread, IDebugStackFrame2** ppStackFrame);
+    HRESULT GetStackFrame(IDebugAddress* pAddress,
+        IDebugThread2* pThread,
+        IMemoryOperation* pMemoryOp,
+        IRegisterOperation* pRegisterOp,
+        IDebugStackFrame2** ppStackFrame);
 
     inline const char* GetFilepath() { return m_filepath.c_str(); }
     inline IDebugModule2* GetDebugModule() { return m_pDebugModule; }
 
     ElfFunction GetFunction(IDebugAddress* pAddress);
+    void UnwindRegisters(MipsRegisters* pRegisters, IMemoryOperation* pMemoryOp);
+    Dwarf_Unsigned UnwindRegister(Dwarf_Regtable_Entry3_s& entry,
+        int registerIndex,
+        Dwarf_Unsigned cfa,
+        Dwarf_Signed alignmentFactory,
+        IMemoryOperation* pMemoryOp,
+        MipsRegisters* pRegisters);
 };

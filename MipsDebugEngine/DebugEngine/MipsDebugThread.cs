@@ -12,6 +12,73 @@ using MipsRemoteDebuggerUtils;
 
 namespace FPGAProjectExtension.DebugEngine
 {
+	class MipsProcessorOperation
+		: IMemoryOperation,
+		IRegisterOperation
+	{
+		MipsRemoteDebuggerClient m_remoteClient = null;
+		public MipsProcessorOperation(MipsRemoteDebuggerClient remoteClient)
+		{
+			m_remoteClient = remoteClient;
+		}
+		public int Read(byte[] buffer, uint offset, uint count, out uint pReadCount)
+		{
+			pReadCount = 0;
+			try
+			{
+				pReadCount = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(
+					 async () => await m_remoteClient.ReadMemoryAsync(buffer, offset));
+				return VSConstants.S_OK;
+			}
+			catch (Exception)
+			{
+			}
+			return VSConstants.E_FAIL;
+		}
+
+		public int Read(uint index, out uint pValue)
+		{
+			pValue = 0;
+			try
+			{
+				pValue = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync((md_register)index));
+				return VSConstants.S_OK;
+			}
+			catch(Exception)
+			{
+			}
+			return VSConstants.E_FAIL;
+		}
+
+		public int Write(byte[] buffer, uint offset, uint count, out uint pWrittenCount)
+		{
+			pWrittenCount = 0;
+			try
+			{
+				pWrittenCount = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(
+					 async () => await m_remoteClient.WriteMemoryAsync(buffer, offset));
+				return VSConstants.S_OK;
+			}
+			catch (Exception)
+			{
+			}
+			return VSConstants.E_FAIL;
+		}
+
+		public int Write(uint index, uint value)
+		{
+			try
+			{
+				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(
+					async () => await m_remoteClient.WriteRegisterAsync((md_register)index, value));
+				return VSConstants.S_OK;
+			}
+			catch (Exception)
+			{
+			}
+			return VSConstants.E_FAIL;
+		}
+	}
 	internal class MipsDebugThread
 		: IDebugThread2
 	{
@@ -27,6 +94,7 @@ namespace FPGAProjectExtension.DebugEngine
 		public uint SuspendCount { get; private set; } = 0;
 
 		MipsRemoteDebuggerClient m_remoteClient = null;
+		MipsProcessorOperation m_processorOp = null;
 		IElfSymbolProvider m_symbolProvider = null;
 		public MipsDebugThread(MipsRemoteDebuggerClient remoteClient, string name, MipsDebugProgram program, IElfSymbolProvider symbolProvider)
 		{
@@ -36,6 +104,7 @@ namespace FPGAProjectExtension.DebugEngine
 			Name = name;
 			Program = program;
 			m_symbolProvider = symbolProvider;
+			m_processorOp = new MipsProcessorOperation(remoteClient);
 		}
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
@@ -96,17 +165,28 @@ namespace FPGAProjectExtension.DebugEngine
 			m_state = enum_THREADSTATE.THREADSTATE_STOPPED;
 			pdwSuspendCount = ++SuspendCount;
 			uint pc = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc));
-			pc = pc - 4;
 
 			// We cannot return an error there, the thread is stopped already
 			IDebugAddress address = null;
 			int hr = m_symbolProvider.GetAddressFromMemory(pc, out address);
-			if (hr == VSConstants.S_OK)
+			if (hr != VSConstants.S_OK)
+				return VSConstants.S_OK;
+
+			// Get all stack frames 
+			IDebugStackFrame2 stackFrame = null;
+			hr = m_symbolProvider.GetStackFrame(address, this, m_processorOp, m_processorOp, out stackFrame);
+			if (hr != VSConstants.S_OK)
+				return VSConstants.S_OK;
+
+			m_stackFrames.Add(stackFrame);
+
+			while (stackFrame != null)
 			{
-				IDebugStackFrame2 stackFrame = null;
-				hr = m_symbolProvider.GetStackFrame(address, this, out stackFrame);
-				if (hr == VSConstants.S_OK)
-					m_stackFrames.Add(stackFrame);
+				hr = m_symbolProvider.GetPreviousStackFrame(stackFrame, out stackFrame);
+				if (hr != VSConstants.S_OK)
+					break;
+
+				m_stackFrames.Add(stackFrame);
 			}
 			return VSConstants.S_OK;
 		}

@@ -21,10 +21,13 @@ MIDL_INTERFACE("bbac5e6b-eb45-4690-9370-beac1e2e6a11")
 IElfDebugStackFrame : public IDebugStackFrame2
 {
 public:
-    virtual HRESULT Init(IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule) = 0;
+    virtual HRESULT Init(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters) = 0;
+    virtual HRESULT GetPreviousStackFrame(IDebugStackFrame2** ppStackFrame) = 0;
 };
 
 // CElfDebugStackFrame
+
+struct IElfSymbolProvider;
 
 class ATL_NO_VTABLE CElfDebugStackFrame :
 	public CComObjectRootEx<CComSingleThreadModel>,
@@ -36,9 +39,13 @@ class ATL_NO_VTABLE CElfDebugStackFrame :
     CComPtr<IDebugAddress> m_pAddress;
     CComPtr<IDebugDocumentContext2> m_pDocumentContext;
     CComPtr<IDebugCodeContext2> m_pCodeContext;
+    CComPtr<IMemoryOperation> m_pMemoryOp;
+    IElfSymbolProvider* m_pSymbolProvider = nullptr;
 
+    MipsRegisters m_registers = {};
 
     CComBSTR GetFunctionName();
+    HRESULT GetFirstCodeContext(IDebugCodeContext2** ppCodeContext);
 public:
 	CElfDebugStackFrame()
 	{
@@ -52,7 +59,8 @@ BEGIN_COM_MAP(CElfDebugStackFrame)
 	COM_INTERFACE_ENTRY(IDebugStackFrame2)
 END_COM_MAP()
 
-STDMETHOD(Init)(IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule);
+STDMETHOD(Init)(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters);
+STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2** ppStackFrame);
 
 STDMETHOD(GetCodeContext)(
     /* [out] */ __RPC__deref_out_opt IDebugCodeContext2** ppCodeCxt);

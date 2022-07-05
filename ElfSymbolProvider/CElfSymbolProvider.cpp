@@ -4,9 +4,36 @@
 #include "CElfSymbolProvider.h"
 #include "ElfDebugDocumentContext.h"
 #include "ElfDebugAddress.h"
+#include "ElfDebugStackFrame.h"
 
 // CElfSymbolProvider
 
+HRESULT CElfSymbolProvider::GetModuleFromDebugAddress(
+    IDebugAddress* pAddress,
+    ElfModule** ppModule)
+{
+    *ppModule = nullptr;
+
+    DEBUG_ADDRESS da = {};
+    HRESULT hr = pAddress->GetAddress(&da);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    return GetModuleFromGUID(da.guidModule, ppModule);
+}
+
+HRESULT CElfSymbolProvider::GetModuleFromGUID(
+    const GUID& guid,
+    ElfModule** ppModule)
+{
+    *ppModule = nullptr;
+    auto found = m_modulesByGuid.find(guid);
+    if (found == m_modulesByGuid.end())
+        return E_FAIL;
+
+    *ppModule = found->second;
+    return S_OK;
+}
 HRESULT CElfSymbolProvider::GetModuleFromAddress(DWORD address, GUID* pGuid)
 {
     if (!pGuid)
@@ -72,7 +99,7 @@ HRESULT CElfSymbolProvider::LoadModule(
         if (m_modules.find(szFilepathA.m_psz) != m_modules.end())
             return E_FAIL;
 
-        auto pModule = std::make_unique<ElfModule>();
+        auto pModule = std::make_unique<ElfModule>(this);
         pModule->Load(pDebugModule, szFilepathA.m_psz);
 
         GUID guid = {};
@@ -98,7 +125,12 @@ HRESULT CElfSymbolProvider::LoadModule(
         return E_FAIL;
     }
 }
-HRESULT CElfSymbolProvider::GetStackFrame(IDebugAddress* pAddress, IDebugThread2* pThread, IDebugStackFrame2** ppStackFrame)
+HRESULT CElfSymbolProvider::GetStackFrame(
+    IDebugAddress* pAddress,
+    IDebugThread2* pThread,
+    IMemoryOperation* pMemoryOp,
+    IRegisterOperation* pRegisterOp,
+    IDebugStackFrame2** ppStackFrame)
 {
     if (!ppStackFrame)
         return E_INVALIDARG;
@@ -113,9 +145,18 @@ HRESULT CElfSymbolProvider::GetStackFrame(IDebugAddress* pAddress, IDebugThread2
         return E_FAIL;
 
     ElfModule* pModule = found->second;
-    return pModule->GetStackFrame(pAddress, pThread, ppStackFrame);
+    return pModule->GetStackFrame(pAddress, pThread, pMemoryOp, pRegisterOp, ppStackFrame);
 }
 
+HRESULT CElfSymbolProvider::GetPreviousStackFrame(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame)
+{
+    CComPtr<IElfDebugStackFrame> pElfStackFrame;
+    HRESULT hr = pStackFrame->QueryInterface(&pElfStackFrame);
+    if (FAILED(hr))
+        return hr;
+
+    return pElfStackFrame->GetPreviousStackFrame(ppStackFrame);
+}
 HRESULT CElfSymbolProvider::Initialize(
     /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices)
 {

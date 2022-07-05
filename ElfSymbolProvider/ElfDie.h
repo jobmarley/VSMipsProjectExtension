@@ -43,6 +43,6 @@ public:
 
     inline const char* Name() { return m_pDie->GetName(); }
 
-    inline DWORD LowPC() { return m_pDie->GetLowPc(); }
-    inline DWORD HighPC() { return m_pDie->GetHiPc();}
+    inline DWORD LowPC() { return static_cast<DWORD>(m_pDie->GetLowPc()); }
+    inline DWORD HighPC() { return static_cast<DWORD>(m_pDie->GetHiPc());}
 };

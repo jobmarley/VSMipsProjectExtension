@@ -52,6 +52,20 @@
 
 /* Forward Declarations */ 
 
+#ifndef __IRegisterOperation_FWD_DEFINED__
+#define __IRegisterOperation_FWD_DEFINED__
+typedef interface IRegisterOperation IRegisterOperation;
+
+#endif 	/* __IRegisterOperation_FWD_DEFINED__ */
+
+
+#ifndef __IMemoryOperation_FWD_DEFINED__
+#define __IMemoryOperation_FWD_DEFINED__
+typedef interface IMemoryOperation IMemoryOperation;
+
+#endif 	/* __IMemoryOperation_FWD_DEFINED__ */
+
+
 #ifndef __IElfSymbolProvider_FWD_DEFINED__
 #define __IElfSymbolProvider_FWD_DEFINED__
 typedef interface IElfSymbolProvider IElfSymbolProvider;
@@ -129,6 +143,212 @@ extern "C"{
 #endif 
 
 
+#ifndef __IRegisterOperation_INTERFACE_DEFINED__
+#define __IRegisterOperation_INTERFACE_DEFINED__
+
+/* interface IRegisterOperation */
+/* [unique][uuid][object] */ 
+
+
+EXTERN_C const IID IID_IRegisterOperation;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("BB324892-D76E-41A6-97EC-8A106D43C4CF")
+    IRegisterOperation : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE Read( 
+            DWORD index,
+            DWORD *pValue) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE Write( 
+            DWORD index,
+            DWORD value) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IRegisterOperationVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IRegisterOperation * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IRegisterOperation * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IRegisterOperation * This);
+        
+        DECLSPEC_XFGVIRT(IRegisterOperation, Read)
+        HRESULT ( STDMETHODCALLTYPE *Read )( 
+            IRegisterOperation * This,
+            DWORD index,
+            DWORD *pValue);
+        
+        DECLSPEC_XFGVIRT(IRegisterOperation, Write)
+        HRESULT ( STDMETHODCALLTYPE *Write )( 
+            IRegisterOperation * This,
+            DWORD index,
+            DWORD value);
+        
+        END_INTERFACE
+    } IRegisterOperationVtbl;
+
+    interface IRegisterOperation
+    {
+        CONST_VTBL struct IRegisterOperationVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IRegisterOperation_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IRegisterOperation_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IRegisterOperation_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IRegisterOperation_Read(This,index,pValue)	\
+    ( (This)->lpVtbl -> Read(This,index,pValue) ) 
+
+#define IRegisterOperation_Write(This,index,value)	\
+    ( (This)->lpVtbl -> Write(This,index,value) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IRegisterOperation_INTERFACE_DEFINED__ */
+
+
+#ifndef __IMemoryOperation_INTERFACE_DEFINED__
+#define __IMemoryOperation_INTERFACE_DEFINED__
+
+/* interface IMemoryOperation */
+/* [unique][uuid][object] */ 
+
+
+EXTERN_C const IID IID_IMemoryOperation;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("06E76594-7C91-4282-9B10-6A626D5D4864")
+    IMemoryOperation : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE Read( 
+            BYTE *buffer,
+            DWORD offset,
+            DWORD count,
+            DWORD *pReadCount) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE Write( 
+            BYTE *buffer,
+            DWORD offset,
+            DWORD count,
+            DWORD *pWrittenCount) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IMemoryOperationVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IMemoryOperation * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IMemoryOperation * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IMemoryOperation * This);
+        
+        DECLSPEC_XFGVIRT(IMemoryOperation, Read)
+        HRESULT ( STDMETHODCALLTYPE *Read )( 
+            IMemoryOperation * This,
+            BYTE *buffer,
+            DWORD offset,
+            DWORD count,
+            DWORD *pReadCount);
+        
+        DECLSPEC_XFGVIRT(IMemoryOperation, Write)
+        HRESULT ( STDMETHODCALLTYPE *Write )( 
+            IMemoryOperation * This,
+            BYTE *buffer,
+            DWORD offset,
+            DWORD count,
+            DWORD *pWrittenCount);
+        
+        END_INTERFACE
+    } IMemoryOperationVtbl;
+
+    interface IMemoryOperation
+    {
+        CONST_VTBL struct IMemoryOperationVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IMemoryOperation_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IMemoryOperation_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IMemoryOperation_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IMemoryOperation_Read(This,buffer,offset,count,pReadCount)	\
+    ( (This)->lpVtbl -> Read(This,buffer,offset,count,pReadCount) ) 
+
+#define IMemoryOperation_Write(This,buffer,offset,count,pWrittenCount)	\
+    ( (This)->lpVtbl -> Write(This,buffer,offset,count,pWrittenCount) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IMemoryOperation_INTERFACE_DEFINED__ */
+
+
 #ifndef __IElfSymbolProvider_INTERFACE_DEFINED__
 #define __IElfSymbolProvider_INTERFACE_DEFINED__
 
@@ -156,6 +376,12 @@ EXTERN_C const IID IID_IElfSymbolProvider;
         virtual HRESULT STDMETHODCALLTYPE GetStackFrame( 
             IDebugAddress *pAddress,
             IDebugThread2 *pThread,
+            IMemoryOperation *pMemoryOp,
+            IRegisterOperation *pRegisterOp,
+            IDebugStackFrame2 **ppStackFrame) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE GetPreviousStackFrame( 
+            IDebugStackFrame2 *pStackFrame,
             IDebugStackFrame2 **ppStackFrame) = 0;
         
     };
@@ -290,6 +516,14 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IElfSymbolProvider * This,
             IDebugAddress *pAddress,
             IDebugThread2 *pThread,
+            IMemoryOperation *pMemoryOp,
+            IRegisterOperation *pRegisterOp,
+            IDebugStackFrame2 **ppStackFrame);
+        
+        DECLSPEC_XFGVIRT(IElfSymbolProvider, GetPreviousStackFrame)
+        HRESULT ( STDMETHODCALLTYPE *GetPreviousStackFrame )( 
+            IElfSymbolProvider * This,
+            IDebugStackFrame2 *pStackFrame,
             IDebugStackFrame2 **ppStackFrame);
         
         END_INTERFACE
@@ -364,8 +598,11 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 #define IElfSymbolProvider_LoadModule(This,pDebugModule,pszFilepath,address)	\
     ( (This)->lpVtbl -> LoadModule(This,pDebugModule,pszFilepath,address) ) 
 
-#define IElfSymbolProvider_GetStackFrame(This,pAddress,pThread,ppStackFrame)	\
-    ( (This)->lpVtbl -> GetStackFrame(This,pAddress,pThread,ppStackFrame) ) 
+#define IElfSymbolProvider_GetStackFrame(This,pAddress,pThread,pMemoryOp,pRegisterOp,ppStackFrame)	\
+    ( (This)->lpVtbl -> GetStackFrame(This,pAddress,pThread,pMemoryOp,pRegisterOp,ppStackFrame) ) 
+
+#define IElfSymbolProvider_GetPreviousStackFrame(This,pStackFrame,ppStackFrame)	\
+    ( (This)->lpVtbl -> GetPreviousStackFrame(This,pStackFrame,ppStackFrame) ) 
 
 #endif /* COBJMACROS */
 

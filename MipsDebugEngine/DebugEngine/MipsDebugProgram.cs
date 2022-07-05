@@ -82,14 +82,13 @@ namespace FPGAProjectExtension.DebugEngine
 		private ConcurrentBag<MipsDebugModule> m_modules = new ConcurrentBag<MipsDebugModule>();
 		public IEnumerable<MipsDebugModule> Modules => m_modules;
 		IElfSymbolProvider m_symbolProvider = null;
-		bool m_loaded = false;
 		object m_eventLock = new object();
 		public MipsDebugModule LoadModule(string filepath, uint address)
 		{
 			MipsDebugModule m = new MipsDebugModule(this, filepath, address);
 			m_modules.Add(m);
 			int hr = m_symbolProvider.LoadModule(m, filepath, address);
-			m_loaded = (hr == VSConstants.S_OK);
+			m.SymbolsLoaded = (hr == VSConstants.S_OK);
 			return m;
 		}
 		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsEventCallback eventCallback, MipsDebugProcess process, string name, IElfSymbolProvider symbolProvider)
