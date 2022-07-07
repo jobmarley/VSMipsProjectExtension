@@ -296,19 +296,7 @@ namespace FPGAProjectExtension.DebugEngine
 			Microsoft.Win32.RegistryKey EEKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(string.Format("{0}\\AD7Metrics\\ExpressionEvaluator\\{1}\\{2}", m_registryRoot, EECppGuid, EEVendorGuid));
 			return new Guid((string)EEKey.GetValue("CLSID"));
 		}
-		IDebugExpressionEvaluator2 CreateExpressionEvaluator()
-		{
-			Guid eeCppCLSID = GetEECppCLSID();
-			var qzdqd = VSComHelper.CreateFromCLSID<IDebugExpressionEvaluator2>(m_registryRoot, eeCppCLSID);
-			Type type = Type.GetTypeFromCLSID(eeCppCLSID, true);
-			object o = Activator.CreateInstance(type);
-			IDebugExpressionEvaluator2 expressionEvaluator = (IDebugExpressionEvaluator2)o;
-			expressionEvaluator.SetRegistryRoot(m_registryRoot);
-			expressionEvaluator.SetLocale(m_wLangID);
-			expressionEvaluator.SetIDebugIDECallback(this);
-			return expressionEvaluator;
-		}
-		
+		VSComHelper.ActivationContext m_activationContext = null;
 		public int LaunchSuspended(string pszServer,
 			IDebugPort2 pPort,
 			string pszExe,
@@ -327,7 +315,19 @@ namespace FPGAProjectExtension.DebugEngine
 
 			m_callback = pCallback;
 
-			m_symbolProvider = VSComHelper.CreateFromCLSID<IElfSymbolProvider>(m_registryRoot, new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
+			// For some reason the manifest is not loaded correctly, so we need to do it manually with activation context
+			string asmFilepath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+			string manifestFilepath = System.IO.Path.Combine(
+				System.IO.Path.GetDirectoryName(asmFilepath),
+				System.IO.Path.GetFileNameWithoutExtension(asmFilepath) + ".manifest");
+			m_activationContext = new VSComHelper.ActivationContext(manifestFilepath);
+
+			// Com object creation need to be wrapped in that so the CLSID can be found (since its not registered)
+			using (var guard = m_activationContext.Activate())
+			{
+				Type t = Type.GetTypeFromCLSID(new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
+				m_symbolProvider = (IElfSymbolProvider)Activator.CreateInstance(t);
+			}
 			//m_expressionEvaluator = CreateExpressionEvaluator();
 
 			// Delegate to port because its remote

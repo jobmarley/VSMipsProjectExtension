@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- This manifest need to be saved in the same directory as MipsDebugEngine for the COM object to be created without registration.
+	Apparently this manifest is not loaded automatically so we will load it manually with activation contexts -->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+	<assemblyIdentity version="1.0.0.0" name="MipsDebugEngine"/>
+
+	<dependency>
+		<dependentAssembly>
+			<assemblyIdentity
+				type="win32"
+				name="ElfSymbolProvider"
+				version="1.0.0.1"
+        />
+		</dependentAssembly>
+	</dependency>
+
+</assembly>

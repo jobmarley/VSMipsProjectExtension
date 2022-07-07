@@ -5,6 +5,9 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <TargetFrameworkProfile />
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>MipsDebugEngine.manifest</ApplicationManifest>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -86,6 +89,9 @@
       <InstallRoot>MSBuild</InstallRoot>
       <VSIXSubPath>MipsProject</VSIXSubPath>
     </Content>
+    <Content Include="MipsDebugEngine.manifest">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -134,11 +140,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ElfSymbolProvider\ElfSymbolProvider.vcxproj">
-      <Project>{1FFDAD0A-8539-431C-8B34-701345B6A047}</Project>
-      <Name>ElfSymbolProvider</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
-    </ProjectReference>
+		<Project>{1FFDAD0A-8539-431C-8B34-701345B6A047}</Project>
+		<Name>ElfSymbolProvider</Name>
+		<IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+		<IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
+	</ProjectReference>
     <ProjectReference Include="..\MipsDebugEngine\MipsDebugEngine.csproj">
       <Project>{811231fc-10fe-4c5e-9c83-20fe71241bd4}</Project>
       <Name>MipsDebugEngine</Name>

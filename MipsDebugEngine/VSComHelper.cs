@@ -7,71 +7,146 @@ using System.Threading.Tasks;
 
 namespace FPGAProjectExtension
 {
-	/*
-	 * That shit is ugly, but thats a way to load a non registered COM component.
-	 * I tried to use it as multithreaded and it didnt work (IID not registered in combase when calling functions on the component)
-	 * Maybe because it doesnt have the registry settings.
-	 * Another way would be to use Side-by-side + activation context, this should allow to set the settings properly
-	 */
-
-	//// Create an activation context
-	//Type actCtxType = System.Type.GetTypeFromProgID("Microsoft.Windows.ActCtx");
-	//dynamic actCtx = System.Activator.CreateInstance(actCtxType);
-	//actCtx.Manifest = @"Path\To\COMClient.manifest";
-
-	//// Create the object you want, using the activation context
-	//dynamic obj = actCtx.CreateObject("COMTestService.COMTestObject");
-
-	//// Now use it!
-	//var question = obj.GetQuestionFromAnswer(42);
-
 	public class VSComHelper
 	{
-		[DllImport("Kernel32.dll", CharSet = CharSet.Unicode)]
-		extern static IntPtr LoadLibraryW(string name);
-		[DllImport("Kernel32.dll", CharSet = CharSet.Ansi)]
-		extern static IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
-		[DllImport("Kernel32.dll", CharSet = CharSet.Unicode)]
-		extern static bool SetDllDirectoryW(string lpPathName);
-		delegate int GetClassObjectDelegate(ref Guid rclsid, ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] out object ppv);
-		// Necessary because Type.GetTypeFromCLSID + Activator.CreateInstance cannot create objects registered with CLSID in the hive
-		public static T CreateFromCLSID<T>(string registryRoot, Guid guid)
+		public class ActivationContext
+			: IDisposable
 		{
-			return Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+			public class ActivationContextGuard
+				: IDisposable
 			{
-				await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-				Microsoft.Win32.RegistryKey Key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(string.Format("{0}\\CLSID\\{{{1}}}\\InprocServer32", registryRoot, guid));
-				string libraryPath = (string)Key.GetValue(null);
-				SetDllDirectoryW(System.IO.Path.GetDirectoryName(libraryPath));
-				IntPtr hModule = LoadLibraryW(libraryPath);
-				SetDllDirectoryW(null);
-				IntPtr functionPtr = GetProcAddress(hModule, "DllGetClassObject");
-				GetClassObjectDelegate d = Marshal.GetDelegateForFunctionPointer<GetClassObjectDelegate>(functionPtr);
-				Guid clsid = guid;
-				Guid unknowniid = new Guid("00000000-0000-0000-C000-000000000046");
-				object unkfactory = null;
-				int err = d(ref clsid, ref unknowniid, out unkfactory);
-				if (err != 0)
-					throw new COMException("", err);
-				IClassFactory factory = (IClassFactory)unkfactory;
+				private bool disposedValue;
+				private ActivationContext m_context = null;
+				private IntPtr m_cookie = IntPtr.Zero;
 
-				object o;
-				Guid iid = typeof(T).GUID;
-				err = factory.CreateInstance(null, ref iid, out o);
-				if (err != 0)
-					throw new COMException("", err);
-				return (T)o;
-			});
-		}
+				public ActivationContextGuard(ActivationContext context)
+				{
+					m_context = context;
+					if (!context.Activate(out m_cookie))
+						throw new Exception();
+				}
+				protected virtual void Dispose(bool disposing)
+				{
+					if (!disposedValue)
+					{
+						if (disposing)
+						{
+							// TODO: dispose managed state (managed objects)
+						}
 
-		[ComImport]
-		[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-		[Guid("00000001-0000-0000-C000-000000000046")]
-		interface IClassFactory
-		{
-			int CreateInstance([MarshalAs(UnmanagedType.IUnknown)] object pUnkOuter, ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] out object ppvObject);
+						// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+						if (m_cookie != IntPtr.Zero)
+						{
+							m_context.Deactivate(0, m_cookie);
+							m_cookie = IntPtr.Zero;
+						}
+						// TODO: set large fields to null
+						disposedValue = true;
+					}
+				}
 
-			int LockServer(bool fLock);
+				// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+				~ActivationContextGuard()
+				{
+					// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+					Dispose(disposing: false);
+				}
+
+				public void Dispose()
+				{
+					// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+					Dispose(disposing: true);
+					GC.SuppressFinalize(this);
+				}
+			}
+
+			private bool disposedValue;
+			private IntPtr m_hActCtx = IntPtr.Zero;
+
+			[StructLayout(LayoutKind.Sequential, Pack = 1)]
+			struct PCACTCTXA
+			{
+				public uint cbSize;
+				public uint dwFlags;
+				[MarshalAs(UnmanagedType.LPStr)]
+				public string lpSource;
+				public ushort wProcessorArchitecture;
+				public ushort wLangId;
+				[MarshalAs(UnmanagedType.LPStr)]
+				public string lpAssemblyDirectory;
+				[MarshalAs(UnmanagedType.LPStr)]
+				public string lpResourceName;
+				[MarshalAs(UnmanagedType.LPStr)]
+				public string lpApplicationName;
+				public IntPtr hModule;
+			};
+
+			[DllImport("Kernel32.dll", CharSet = CharSet.Ansi)]
+			extern static IntPtr CreateActCtxA(ref PCACTCTXA pActCtx);
+			[DllImport("Kernel32.dll", CharSet = CharSet.Ansi)]
+			extern static bool ActivateActCtx(IntPtr hActCtx, out IntPtr lpCookie);
+			[DllImport("Kernel32.dll", CharSet = CharSet.Ansi)]
+			extern static void ReleaseActCtx(IntPtr hActCtx);
+			[DllImport("Kernel32.dll", CharSet = CharSet.Ansi)]
+			extern static bool DeactivateActCtx(uint dwFlags, IntPtr ulCookie);
+			public ActivationContext(string filename)
+			{
+				string asmFilepath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+				string manifestFilepath = System.IO.Path.Combine(
+					System.IO.Path.GetDirectoryName(asmFilepath),
+					System.IO.Path.GetFileNameWithoutExtension(asmFilepath) + ".manifest");
+				PCACTCTXA act = new PCACTCTXA();
+				act.cbSize = (uint)Marshal.SizeOf(act); // 52
+				act.lpSource = manifestFilepath;
+				act.lpAssemblyDirectory = System.IO.Path.GetDirectoryName(asmFilepath);
+				//act.dwFlags = 0x4 | 0x32;
+				m_hActCtx = CreateActCtxA(ref act);
+			}
+
+			public bool Activate(out IntPtr cookie)
+			{
+				return ActivateActCtx(m_hActCtx, out cookie);
+			}
+			public ActivationContextGuard Activate()
+			{
+				return new ActivationContextGuard(this);
+			}
+			public bool Deactivate(uint dwFlags, IntPtr ulCookie)
+			{
+				return DeactivateActCtx(dwFlags, ulCookie);
+			}
+			protected virtual void Dispose(bool disposing)
+			{
+				if (!disposedValue)
+				{
+					if (disposing)
+					{
+						// TODO: dispose managed state (managed objects)
+					}
+
+					// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+					if (m_hActCtx != IntPtr.Zero)
+					{
+						ReleaseActCtx(m_hActCtx);
+						m_hActCtx = IntPtr.Zero;
+					}
+					// TODO: set large fields to null
+					disposedValue = true;
+				}
+			}
+
+			~ActivationContext()
+			{
+				// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+				Dispose(disposing: false);
+			}
+
+			public void Dispose()
+			{
+				// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+				Dispose(disposing: true);
+				GC.SuppressFinalize(this);
+			}
 		}
 	}
 }
