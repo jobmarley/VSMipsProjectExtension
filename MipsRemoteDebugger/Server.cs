@@ -61,8 +61,9 @@ namespace MipsRemoteDebugger
 					}
 					catch (Exception e)
 					{
+						Console.WriteLine("Exception: " + e.Message);
 						if (connection != null)
-							Console.WriteLine("Closed connection from " + connection.Client.Client.RemoteEndPoint.ToString());
+							Console.WriteLine("Closed connection from " + (connection?.Client?.Client?.RemoteEndPoint?.ToString() ?? "<null>"));
 					}
 					m_connection = null;
 				}

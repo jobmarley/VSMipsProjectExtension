@@ -87,7 +87,7 @@ namespace MipsRemoteDebugger
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else
-				throw new Exception("Unknown packet type");
+				throw new Exception("Handling unknown packet type");
 		}
 
 		// Doesnt need to be threadsafe since its only called from LoopAsync
@@ -103,6 +103,8 @@ namespace MipsRemoteDebugger
 			PacketHeader hdr = Packet.Deserialize<PacketHeader>(new BinaryReader(new MemoryStream(hdrbuffer)));
 			if (hdr.Length > 50 * 1024) // hard limit on 50KB
 				throw new Exception("packet too big");
+
+			Console.WriteLine(string.Format("Received packet, Type: {0}, Length: {1}", hdr.Type, hdr.Length));
 
 			byte[] buffer = new byte[hdr.Length - 8];
 			if (await ns.ReadAsync(buffer, 0, buffer.Length, cancellationToken) != buffer.Length)
@@ -124,7 +126,7 @@ namespace MipsRemoteDebugger
 				case PacketType.WriteStateRequest:
 					return await Task.Run(() => Packet.Deserialize<WriteStateRequestPacket>(bufferReader), cancellationToken);
 				default:
-					throw new Exception("Unknown packet type");
+					throw new Exception("Received unknown packet type");
 			}
 		}
 
