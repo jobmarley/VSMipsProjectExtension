@@ -1,6 +1,6 @@
 # VSMipsProjectExtension
 
-This is a project + debugger extension to be used with [MIPS_core](https://github.com/jobmarley/MIPS_core).
+This is a project + debugger extension for visual studio to be used with [MIPS_core](https://github.com/jobmarley/MIPS_core).
 
 It only support very basic functionalities.
 To use it MipsRemoteDebugger must be running on the target machine, and the project must be properly configured as explained [here](https://github.com/jobmarley/mips_project_test).
