@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace FPGAProjectExtension
+namespace VSMipsProjectExtension
 {
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	struct ElfHeader

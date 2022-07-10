@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 
-namespace FPGAProjectExtension
+namespace VSMipsProjectExtension
 {
     [Export]
     partial class ProjectProperties : StronglyTypedPropertyAccess

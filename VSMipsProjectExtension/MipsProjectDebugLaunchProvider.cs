@@ -12,12 +12,12 @@ using Microsoft.VisualStudio.ProjectSystem.VS.Debug;
 using System.Linq;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace FPGAProjectExtension
+namespace VSMipsProjectExtension
 {
 	[Export(ExportContractNames.Scopes.ConfiguredProject, typeof(IProjectDynamicLoadComponent))]
 	[ExportDebugger("MipsDebugger")]
-	[AppliesTo("FPGADebuggerCapability")]
-	public class FPGAProjectDebugLaunchProvider
+	[AppliesTo("MipsDebuggerCapability")]
+	public class MipsProjectDebugLaunchProvider
 		: DebugLaunchProviderBase,
 		IProjectDynamicLoadComponent
 	{
@@ -30,7 +30,7 @@ namespace FPGAProjectExtension
 		private OrderPrecedenceImportCollection<IVsHierarchy> IVsHierarchies { get; set; } = null;
 
 		[ImportingConstructor]
-		public FPGAProjectDebugLaunchProvider(ConfiguredProject configuredProject, IAdditionalRuleDefinitionsService rds)
+		public MipsProjectDebugLaunchProvider(ConfiguredProject configuredProject, IAdditionalRuleDefinitionsService rds)
 			: base(configuredProject)
 		{
 			IVsHierarchies = new OrderPrecedenceImportCollection<IVsHierarchy>(projectCapabilityCheckProvider: configuredProject.UnconfiguredProject);
@@ -41,8 +41,8 @@ namespace FPGAProjectExtension
 		}
 
 		// This is one of the methods of injecting rule xaml files into the project system.
-		[ExportPropertyXamlRuleDefinition("FPGAProjectExtension", "XamlRuleToCode:MipsDebugger.xaml", "Project")]
-		[AppliesTo("FPGADebuggerCapability")]
+		[ExportPropertyXamlRuleDefinition("VSMipsProjectExtension", "XamlRuleToCode:MipsDebugger.xaml", "Project")]
+		[AppliesTo("MipsDebuggerCapability")]
 		private object DebuggerXaml { get { throw new NotImplementedException(); } }
 
 		public override Task<bool> CanLaunchAsync(DebugLaunchOptions launchOptions)

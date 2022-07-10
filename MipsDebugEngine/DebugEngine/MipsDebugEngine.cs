@@ -12,7 +12,7 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 using MipsRemoteDebuggerUtils;
 
-namespace FPGAProjectExtension.DebugEngine
+namespace VSMipsProjectExtension.DebugEngine
 {
 	[ComImport]
 	[Guid("22F26F84-2D86-4835-A3E3-56C0837D0B0D")]

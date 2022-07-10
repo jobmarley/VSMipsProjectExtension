@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Task = System.Threading.Tasks.Task;
 
-namespace FPGAProjectExtension
+namespace VSMipsProjectExtension
 {
 	/// <summary>
 	/// This is the class that implements the package exposed by this assembly.
@@ -24,12 +24,12 @@ namespace FPGAProjectExtension
 	/// </para>
 	/// </remarks>
 	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-	[Guid(FPGAProjectExtensionPackage.PackageGuidString)]
+	[Guid(VSMipsProjectExtensionPackage.PackageGuidString)]
 	[ProvideMenuResource("Menus.ctmenu", 1)]
-	public sealed class FPGAProjectExtensionPackage : AsyncPackage
+	public sealed class VSMipsProjectExtensionPackage : AsyncPackage
 	{
 		/// <summary>
-		/// FPGAProjectExtensionPackage GUID string.
+		/// VSMipsProjectExtensionPackage GUID string.
 		/// </summary>
 		public const string PackageGuidString = "c77c8f36-2592-4ab2-a640-f55daf41e096";
 		public const string ProjectTypeGuid = "B18B08ED-E317-448F-B7F0-8DB6B26336FB";

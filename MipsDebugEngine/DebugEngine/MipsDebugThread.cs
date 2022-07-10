@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.Debugger.Interop;
 using MipsRemoteDebuggerUtils;
 using System.Runtime.InteropServices;
 
-namespace FPGAProjectExtension.DebugEngine
+namespace VSMipsProjectExtension.DebugEngine
 {
 	class MipsProcessorOperation
 		: IMemoryOperation,

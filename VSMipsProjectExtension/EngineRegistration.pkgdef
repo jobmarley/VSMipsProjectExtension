@@ -25,17 +25,17 @@
 
 [$RootKey$\CLSID\{AD8869A4-D013-4C71-ABDE-B33998A0CECA}]
 "Assembly"="MipsDebugEngine"
-"Class"="FPGAProjectExtension.DebugEngine.MipsDebugEngine"
+"Class"="VSMipsProjectExtension.DebugEngine.MipsDebugEngine"
 "CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
 
 [$RootKey$\CLSID\{9D1EEDD2-CF21-416A-B53A-D933B2F47920}]
 "Assembly"="MipsDebugEngine"
-"Class"="FPGAProjectExtension.DebugEngine.MipsProgramProvider"
+"Class"="VSMipsProjectExtension.DebugEngine.MipsProgramProvider"
 "CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
 
 [$RootKey$\CLSID\{B473EA66-5824-4F62-97DB-7A57F01C0C7A}]
 "Assembly"="MipsDebugEngine"
-"Class"="FPGAProjectExtension.DebugEngine.MipsRemotePortSupplier"
+"Class"="VSMipsProjectExtension.DebugEngine.MipsRemotePortSupplier"
 "CodeBase"="$PackageFolder$\MipsDebugEngine.dll"
 
 [$RootKey$\CLSID\{305ae8e3-ce4d-4a0b-889c-9836bf4ddedf}]

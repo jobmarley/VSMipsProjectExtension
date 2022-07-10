@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 
-namespace FPGAProjectExtension.DebugEngine
+namespace VSMipsProjectExtension.DebugEngine
 {
 	[ComVisible(true)]
 	[Guid("5F01F2FA-1A4B-4D32-AF99-BE3B67F1F162")]

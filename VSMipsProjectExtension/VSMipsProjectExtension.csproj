@@ -49,10 +49,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FPGAProjectDebugLaunchProvider.cs" />
+    <Compile Include="MipsProjectDebugLaunchProvider.cs" />
     <Compile Include="ProjectProperties.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FPGAProjectExtensionPackage.cs" />
+    <Compile Include="MipsProjectExtensionPackage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\ElfSymbolProvider\libdwarf.dll">

@@ -15,7 +15,7 @@ To use it MipsRemoteDebugger must be running on the target machine, and the proj
 
 ![image](https://user-images.githubusercontent.com/99695100/178160470-03acb55f-7645-4ae0-8374-3537b45f9cbd.png)
 
-## VSMipsProjectExtension
+## FPGAProjectExtension
 Contains the VSPackage of the extension, the IDebugLaunchProvider implementation used to launch the debugger
 
 ## MipsDebugEngine

@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.Debugger.Interop;
 
 using MipsRemoteDebuggerUtils;
 
-namespace FPGAProjectExtension.DebugEngine
+namespace VSMipsProjectExtension.DebugEngine
 {
 	class MipsDebugPortEventsConnectionPoint
 		: IConnectionPoint,
