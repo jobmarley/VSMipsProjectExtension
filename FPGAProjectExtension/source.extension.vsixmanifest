@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="FPGAProjectExtension.7e9a59ed-6c41-4611-a47f-262e5b4fc89a" Version="1.0" Language="en-US" Publisher="jobmarley" />
-        <DisplayName>FPGAProjectExtension</DisplayName>
-        <Description xml:space="preserve">Empty VSIX Project.</Description>
+        <Identity Id="VSMipsProjectExtension.7e9a59ed-6c41-4611-a47f-262e5b4fc89a" Version="1.0" Language="en-US" Publisher="jobmarley" />
+        <DisplayName>VSMipsProjectExtension</DisplayName>
+        <Description xml:space="preserve">Mips project and debugger extension for visual studio</Description>
     </Metadata>
     <Installation AllUsers="true">
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">

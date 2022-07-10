@@ -17,8 +17,8 @@
     <ProjectGuid>{55228E9C-995F-49E0-B44D-246F0D9614E9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FPGAProjectExtension</RootNamespace>
-    <AssemblyName>FPGAProjectExtension</AssemblyName>
+    <RootNamespace>VSMipsProjectExtension</RootNamespace>
+    <AssemblyName>VSMipsProjectExtension</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
@@ -50,7 +50,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FPGAProjectDebugLaunchProvider.cs" />
-	  <Compile Include="ProjectProperties.cs" />
+    <Compile Include="ProjectProperties.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FPGAProjectExtensionPackage.cs" />
   </ItemGroup>
