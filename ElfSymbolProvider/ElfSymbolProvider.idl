@@ -8,6 +8,18 @@ import "oaidl.idl";
 import "ocidl.idl";
 import "msdbg.idl";
 
+
+[
+	object,
+	uuid(22F26F84-2D86-4835-A3E3-56C0837D0B0D),
+	pointer_default(unique)
+]
+interface IMipsDEEventCallback : IUnknown
+{
+	HRESULT SendEECompleteEvent(IDebugThread2* pThread, IDebugExpression2* pExpression, IDebugProperty2* pDebugProperty);
+	HRESULT SendDebugBreakEvent(IDebugThread2* pThread);
+	HRESULT SendPropertyCreateEvent(IDebugProperty2* pProperty);
+}
 [
 	object,
 	uuid(BB324892-D76E-41A6-97EC-8A106D43C4CF),
@@ -52,6 +64,7 @@ interface IElfSymbolProvider : IDebugSymbolProvider
 		IDebugStackFrame2** ppStackFrame);
 
 	HRESULT GetPreviousStackFrame(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
+	HRESULT SetEventCallback(IMipsDEEventCallback* pDEEventCallback);
 };
 [
 	uuid(d58c5021-1e35-4bde-854c-80217cada2ae),
@@ -94,5 +107,26 @@ library ElfSymbolProviderLib
 	coclass ElfDebugStackFrame
 	{
 		[default] interface IDebugStackFrame2;
+	};
+	[
+		uuid(4FD1BCEB-8D02-411E-AEE7-8B7FAA83ACB2)
+	]
+	coclass ElfDebugExpression
+	{
+		[default] interface IDebugExpression2;
+	};
+	[
+		uuid(508E94E5-487A-4D94-8F12-06756192FB93)
+	]
+	coclass ElfDebugExpressionContext
+	{
+		[default] interface IDebugExpressionContext2;
+	};
+	[
+		uuid(D7EBC85C-E027-4201-A7D8-33755512EF4B)
+	]
+	coclass ElfDebugProperty
+	{
+		[default] interface IDebugProperty2;
 	};
 };

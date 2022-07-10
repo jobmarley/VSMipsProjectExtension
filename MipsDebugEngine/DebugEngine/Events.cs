@@ -212,4 +212,54 @@ namespace FPGAProjectExtension.DebugEngine
 			Thread = thread;
 		}
 	}
+	internal class MipsDebugEECompleteEvent
+		: MipsAsynchronousEvent,
+		IDebugExpressionEvaluationCompleteEvent2,
+		IDebugEvent2
+	{
+		public MipsDebugThread Thread { get; } = null;
+		public IDebugExpression2 Expression { get; } = null;
+		public IDebugProperty2 Property { get; } = null;
+		public MipsDebugEECompleteEvent(
+			MipsDebugThread thread,
+			IDebugExpression2 expression,
+			IDebugProperty2 debugProperty)
+			: base(typeof(IDebugExpressionEvaluationCompleteEvent2).GUID)
+		{
+			Thread = thread;
+			Expression = expression;
+			Property = debugProperty;
+		}
+
+		public int GetExpression(out IDebugExpression2 ppExpr)
+		{
+			ppExpr = Expression;
+			return VSConstants.S_OK;
+		}
+
+		public int GetResult(out IDebugProperty2 ppResult)
+		{
+			ppResult = Property;
+			return VSConstants.S_OK;
+		}
+	}
+	internal class MipsPropertyCreateEvent
+		: MipsAsynchronousEvent,
+		IDebugPropertyCreateEvent2,
+		IDebugEvent2
+	{
+		public IDebugProperty2 Property { get; } = null;
+		public MipsPropertyCreateEvent(
+			IDebugProperty2 debugProperty)
+			: base(typeof(IDebugPropertyCreateEvent2).GUID)
+		{
+			Property = debugProperty;
+		}
+
+		public int GetDebugProperty(out IDebugProperty2 ppProperty)
+		{
+			ppProperty = Property;
+			return VSConstants.S_OK;
+		}
+	}
 }

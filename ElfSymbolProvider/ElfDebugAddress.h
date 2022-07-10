@@ -33,7 +33,7 @@ public:
 // CElfDebugAddress
 
 class ATL_NO_VTABLE CElfDebugAddress :
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfDebugAddress, &CLSID_ElfDebugAddress>,
 	public IElfDebugAddress
 {

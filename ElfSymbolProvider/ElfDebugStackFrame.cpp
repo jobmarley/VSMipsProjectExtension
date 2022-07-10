@@ -4,9 +4,26 @@
 #include "ElfDebugStackFrame.h"
 #include "ElfDebugAddress.h"
 #include "CElfSymbolProvider.h"
+#include "ElfDebugExpressionContext.h"
+#include "ElfDebugProperty.h"
+#include "SimpleEnumerator.h"
+
 // CElfDebugStackFrame
 
 
+HRESULT CElfDebugStackFrame::GetRegisters(MipsRegisters* pRegisters)
+{
+	*pRegisters = m_registers;
+	return S_OK;
+}
+HRESULT CElfDebugStackFrame::GetMemoryOperation(IMemoryOperation** ppMemoryOp)
+{
+	if (m_pMemoryOp)
+		return m_pMemoryOp.QueryInterface(ppMemoryOp);
+
+	*ppMemoryOp = nullptr;
+	return E_FAIL;
+}
 HRESULT CElfDebugStackFrame::GetFirstCodeContext(IDebugCodeContext2** ppCodeContext)
 {
 	if (!m_pDocumentContext)
@@ -25,7 +42,69 @@ HRESULT CElfDebugStackFrame::GetFirstCodeContext(IDebugCodeContext2** ppCodeCont
 		return E_FAIL;
 	return S_OK;
 }
-HRESULT CElfDebugStackFrame::Init(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters)
+
+
+void CElfDebugStackFrame::AddProperties(DWORD pc, const std::vector<std::unique_ptr<ElfDie>>& dies)
+{
+	for (auto& it : dies)
+	{
+		if (it->GetTag() == DW_TAG_variable)
+		{
+			CComPtr<IElfDebugProperty> pProperty;
+			HRESULT hr = CElfDebugProperty::CreateInstance(&pProperty);
+			if (FAILED(hr))
+				continue;
+			hr = pProperty->Init(it.get(), m_pDocumentContext, this);
+			if (FAILED(hr))
+				continue;
+
+			CComPtr<IDebugProperty2> pDP2;
+			hr = pProperty.QueryInterface(&pDP2);
+			if (FAILED(hr))
+				continue;
+			m_properties.push_back(pDP2);
+		}
+		else if (it->GetTag() == DW_TAG_lexical_block)
+		{
+			try
+			{
+				if (it->GetLowPc() <= pc && pc < it->GetHiPc())
+				{
+					AddProperties(pc, it->GetChildrens());
+				}
+			}
+			catch (...)
+			{
+			}
+		}
+	}
+}
+void CElfDebugStackFrame::InitializeProperties()
+{
+	m_properties.clear();
+
+	if (m_pModule)
+	{
+		ElfDie* die = m_pModule->GetFunction(m_pAddress);
+		if (!die)
+			return;
+
+		DEBUG_ADDRESS ad = {};
+		HRESULT hr = m_pAddress->GetAddress(&ad);
+		if (FAILED(hr))
+			return;
+
+		DWORD pc = ad.addr.addr.addrNative.unknown;
+
+		AddProperties(pc, die->GetChildrens());
+	}
+}
+HRESULT CElfDebugStackFrame::Init(IElfSymbolProvider* pSymbolProvider,
+	IDebugAddress* pAddress,
+	IDebugThread2* pThread,
+	ElfModule* pModule,
+	IMemoryOperation* pMemoryOp,
+	MipsRegisters* pRegisters)
 {
 	m_pSymbolProvider = pSymbolProvider;
 	m_pAddress = pAddress;
@@ -39,6 +118,14 @@ HRESULT CElfDebugStackFrame::Init(IElfSymbolProvider* pSymbolProvider, IDebugAdd
 	{
 		pModule->GetContextFromAddress(m_pAddress, &m_pDocumentContext);
 		GetFirstCodeContext(&m_pCodeContext);
+
+		/*CComPtr<IElfDebugExpressionContext> pExpressionContext;
+		CElfDebugExpressionContext::CreateInstance(&pExpressionContext);
+		HRESULT hr = pExpressionContext->Init(m_pSymbolProvider, m_pThread, m_pModule->GetFunction(m_pAddress), m_pDocumentContext);
+		if (SUCCEEDED(hr))
+			pExpressionContext.QueryInterface(&m_pExpressionContext);*/
+
+		InitializeProperties();
 	}
 
 	return S_OK;
@@ -259,7 +346,9 @@ HRESULT CElfDebugStackFrame::GetPhysicalStackRange(
 HRESULT CElfDebugStackFrame::GetExpressionContext(
     /* [out] */ __RPC__deref_out_opt IDebugExpressionContext2** ppExprCxt)
 {
-    return E_NOTIMPL;
+	if (m_pExpressionContext)
+		return m_pExpressionContext->QueryInterface(ppExprCxt);
+	return E_FAIL;
 }
 
 HRESULT CElfDebugStackFrame::GetLanguageInfo(
@@ -291,7 +380,16 @@ HRESULT CElfDebugStackFrame::EnumProperties(
     /* [out] */ __RPC__out ULONG* pcelt,
     /* [out] */ __RPC__deref_out_opt IEnumDebugPropertyInfo2** ppEnum)
 {
-    return E_NOTIMPL;
+	std::vector<DEBUG_PROPERTY_INFO> infos(m_properties.size());
+	for (size_t i = 0; i < m_properties.size(); ++i)
+	{
+		auto& it = m_properties[i];
+		CComPtr<IDebugReference2> pReference;
+		HRESULT hr = it->GetPropertyInfo(dwFields, nRadix, dwTimeout, &pReference, 0, &infos[i]);
+		if (FAILED(hr))
+			return E_FAIL;
+	}
+	return SimpleEnumerator<IEnumDebugPropertyInfo2>::Create(infos, ppEnum);
 }
 
 HRESULT CElfDebugStackFrame::GetThread(

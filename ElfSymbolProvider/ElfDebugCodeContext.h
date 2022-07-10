@@ -28,12 +28,12 @@ public:
 // CElfDebugCodeContext
 
 class ATL_NO_VTABLE CElfDebugCodeContext :
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfDebugCodeContext, &CLSID_ElfDebugCodeContext>,
 	public IElfDebugCodeContext
 {
 	ElfModule* m_pModule = nullptr;
-	ElfFunction m_function;
+	ElfDie* m_die = nullptr;
 
 	CComPtr<IDebugAddress> m_pAddress;
 	CComPtr<IDebugDocumentContext2> m_pDocumentContext;

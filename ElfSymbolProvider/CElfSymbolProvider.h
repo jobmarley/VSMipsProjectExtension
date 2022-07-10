@@ -31,11 +31,12 @@ public:
     virtual HRESULT STDMETHODCALLTYPE GetModuleFromDebugAddress(
         IDebugAddress* pAddress,
         ElfModule** ppModule) = 0;
+    virtual HRESULT STDMETHODCALLTYPE GetDEEventCallback(
+        IMipsDEEventCallback** ppDEEventCallback) = 0;
 
 };
 
 // CElfSymbolProvider
-
 class ATL_NO_VTABLE CElfSymbolProvider :
 	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfSymbolProvider, &CLSID_ElfSymbolProvider>,
@@ -47,6 +48,7 @@ class ATL_NO_VTABLE CElfSymbolProvider :
     std::map<DWORD, GUID> m_modulesByAddress;
     std::unordered_map<GUID, ElfModule*> m_modulesByGuid;
     std::mutex m_mutex;
+    CComPtr<IMipsDEEventCallback> m_pDEEventCallback;
 public:
 	CElfSymbolProvider()
 	{
@@ -70,6 +72,8 @@ END_COM_MAP()
     STDMETHOD(GetModuleFromGUID)(
         const GUID& guid,
         ElfModule** ppModule);
+    STDMETHOD(GetDEEventCallback)(
+        IMipsDEEventCallback** ppDEEventCallback);
 
     STDMETHOD(GetModuleFromAddress)(DWORD address, GUID* pGuid);
 
@@ -90,6 +94,8 @@ END_COM_MAP()
         IDebugStackFrame2** ppStackFrame);
 
     STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
+
+    STDMETHOD(SetEventCallback)(IMipsDEEventCallback* pDEEventCallback);
 
     STDMETHOD(Initialize)(
         /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices);

@@ -9,6 +9,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 
 using MipsRemoteDebuggerUtils;
+using System.Runtime.InteropServices;
 
 namespace FPGAProjectExtension.DebugEngine
 {
@@ -21,6 +22,7 @@ namespace FPGAProjectExtension.DebugEngine
 		{
 			m_remoteClient = remoteClient;
 		}
+
 		public int Read(byte[] buffer, uint offset, uint count, out uint pReadCount)
 		{
 			pReadCount = 0;
@@ -106,6 +108,8 @@ namespace FPGAProjectExtension.DebugEngine
 			m_symbolProvider = symbolProvider;
 			m_processorOp = new MipsProcessorOperation(remoteClient);
 		}
+		EnumDebugFrameInfo2 m_zozozo = null;
+		EnumDebugFrameInfo2 m_zozozo2 = null;
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
 			var fis = StackFrames.Select(x =>
@@ -114,7 +118,9 @@ namespace FPGAProjectExtension.DebugEngine
 				x.GetInfo(dwFieldSpec, nRadix, fi);
 				return fi[0];
 			}).ToArray();
-			ppEnum = new EnumDebugFrameInfo2(fis);
+			m_zozozo = new EnumDebugFrameInfo2(fis);
+			m_zozozo2 = m_zozozo;
+			ppEnum = m_zozozo;
 			return VSConstants.S_OK;
 		}
 

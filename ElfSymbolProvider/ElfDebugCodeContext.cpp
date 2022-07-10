@@ -13,7 +13,7 @@ HRESULT CElfDebugCodeContext::Init(ElfModule* pModule, IDebugAddress* pAddress, 
 	m_pAddress = pAddress;
 	m_pDocumentContext = pDocumentContext;
 
-	m_function = pModule->GetFunction(pAddress);
+	m_die = pModule->GetFunction(pAddress);
 	return S_OK;
 }
 HRESULT CElfDebugCodeContext::GetDocumentContext(
@@ -32,7 +32,8 @@ HRESULT CElfDebugCodeContext::GetLanguageInfo(
 HRESULT CElfDebugCodeContext::GetName(
 	/* [out] */ __RPC__deref_out_opt BSTR* pbstrName)
 {
-	return E_NOTIMPL;
+	*pbstrName = SysAllocString(CA2W(m_die->GetName()));
+	return S_OK;
 }
 
 HRESULT CElfDebugCodeContext::GetInfo(
@@ -65,11 +66,13 @@ HRESULT CElfDebugCodeContext::GetInfo(
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION)
 	{
-		 pInfo->bstrFunction = SysAllocString(CA2W(m_function.Name()));
+		 pInfo->bstrFunction = SysAllocString(CA2W(m_die->GetName()));
 		 pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET)
 	{
+		m_pDocumentContext->GetSourceRange(&pInfo->posFunctionOffset, nullptr);
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_MODULEURL)
 	{

@@ -21,16 +21,25 @@ MIDL_INTERFACE("bbac5e6b-eb45-4690-9370-beac1e2e6a11")
 IElfDebugStackFrame : public IDebugStackFrame2
 {
 public:
-    virtual HRESULT Init(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters) = 0;
+    virtual HRESULT Init(
+        IElfSymbolProvider* pSymbolProvider,
+        IDebugAddress* pAddress,
+        IDebugThread2* pThread,
+        ElfModule* pModule,
+        IMemoryOperation* pMemoryOp,
+        MipsRegisters* pRegisters) = 0;
     virtual HRESULT GetPreviousStackFrame(IDebugStackFrame2** ppStackFrame) = 0;
+    virtual HRESULT GetRegisters(MipsRegisters* pRegisters) = 0;
+    virtual HRESULT GetMemoryOperation(IMemoryOperation** ppMemoryOp) = 0;
 };
+
 
 // CElfDebugStackFrame
 
 struct IElfSymbolProvider;
 
 class ATL_NO_VTABLE CElfDebugStackFrame :
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfDebugStackFrame, &CLSID_ElfDebugStackFrame>,
 	public IElfDebugStackFrame
 {
@@ -41,11 +50,16 @@ class ATL_NO_VTABLE CElfDebugStackFrame :
     CComPtr<IDebugCodeContext2> m_pCodeContext;
     CComPtr<IMemoryOperation> m_pMemoryOp;
     IElfSymbolProvider* m_pSymbolProvider = nullptr;
+    CComPtr<IDebugExpressionContext2> m_pExpressionContext;
+
+    std::vector<CComPtr<IDebugProperty2>> m_properties;
 
     MipsRegisters m_registers = {};
 
     CComBSTR GetFunctionName();
     HRESULT GetFirstCodeContext(IDebugCodeContext2** ppCodeContext);
+    void InitializeProperties();
+    void AddProperties(DWORD pc, const std::vector<std::unique_ptr<ElfDie>>& dies);
 public:
 	CElfDebugStackFrame()
 	{
@@ -59,8 +73,15 @@ BEGIN_COM_MAP(CElfDebugStackFrame)
 	COM_INTERFACE_ENTRY(IDebugStackFrame2)
 END_COM_MAP()
 
-STDMETHOD(Init)(IElfSymbolProvider* pSymbolProvider, IDebugAddress* pAddress, IDebugThread2* pThread, ElfModule* pModule, IMemoryOperation* pMemoryOp, MipsRegisters* pRegisters);
+STDMETHOD(Init)(IElfSymbolProvider* pSymbolProvider,
+    IDebugAddress* pAddress,
+    IDebugThread2* pThread,
+    ElfModule* pModule,
+    IMemoryOperation* pMemoryOp,
+    MipsRegisters* pRegisters);
 STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2** ppStackFrame);
+STDMETHOD(GetRegisters)(MipsRegisters* pRegisters);
+STDMETHOD(GetMemoryOperation)(IMemoryOperation** ppMemoryOp);
 
 STDMETHOD(GetCodeContext)(
     /* [out] */ __RPC__deref_out_opt IDebugCodeContext2** ppCodeCxt);

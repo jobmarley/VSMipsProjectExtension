@@ -5,12 +5,12 @@
 template<class IEnumerator>
 class SimpleEnumerator
 	: public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<SimpleEnumerator<IEnumerator>, &CLSID_ElfDebugAddress>,
 	public IEnumerator
 {
 	template<typename T>
 	struct func_args;
 
+	// This allows to access the argument types from a function pointer type
 	template<typename C, typename T, typename... Args>
 	struct func_args<T(C::*)(Args...)>
 	{
@@ -21,14 +21,37 @@ class SimpleEnumerator
 	};
 
 	// Deduce element as 2nd argument from IEnumerator::Next
-	using IElementPtrPtr = typename std::tuple_element_t<1, typename func_args<decltype(&IEnumerator::Next)>::args>;
-	using IElement = std::remove_pointer_t<std::remove_pointer_t<IElementPtrPtr>>;
+	using IElementPtr = typename std::tuple_element_t<1, typename func_args<decltype(&IEnumerator::Next)>::args>;
+	// This is IUnknown*, DEBUG_PROPERTY_INFO, etc...
+	using IElement = std::remove_pointer_t<IElementPtr>;
 
-
-	std::vector<ATL::CComPtr<IElement>> m_elements;
+	// Sometimes we have IUnknown* derived stuff, in which case we have to wrap them in CComPtr
+	// other times we have structures, and we should just keep them in vector
+	template<typename T>
+	struct Wrapper
+	{
+		using Type = T;
+	};
+	template<typename T>
+	struct Wrapper<T*>
+	{
+		using Type = ATL::CComPtr<T>;
+	};
+	using WrappedElement = Wrapper<IElement>::Type;
+	std::vector<WrappedElement> m_elements;
 	size_t m_currentIndex = 0;
 
 	typedef ATL::CComObject<SimpleEnumerator<IEnumerator>> ComObjectType;
+
+	inline void CopyElement(const IElement& from, IElement* to)
+	{
+		static_assert(std::is_pointer_v<IElement> == false); // safety check
+		*to = from;
+	}
+	inline void CopyElement(const ATL::CComPtr<std::remove_pointer_t<IElement>>& from, IElement* to)
+	{
+		from.QueryInterface(to);
+	}
 public:
 	SimpleEnumerator()
 	{
@@ -37,7 +60,7 @@ public:
 		COM_INTERFACE_ENTRY(IEnumerator)
 	END_COM_MAP()
 
-	void Add(IElement* pElem)
+	void Add(IElement pElem)
 	{
 		m_elements.push_back(pElem);
 	}
@@ -46,14 +69,14 @@ public:
 	{
 		m_elements.reserve(m_elements.size() + std::size(r));
 		for (auto& it : r)
-			m_elements.push_back(static_cast<IElement*>(it)); // static_cast because CComPtr<B> cannot be converted to CComPtr<A>
+			m_elements.push_back(static_cast<IElement>(it)); // static_cast because CComPtr<B> cannot be converted to CComPtr<A>
 	}
-	HRESULT Next(ULONG celt, IElement** rgelt, ULONG* pceltFetched)
+	HRESULT Next(ULONG celt, IElement* rgelt, ULONG* pceltFetched)
 	{
 		*pceltFetched = 0;
 		while (celt > 0 && m_currentIndex < m_elements.size())
 		{
-			m_elements[m_currentIndex]->QueryInterface(rgelt);
+			CopyElement(m_elements[m_currentIndex], rgelt);
 			++m_currentIndex;
 			--celt;
 			++(*pceltFetched);

@@ -1,6 +1,11 @@
 #pragma once
 #include "framework.h"
 #include "Utils.h"
+#include "ElfSymbolProvider_i.h"
+
+class ElfModule;
+class ElfAttribute;
+struct MipsRegisters;
 
 class ElfDie
 {
@@ -11,10 +16,11 @@ class ElfDie
     Dwarf_Die m_die = nullptr;
     Dwarf_Unsigned m_lang = 0;
     ElfDie* m_parent = nullptr;
+    ElfModule* m_pModule = nullptr;
 
     std::vector<std::unique_ptr<ElfDie>> m_children;
 public:
-    ElfDie(Dwarf_Debug dbg, Dwarf_Die die, ElfDie* parent);
+    ElfDie(Dwarf_Debug dbg, Dwarf_Die die, ElfModule* pModule, ElfDie* parent);
     virtual ~ElfDie();
 
     Dwarf_Half GetTag();
@@ -28,21 +34,44 @@ public:
     inline std::vector<std::unique_ptr<ElfDie>>& GetChildrens() { return m_children; }
     inline Dwarf_Debug Dbg() { return m_dbg; }
     inline Dwarf_Die Die() { return m_die; }
+
+    ElfDie* GetType();
+
+    Dwarf_Off GetDwarfOfs();
+
+    std::unique_ptr<ElfAttribute> GetAttribute(Dwarf_Half attributeNum);
 };
 
 
-class ElfFunction
+// Calculate location expressions
+class ElfLECalculator
 {
-    ElfDie* m_pDie = nullptr;
+    ElfLECalculator() = delete;
+    ElfLECalculator& operator=(const ElfLECalculator&) = delete;
+
+    Dwarf_Loc_Head_c m_head = nullptr;
+    Dwarf_Unsigned m_count = 0;
+    Dwarf_Debug m_dbg = nullptr;
+    ATL::CComPtr<IMemoryOperation> m_pMemOp;
 public:
-    ElfFunction() {}
-    ElfFunction(ElfDie* die)
-    {
-        m_pDie = die;
-    }
+    ElfLECalculator(Dwarf_Debug dbg, Dwarf_Attribute attr, IMemoryOperation* pMemOp);
+    ~ElfLECalculator();
 
-    inline const char* Name() { return m_pDie->GetName(); }
+    DWORD Calculate(MipsRegisters& registers);
+};
 
-    inline DWORD LowPC() { return static_cast<DWORD>(m_pDie->GetLowPc()); }
-    inline DWORD HighPC() { return static_cast<DWORD>(m_pDie->GetHiPc());}
+class ElfAttribute
+{
+    ElfAttribute() = delete;
+    ElfAttribute& operator=(const ElfAttribute&) = delete;
+
+    Dwarf_Attribute m_attr = nullptr;
+    Dwarf_Debug m_dbg = nullptr;
+public:
+    ElfAttribute(Dwarf_Debug dbg, Dwarf_Attribute attr);
+    ~ElfAttribute();
+
+    Dwarf_Attribute Attr();
+
+    std::unique_ptr<ElfLECalculator> GetCalculator(IMemoryOperation* pMemOp);
 };

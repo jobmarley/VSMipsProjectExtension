@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+	<file name="ElfSymbolProvider.dll" hashalg="SHA1">
+		<comClass clsid="{305AE8E3-CE4D-4A0B-889C-9836BF4DDEDF}" threadingModel="Both" />
+		<comClass clsid="{A40AB257-221D-4DB3-8618-F7E2CFB16355}" threadingModel="Both" />
+		<comClass clsid="{546D6384-97AB-428B-9BE2-5E287080CE93}" threadingModel="Both" />
+		<comClass clsid="{D8762730-223E-4616-9D72-236321BBFB9A}" threadingModel="Both" />
+		<comClass clsid="{AB1A8BF8-F8B7-4681-BDC8-5C389F9835FE}" threadingModel="Both" />
+		<comClass clsid="{4FD1BCEB-8D02-411E-AEE7-8B7FAA83ACB2}" threadingModel="Both" />
+		<comClass clsid="{508E94E5-487A-4D94-8F12-06756192FB93}" threadingModel="Both" />
+		<comClass clsid="{D7EBC85C-E027-4201-A7D8-33755512EF4B}" threadingModel="Both" />
+	</file>
+</assembly>

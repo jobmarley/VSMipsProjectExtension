@@ -6,7 +6,8 @@
 
 #include "targetver.h"
 
-#define _ATL_APARTMENT_THREADED
+//#define _ATL_APARTMENT_THREADED
+#define _ATL_FREE_THREADED
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 
@@ -36,6 +37,9 @@
 #include <tuple>
 #include <ranges>
 #include <sstream>
+#include <future>
+#include <regex>
+#include <stack>
 
 #include <msdbg.h> 
 #include <dbgmetric.h> 

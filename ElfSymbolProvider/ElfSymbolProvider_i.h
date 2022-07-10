@@ -52,6 +52,13 @@
 
 /* Forward Declarations */ 
 
+#ifndef __IMipsDEEventCallback_FWD_DEFINED__
+#define __IMipsDEEventCallback_FWD_DEFINED__
+typedef interface IMipsDEEventCallback IMipsDEEventCallback;
+
+#endif 	/* __IMipsDEEventCallback_FWD_DEFINED__ */
+
+
 #ifndef __IRegisterOperation_FWD_DEFINED__
 #define __IRegisterOperation_FWD_DEFINED__
 typedef interface IRegisterOperation IRegisterOperation;
@@ -133,6 +140,42 @@ typedef struct ElfDebugStackFrame ElfDebugStackFrame;
 #endif 	/* __ElfDebugStackFrame_FWD_DEFINED__ */
 
 
+#ifndef __ElfDebugExpression_FWD_DEFINED__
+#define __ElfDebugExpression_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class ElfDebugExpression ElfDebugExpression;
+#else
+typedef struct ElfDebugExpression ElfDebugExpression;
+#endif /* __cplusplus */
+
+#endif 	/* __ElfDebugExpression_FWD_DEFINED__ */
+
+
+#ifndef __ElfDebugExpressionContext_FWD_DEFINED__
+#define __ElfDebugExpressionContext_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class ElfDebugExpressionContext ElfDebugExpressionContext;
+#else
+typedef struct ElfDebugExpressionContext ElfDebugExpressionContext;
+#endif /* __cplusplus */
+
+#endif 	/* __ElfDebugExpressionContext_FWD_DEFINED__ */
+
+
+#ifndef __ElfDebugProperty_FWD_DEFINED__
+#define __ElfDebugProperty_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class ElfDebugProperty ElfDebugProperty;
+#else
+typedef struct ElfDebugProperty ElfDebugProperty;
+#endif /* __cplusplus */
+
+#endif 	/* __ElfDebugProperty_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "oaidl.h"
 #include "ocidl.h"
@@ -141,6 +184,116 @@ typedef struct ElfDebugStackFrame ElfDebugStackFrame;
 #ifdef __cplusplus
 extern "C"{
 #endif 
+
+
+#ifndef __IMipsDEEventCallback_INTERFACE_DEFINED__
+#define __IMipsDEEventCallback_INTERFACE_DEFINED__
+
+/* interface IMipsDEEventCallback */
+/* [unique][uuid][object] */ 
+
+
+EXTERN_C const IID IID_IMipsDEEventCallback;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("22F26F84-2D86-4835-A3E3-56C0837D0B0D")
+    IMipsDEEventCallback : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE SendEECompleteEvent( 
+            IDebugThread2 *pThread,
+            IDebugExpression2 *pExpression,
+            IDebugProperty2 *pDebugProperty) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendDebugBreakEvent( 
+            IDebugThread2 *pThread) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendPropertyCreateEvent( 
+            IDebugProperty2 *pProperty) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IMipsDEEventCallbackVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IMipsDEEventCallback * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IMipsDEEventCallback * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IMipsDEEventCallback * This);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendEECompleteEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendEECompleteEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugThread2 *pThread,
+            IDebugExpression2 *pExpression,
+            IDebugProperty2 *pDebugProperty);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendDebugBreakEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendDebugBreakEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugThread2 *pThread);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendPropertyCreateEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendPropertyCreateEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugProperty2 *pProperty);
+        
+        END_INTERFACE
+    } IMipsDEEventCallbackVtbl;
+
+    interface IMipsDEEventCallback
+    {
+        CONST_VTBL struct IMipsDEEventCallbackVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IMipsDEEventCallback_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IMipsDEEventCallback_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IMipsDEEventCallback_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IMipsDEEventCallback_SendEECompleteEvent(This,pThread,pExpression,pDebugProperty)	\
+    ( (This)->lpVtbl -> SendEECompleteEvent(This,pThread,pExpression,pDebugProperty) ) 
+
+#define IMipsDEEventCallback_SendDebugBreakEvent(This,pThread)	\
+    ( (This)->lpVtbl -> SendDebugBreakEvent(This,pThread) ) 
+
+#define IMipsDEEventCallback_SendPropertyCreateEvent(This,pProperty)	\
+    ( (This)->lpVtbl -> SendPropertyCreateEvent(This,pProperty) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IMipsDEEventCallback_INTERFACE_DEFINED__ */
 
 
 #ifndef __IRegisterOperation_INTERFACE_DEFINED__
@@ -384,6 +537,9 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IDebugStackFrame2 *pStackFrame,
             IDebugStackFrame2 **ppStackFrame) = 0;
         
+        virtual HRESULT STDMETHODCALLTYPE SetEventCallback( 
+            IMipsDEEventCallback *pDEEventCallback) = 0;
+        
     };
     
     
@@ -526,6 +682,11 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IDebugStackFrame2 *pStackFrame,
             IDebugStackFrame2 **ppStackFrame);
         
+        DECLSPEC_XFGVIRT(IElfSymbolProvider, SetEventCallback)
+        HRESULT ( STDMETHODCALLTYPE *SetEventCallback )( 
+            IElfSymbolProvider * This,
+            IMipsDEEventCallback *pDEEventCallback);
+        
         END_INTERFACE
     } IElfSymbolProviderVtbl;
 
@@ -604,6 +765,9 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 #define IElfSymbolProvider_GetPreviousStackFrame(This,pStackFrame,ppStackFrame)	\
     ( (This)->lpVtbl -> GetPreviousStackFrame(This,pStackFrame,ppStackFrame) ) 
 
+#define IElfSymbolProvider_SetEventCallback(This,pDEEventCallback)	\
+    ( (This)->lpVtbl -> SetEventCallback(This,pDEEventCallback) ) 
+
 #endif /* COBJMACROS */
 
 
@@ -663,6 +827,30 @@ EXTERN_C const CLSID CLSID_ElfDebugStackFrame;
 
 class DECLSPEC_UUID("ab1a8bf8-f8b7-4681-bdc8-5c389f9835fe")
 ElfDebugStackFrame;
+#endif
+
+EXTERN_C const CLSID CLSID_ElfDebugExpression;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("4FD1BCEB-8D02-411E-AEE7-8B7FAA83ACB2")
+ElfDebugExpression;
+#endif
+
+EXTERN_C const CLSID CLSID_ElfDebugExpressionContext;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("508E94E5-487A-4D94-8F12-06756192FB93")
+ElfDebugExpressionContext;
+#endif
+
+EXTERN_C const CLSID CLSID_ElfDebugProperty;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("D7EBC85C-E027-4201-A7D8-33755512EF4B")
+ElfDebugProperty;
 #endif
 #endif /* __ElfSymbolProviderLib_LIBRARY_DEFINED__ */
 

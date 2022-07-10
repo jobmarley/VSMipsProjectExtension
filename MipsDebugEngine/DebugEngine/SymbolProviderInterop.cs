@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace FPGAProjectExtension.DebugEngine
 {
 
+	[ComImport]
 	[Guid("BB324892-D76E-41A6-97EC-8A106D43C4CF")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	interface IRegisterOperation
@@ -21,6 +22,7 @@ namespace FPGAProjectExtension.DebugEngine
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
 		int Write(uint index, uint value);
 	};
+	[ComImport]
 	[Guid("06E76594-7C91-4282-9B10-6A626D5D4864")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	interface IMemoryOperation
@@ -90,5 +92,7 @@ namespace FPGAProjectExtension.DebugEngine
 		int GetStackFrame(IDebugAddress pAddress, IDebugThread2 pThread, IMemoryOperation pMemoryOp, IRegisterOperation pRegisterOp, out IDebugStackFrame2 ppStackFrame);
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
 		int GetPreviousStackFrame(IDebugStackFrame2 pStackFrame, out IDebugStackFrame2 ppStackFrame);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SetEventCallback(IMipsDEEventCallback pDEEventCallback);
 	}
 }

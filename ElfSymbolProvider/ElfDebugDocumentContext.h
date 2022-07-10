@@ -27,7 +27,7 @@ public:
 // CElfDebugDocumentContext
 
 class ATL_NO_VTABLE CElfDebugDocumentContext :
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfDebugDocumentContext, &CLSID_ElfDebugDocumentContext>,
 	public IElfDebugDocumentContext
 {

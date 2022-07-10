@@ -71,10 +71,12 @@ void ElfModule::LoadChildren(ElfDie* die)
     {
         ElfDie* child = nullptr;
         {
-            auto s = std::make_unique<ElfDie>(m_dbg, d, die);
+            auto s = std::make_unique<ElfDie>(m_dbg, d, this, die);
             child = s.get();
             die->GetChildrens().push_back(std::move(s));
         }
+
+        m_diesFromOfs[child->GetDwarfOfs()] = child;
 
         if (child->GetTag() == DW_TAG_subprogram)
         {
@@ -142,8 +144,10 @@ void ElfModule::Load(IDebugModule2* pDebugModule, const char* filepath)
         result = dwarf_siblingof_b(m_dbg, die, TRUE, &die, &err);
         SafeThrowOnError(m_dbg, err);
         cu_info cui = {};
-        cui.die = std::make_unique<ElfDie>(m_dbg, die, nullptr);
+        cui.die = std::make_unique<ElfDie>(m_dbg, die, this, nullptr);
         cui.lineTable = std::make_unique<ElfLineTable>(m_dbg, die);
+
+        m_diesFromOfs[cui.die->GetDwarfOfs()] = cui.die.get();
 
         LoadChildren(cui.die.get());
 
@@ -219,7 +223,7 @@ HRESULT ElfModule::GetStackFrame(
 
     return pStackFrame.QueryInterface(ppStackFrame);
 }
-ElfFunction ElfModule::GetFunction(IDebugAddress* pAddress)
+ElfDie* ElfModule::GetFunction(IDebugAddress* pAddress)
 {
     DEBUG_ADDRESS ad = {};
     HRESULT hr = pAddress->GetAddress(&ad);
@@ -235,7 +239,7 @@ ElfFunction ElfModule::GetFunction(IDebugAddress* pAddress)
         throw std::exception();
 
     --found;
-    return ElfFunction(found->second);
+    return found->second;
 }
 void ElfModule::LoadFrames()
 {
@@ -438,4 +442,13 @@ Dwarf_Unsigned ElfModule::UnwindRegister(
     default:
         throw std::exception();
     }
+}
+// Get die from dwarf offset
+ElfDie* ElfModule::GetDieFromOffset(Dwarf_Off ofs)
+{
+    auto f = m_diesFromOfs.find(ofs);
+    if (f == m_diesFromOfs.end())
+        return nullptr;
+
+    return f->second;
 }

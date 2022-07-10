@@ -38,6 +38,15 @@
     <Filter Include="Src\DebugAddress">
       <UniqueIdentifier>{d61d0ab3-7bcd-4c10-bc00-02d866299f93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src\ExpressionContext">
+      <UniqueIdentifier>{ab500cef-0c89-45b9-a295-e4ac772c0047}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Expression">
+      <UniqueIdentifier>{b99e0690-d63e-4b1d-9cb7-8b180f02d4d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\DebugProperty">
+      <UniqueIdentifier>{cf46943a-dcb5-47e2-b284-b926f2fac34f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -88,6 +97,15 @@
     <ClInclude Include="ElfUtils.h">
       <Filter>Src</Filter>
     </ClInclude>
+    <ClInclude Include="ElfDebugExpressionContext.h">
+      <Filter>Src\ExpressionContext</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugExpression.h">
+      <Filter>Src\Expression</Filter>
+    </ClInclude>
+    <ClInclude Include="ElfDebugProperty.h">
+      <Filter>Src\DebugProperty</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ElfSymbolProvider.cpp">
@@ -129,6 +147,15 @@
     <ClCompile Include="guids.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ElfDebugExpressionContext.cpp">
+      <Filter>Src\ExpressionContext</Filter>
+    </ClCompile>
+    <ClCompile Include="ElfDebugExpression.cpp">
+      <Filter>Src\Expression</Filter>
+    </ClCompile>
+    <ClCompile Include="ElfDebugProperty.cpp">
+      <Filter>Src\DebugProperty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ElfSymbolProvider.rc">
@@ -157,10 +184,22 @@
     <None Include="ElfDebugStackFrame.rgs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="ElfDebugExpressionContext.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ElfDebugExpression.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ElfDebugProperty.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="ElfSymbolProvider.idl">
       <Filter>Source Files</Filter>
     </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="ElfSymbolProvider.manifest" />
   </ItemGroup>
 </Project>

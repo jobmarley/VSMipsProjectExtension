@@ -81,6 +81,7 @@ class ElfModule
     std::string m_filepath;
     CComPtr<IDebugModule2> m_pDebugModule;
     IElfSymbolProvider* m_pSymbolProvider = nullptr;
+    std::unordered_map<Dwarf_Off, ElfDie*> m_diesFromOfs; // from dwarf offset
 
     Dwarf_Cie* m_cieTable = nullptr;
     Dwarf_Signed m_cieCount = 0;
@@ -111,7 +112,7 @@ public:
     inline const char* GetFilepath() { return m_filepath.c_str(); }
     inline IDebugModule2* GetDebugModule() { return m_pDebugModule; }
 
-    ElfFunction GetFunction(IDebugAddress* pAddress);
+    ElfDie* GetFunction(IDebugAddress* pAddress);
     void UnwindRegisters(MipsRegisters* pRegisters, IMemoryOperation* pMemoryOp);
     Dwarf_Unsigned UnwindRegister(Dwarf_Regtable_Entry3_s& entry,
         int registerIndex,
@@ -119,4 +120,7 @@ public:
         Dwarf_Signed alignmentFactory,
         IMemoryOperation* pMemoryOp,
         MipsRegisters* pRegisters);
+
+    // Get die from dwarf offset
+    ElfDie* GetDieFromOffset(Dwarf_Off ofs);
 };

@@ -72,7 +72,7 @@ namespace FPGAProjectExtension.DebugEngine
 		MipsDebugProcess m_process = null;
 		string m_name = null;
 		Guid m_guid = Guid.Empty;
-		IMipsEventCallback m_eventCallback = null;
+		IMipsDEEventCallback m_eventCallback = null;
 		MipsRemoteDebuggerClient m_remoteClient = null;
 
 		public MipsDebugProcess Process => m_process;
@@ -91,7 +91,7 @@ namespace FPGAProjectExtension.DebugEngine
 			m.SymbolsLoaded = (hr == VSConstants.S_OK);
 			return m;
 		}
-		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsEventCallback eventCallback, MipsDebugProcess process, string name, IElfSymbolProvider symbolProvider)
+		public MipsDebugProgram(MipsRemoteDebuggerClient client, IMipsDEEventCallback eventCallback, MipsDebugProcess process, string name, IElfSymbolProvider symbolProvider)
 		{
 			m_remoteClient = client;
 			m_eventCallback = eventCallback;
@@ -199,7 +199,7 @@ namespace FPGAProjectExtension.DebugEngine
 						uint count;
 						x.Suspend(out count);
 					});
-					m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault()));
+					m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
 				});
 
 				return VSConstants.S_OK;
@@ -303,7 +303,7 @@ namespace FPGAProjectExtension.DebugEngine
 						uint count;
 						x.Suspend(out count);
 					});
-					m_eventCallback.SendEvent(new MipsDebugBreakEvent(Threads.FirstOrDefault()));
+					m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
 				});
 				return VSConstants.S_OK;
 			}

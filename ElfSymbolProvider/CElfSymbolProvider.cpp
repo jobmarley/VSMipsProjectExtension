@@ -34,6 +34,13 @@ HRESULT CElfSymbolProvider::GetModuleFromGUID(
     *ppModule = found->second;
     return S_OK;
 }
+
+HRESULT CElfSymbolProvider::GetDEEventCallback(
+    IMipsDEEventCallback** ppDEEventCallback)
+{
+    *ppDEEventCallback = m_pDEEventCallback;
+    return S_OK;
+}
 HRESULT CElfSymbolProvider::GetModuleFromAddress(DWORD address, GUID* pGuid)
 {
     if (!pGuid)
@@ -156,6 +163,11 @@ HRESULT CElfSymbolProvider::GetPreviousStackFrame(IDebugStackFrame2* pStackFrame
         return hr;
 
     return pElfStackFrame->GetPreviousStackFrame(ppStackFrame);
+}
+HRESULT CElfSymbolProvider::SetEventCallback(IMipsDEEventCallback* pDEEventCallback)
+{
+    m_pDEEventCallback = pDEEventCallback;
+    return S_OK;
 }
 HRESULT CElfSymbolProvider::Initialize(
     /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices)

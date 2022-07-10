@@ -263,6 +263,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ElfDebugCodeContext.h" />
+    <ClInclude Include="ElfDebugExpression.h" />
+    <ClInclude Include="ElfDebugExpressionContext.h" />
+    <ClInclude Include="ElfDebugProperty.h" />
     <ClInclude Include="ElfDebugStackFrame.h" />
     <ClInclude Include="SimpleEnumerator.h" />
     <ClInclude Include="CElfSymbolProvider.h" />
@@ -298,6 +301,9 @@
     <ClCompile Include="ElfDebugAddress.cpp" />
     <ClCompile Include="ElfDebugCodeContext.cpp" />
     <ClCompile Include="ElfDebugDocumentContext.cpp" />
+    <ClCompile Include="ElfDebugExpression.cpp" />
+    <ClCompile Include="ElfDebugExpressionContext.cpp" />
+    <ClCompile Include="ElfDebugProperty.cpp" />
     <ClCompile Include="ElfDebugStackFrame.cpp" />
     <ClCompile Include="ElfDie.cpp" />
     <ClCompile Include="ElfModule.cpp" />
@@ -332,6 +338,9 @@
     <None Include="ElfDebugAddress.rgs" />
     <None Include="ElfDebugCodeContext.rgs" />
     <None Include="ElfDebugDocumentContext.rgs" />
+    <None Include="ElfDebugExpression.rgs" />
+    <None Include="ElfDebugExpressionContext.rgs" />
+    <None Include="ElfDebugProperty.rgs" />
     <None Include="ElfDebugStackFrame.rgs" />
     <None Include="ElfSymbolProvider.def" />
     <None Include="ElfSymbolProvider.rgs" />
@@ -339,6 +348,9 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="ElfSymbolProvider.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="ElfSymbolProvider.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,9 +14,17 @@ using MipsRemoteDebuggerUtils;
 
 namespace FPGAProjectExtension.DebugEngine
 {
-	interface IMipsEventCallback
+	[ComImport]
+	[Guid("22F26F84-2D86-4835-A3E3-56C0837D0B0D")]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	interface IMipsDEEventCallback
 	{
-		void SendEvent(MipsDebugBreakEvent e);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendEECompleteEvent(IDebugThread2 pThread, IDebugExpression2 pExpression, IDebugProperty2 pDebugProperty);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendDebugBreakEvent(IDebugThread2 pThread);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendPropertyCreateEvent(IDebugProperty2 pProperty);
 	}
 
 	[ComVisible(true)]
@@ -23,7 +32,7 @@ namespace FPGAProjectExtension.DebugEngine
 	public class MipsDebugEngine
 		: IDebugEngine2,
 		IDebugEngineLaunch2,
-		IMipsEventCallback,
+		IMipsDEEventCallback,
 		IDebugIDECallback
 	//, ICustomQueryInterface
 	{
@@ -45,15 +54,44 @@ namespace FPGAProjectExtension.DebugEngine
 		IDebugExpressionEvaluator2 m_expressionEvaluator = null;
 		IElfSymbolProvider m_symbolProvider = null;
 
-		void IMipsEventCallback.SendEvent(MipsDebugBreakEvent e)
+		public int SendPropertyCreateEvent(IDebugProperty2 pProperty)
 		{
+			MipsPropertyCreateEvent e = new MipsPropertyCreateEvent(pProperty);
 			m_callback.Event(this,
-				e.Thread?.Program?.Process,
-				e.Thread?.Program,
-				e.Thread,
+				m_debuggedProgram.Process,
+				m_debuggedProgram,
+				null,
 				e,
 				e.IID,
 				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendEECompleteEvent(IDebugThread2 pThread, IDebugExpression2 pExpression, IDebugProperty2 pDebugProperty)
+		{
+			var qzdqzd = System.Threading.Thread.CurrentThread.GetApartmentState();
+			MipsDebugThread mt = pThread as MipsDebugThread;
+			MipsDebugEECompleteEvent e = new MipsDebugEECompleteEvent(mt, pExpression, pDebugProperty);
+			m_callback.Event(this,
+				mt?.Program?.Process,
+				mt?.Program,
+				mt,
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendDebugBreakEvent(IDebugThread2 pThread)
+		{
+			MipsDebugThread mt = pThread as MipsDebugThread;
+			MipsDebugBreakEvent e = new MipsDebugBreakEvent(mt);
+			m_callback.Event(this,
+				mt?.Program?.Process,
+				mt?.Program,
+				mt,
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
 		}
 		void SendEvent(MipsDebugProcessDestroyEvent e)
 		{
@@ -327,6 +365,7 @@ namespace FPGAProjectExtension.DebugEngine
 			{
 				Type t = Type.GetTypeFromCLSID(new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
 				m_symbolProvider = (IElfSymbolProvider)Activator.CreateInstance(t);
+				m_symbolProvider.SetEventCallback(this);
 			}
 			//m_expressionEvaluator = CreateExpressionEvaluator();
 
