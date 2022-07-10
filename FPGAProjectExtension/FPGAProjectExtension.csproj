@@ -49,11 +49,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Command1.cs" />
     <Compile Include="FPGAProjectDebugLaunchProvider.cs" />
-    <Compile Include="MyConfiguredProject.cs" />
-    <Compile Include="ProjectProperties.cs" />
-    <Compile Include="MyUnconfiguredProject.cs" />
+	  <Compile Include="ProjectProperties.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FPGAProjectExtensionPackage.cs" />
   </ItemGroup>
@@ -127,16 +124,10 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
-    <VSCTCompile Include="FPGAProjectExtensionPackage.vsct">
-      <ResourceName>Menus.ctmenu</ResourceName>
-    </VSCTCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="EngineRegistration.pkgdef">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\Command1.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ElfSymbolProvider\ElfSymbolProvider.vcxproj">
