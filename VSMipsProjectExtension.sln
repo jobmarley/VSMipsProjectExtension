@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSMipsProjectExtension", "FPGAProjectExtension\VSMipsProjectExtension.csproj", "{55228E9C-995F-49E0-B44D-246F0D9614E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSMipsProjectExtension", "VSMipsProjectExtension\VSMipsProjectExtension.csproj", "{55228E9C-995F-49E0-B44D-246F0D9614E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsRemoteDebuggerUtils", "MipsRemoteDebuggerUtils\MipsRemoteDebuggerUtils.csproj", "{E0565C13-9330-4B7F-B941-BB10730DCDBA}"
 EndProject
