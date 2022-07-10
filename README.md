@@ -13,4 +13,4 @@ To use it MipsRemoteDebugger must be running on the target machine, and the proj
 - hardcoded breakpoints (mips instruction "sdbbp", breakpoint window and adding breakpoint on the fly not supported)
 - local variable for simple types
 
-![image](https://user-images.githubusercontent.com/99695100/178160112-6fc0c04e-99a5-4593-ad0f-1337fae8e340.png)
+![image](https://user-images.githubusercontent.com/99695100/178160470-03acb55f-7645-4ae0-8374-3537b45f9cbd.png)
