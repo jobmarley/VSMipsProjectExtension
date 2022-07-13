@@ -137,7 +137,7 @@ namespace MipsRemoteTest
 					try
 					{
 						client.WriteRegisterAsync((md_register)register, value).Wait();
-						Console.WriteLine(string.Format("status: ", md_status.Success));
+						Console.WriteLine(string.Format("status: {0}", md_status.Success));
 					}
 					catch (AggregateException e)
 					{
