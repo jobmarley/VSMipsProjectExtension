@@ -398,8 +398,9 @@ namespace VSMipsProjectExtension.DebugEngine
 			{
 				try
 				{
-					// Stop the processor if it's running
+					// Stop the processor if it's running and set pc to 0
 					await m_client.SetStateAsync(md_state.md_state_paused);
+					await m_client.WriteRegisterAsync(md_register.md_register_pc, 0);
 
 					// Load each file in memory at the given offset
 					// Maybe we should check for overlap but...
