@@ -65,6 +65,8 @@ ElfModule::ElfModule(IElfSymbolProvider* pSymbolProvider)
 }
 ElfModule::~ElfModule()
 {
+    m_compilationUnits.clear();
+
     if (m_cieTable || m_fdeTable)
         dwarf_dealloc_fde_cie_list(m_dbg, m_cieTable, m_cieCount, m_fdeTable, m_fdeCount);
 

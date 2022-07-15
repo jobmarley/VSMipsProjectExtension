@@ -96,6 +96,7 @@ END_COM_MAP()
     STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
 
     STDMETHOD(SetEventCallback)(IMipsDEEventCallback* pDEEventCallback);
+    STDMETHOD(UnloadAll)();
 
     STDMETHOD(Initialize)(
         /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices);

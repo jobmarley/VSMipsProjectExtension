@@ -132,7 +132,6 @@ namespace VSMipsProjectExtension.DebugEngine
 			Guid iid = e.IID;
 			m_eventConnectionPoint.Event(m_server, this, program.Process, program, e, ref iid);
 		}
-		async Task SendProgramDestroyEventAsync(MipsDebugProgram program) => await Task.Run(() => SendProgramDestroyEvent(program));
 		void SendProgramDestroyEvent(MipsDebugProgram program)
 		{
 			MipsDebugProgramDestroyEvent e = new MipsDebugProgramDestroyEvent(0, program);
@@ -216,7 +215,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		public int RemoveProgramNode(IDebugProgramNode2 pProgramNode)
 		{
 			MipsDebugProgram program = pProgramNode as MipsDebugProgram;
-			SendProgramDestroyEventAsync(program);
+			SendProgramDestroyEvent(program);
 			return m_programPublisher.UnpublishProgramNode(pProgramNode);
 		}
 
@@ -253,6 +252,12 @@ namespace VSMipsProjectExtension.DebugEngine
 		{
 			ppv = IntPtr.Zero;
 			return CustomQueryInterfaceResult.NotHandled;
+		}
+
+		public void Close()
+		{
+			m_client.Close();
+			m_client = null;
 		}
 	}
 }

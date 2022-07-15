@@ -141,6 +141,7 @@ namespace VSMipsProjectExtension.DebugEngine
 			IDebugPortNotify2 dpn;
 			ddp.GetPortNotify(out dpn);
 			dpn.RemoveProgramNode(this);
+
 			return VSConstants.S_OK;
 		}
 

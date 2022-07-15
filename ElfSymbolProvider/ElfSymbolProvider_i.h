@@ -540,6 +540,8 @@ EXTERN_C const IID IID_IElfSymbolProvider;
         virtual HRESULT STDMETHODCALLTYPE SetEventCallback( 
             IMipsDEEventCallback *pDEEventCallback) = 0;
         
+        virtual HRESULT STDMETHODCALLTYPE UnloadAll( void) = 0;
+        
     };
     
     
@@ -687,6 +689,10 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IElfSymbolProvider * This,
             IMipsDEEventCallback *pDEEventCallback);
         
+        DECLSPEC_XFGVIRT(IElfSymbolProvider, UnloadAll)
+        HRESULT ( STDMETHODCALLTYPE *UnloadAll )( 
+            IElfSymbolProvider * This);
+        
         END_INTERFACE
     } IElfSymbolProviderVtbl;
 
@@ -767,6 +773,9 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 
 #define IElfSymbolProvider_SetEventCallback(This,pDEEventCallback)	\
     ( (This)->lpVtbl -> SetEventCallback(This,pDEEventCallback) ) 
+
+#define IElfSymbolProvider_UnloadAll(This)	\
+    ( (This)->lpVtbl -> UnloadAll(This) ) 
 
 #endif /* COBJMACROS */
 

@@ -285,8 +285,24 @@ namespace VSMipsProjectExtension.DebugEngine
 			// This is a notification.
 			// We should cleanup everything program related and send the event
 			SendEvent(new MipsDebugProgramDestroyEvent(0, m_debuggedProgram));
-			m_debuggedProgram = null;
 			return VSConstants.S_OK;
+		}
+
+		void Cleanup()
+		{
+			m_client.OnMipsEvent -= OnMipsEvent;
+			m_client = null;
+
+			MipsRemoteDebugPort port = m_debuggedProcess.Port as MipsRemoteDebugPort;
+			port?.Close();
+
+			m_debuggedProgram = null;
+			m_debuggedProcess = null;
+			m_symbolProvider.UnloadAll();
+			m_symbolProvider = null;
+			m_callback = null;
+			m_expressionEvaluator = null;
+			m_activationContext = null;
 		}
 		// Called by the SDM to indicate that a synchronous debug event, previously sent by the DE to the SDM,
 		// was received and processed. The only event the sample engine sends in this fashion is Program Destroy.
@@ -322,9 +338,10 @@ namespace VSMipsProjectExtension.DebugEngine
 
 		async Task<int> LoadFileInMemoryAsync(string filepath, uint offset)
 		{
+			System.IO.FileStream fs = null;
 			try
 			{
-				System.IO.FileStream fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+				fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
 				byte[] buffer = new byte[fs.Length];
 				if (await fs.ReadAsync(buffer, 0, buffer.Length) != buffer.Length)
 					return VSConstants.E_FAIL;
@@ -336,6 +353,11 @@ namespace VSMipsProjectExtension.DebugEngine
 			catch (Exception)
 			{
 				return VSConstants.E_FAIL;
+			}
+			finally
+			{
+				if (fs != null)
+					fs.Close();
 			}
 			return VSConstants.S_OK;
 		}
@@ -494,7 +516,7 @@ namespace VSMipsProjectExtension.DebugEngine
 
 			SendEvent(new MipsDebugProcessDestroyEvent(m_debuggedProcess));
 
-			m_debuggedProcess = null;
+			Cleanup();
 			return VSConstants.S_OK;
 		}
 

@@ -106,5 +106,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		int GetPreviousStackFrame(IDebugStackFrame2 pStackFrame, out IDebugStackFrame2 ppStackFrame);
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
 		int SetEventCallback(IMipsDEEventCallback pDEEventCallback);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int UnloadAll();
 	}
 }

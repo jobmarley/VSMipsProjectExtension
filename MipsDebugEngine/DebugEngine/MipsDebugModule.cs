@@ -34,11 +34,12 @@ namespace VSMipsProjectExtension.DebugEngine
 
 		uint CalculateSize()
 		{
+			FileStream fs = null;
 			try
 			{
 				uint lower = uint.MaxValue;
 				uint upper = uint.MinValue;
-				FileStream fs = new FileStream(Filepath, FileMode.Open, FileAccess.Read);
+				fs = new FileStream(Filepath, FileMode.Open, FileAccess.Read);
 				var header = ElfUtils.RawDeserialize<ElfHeader>(fs);
 				if (header.magic == ElfUtils.ELF_MAGIC)
 				{
@@ -65,6 +66,11 @@ namespace VSMipsProjectExtension.DebugEngine
 			catch (Exception)
 			{
 
+			}
+			finally
+			{
+				if (fs != null)
+					fs.Close();
 			}
 			return (uint)new FileInfo(Filepath).Length;
 		}

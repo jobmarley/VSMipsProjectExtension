@@ -65,6 +65,7 @@ interface IElfSymbolProvider : IDebugSymbolProvider
 
 	HRESULT GetPreviousStackFrame(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
 	HRESULT SetEventCallback(IMipsDEEventCallback* pDEEventCallback);
+	HRESULT UnloadAll();
 };
 [
 	uuid(d58c5021-1e35-4bde-854c-80217cada2ae),

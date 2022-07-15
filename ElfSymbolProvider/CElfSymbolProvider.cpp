@@ -181,6 +181,15 @@ HRESULT CElfSymbolProvider::SetEventCallback(IMipsDEEventCallback* pDEEventCallb
     m_pDEEventCallback = pDEEventCallback;
     return S_OK;
 }
+HRESULT CElfSymbolProvider::UnloadAll()
+{
+    // destroy everything, in case of circular references we would still close the elf files and such
+    m_modulesByGuid.clear();
+    m_modulesByAddress.clear();
+    m_modules.clear();
+    m_pDEEventCallback.Release();
+    return S_OK;
+}
 HRESULT CElfSymbolProvider::Initialize(
     /* [in] */ __RPC__in_opt IDebugEngineSymbolProviderServices* pServices)
 {
