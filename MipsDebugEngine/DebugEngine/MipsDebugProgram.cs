@@ -136,7 +136,10 @@ namespace VSMipsProjectExtension.DebugEngine
 		public int Terminate()
 		{
 			// This must kill the program
-			//SendEvent(new MipsDebugProgramDestroyEvent(0, m_debuggedProgram));
+
+			// We cannot really kill the program, lets just break to stop execution
+			CauseBreak();
+
 			IDebugDefaultPort2 ddp = (IDebugDefaultPort2)Process.Port;
 			IDebugPortNotify2 dpn;
 			ddp.GetPortNotify(out dpn);
