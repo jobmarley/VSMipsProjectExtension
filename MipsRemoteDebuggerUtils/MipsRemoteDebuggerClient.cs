@@ -114,6 +114,8 @@ namespace MipsRemoteDebuggerUtils
 		public void Close()
 		{
 			m_cts.Cancel();
+			// Stream.ReadAsync doesnt work properly, it doesnt react to cancel so we force close the tcp client
+			m_tcpClient.Close();
 			try
 			{
 				m_receiveLoopTask.Wait();
@@ -122,7 +124,6 @@ namespace MipsRemoteDebuggerUtils
 			{
 
 			}
-			m_tcpClient.Close();
 			m_tcpClient = null;
 			m_cts = null;
 			m_clientConnection = null;

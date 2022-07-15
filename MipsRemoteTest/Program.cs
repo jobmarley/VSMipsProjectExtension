@@ -285,12 +285,17 @@ namespace MipsRemoteTest
 							Console.WriteLine("Exception: " + e.Message);
 					}
 				}
+				else if (cmd == "exit")
+				{
+					break;
+				}
 				else
 				{
 					Console.WriteLine("Unknown command");
 					continue;
 				}
 			}
+			client.Close();
 		}
 	}
 }
