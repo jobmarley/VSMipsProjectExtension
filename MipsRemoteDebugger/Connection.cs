@@ -29,12 +29,14 @@ namespace MipsRemoteDebugger
 		IntPtr m_devicePtr = IntPtr.Zero;
 		object m_sendLock = new object();
 		TcpClient m_client = null;
+		Mutex m_deviceMutex = null;
 
 		public TcpClient Client => m_client;
-		public Connection(IntPtr devicePtr, TcpClient client)
+		public Connection(IntPtr devicePtr, Mutex deviceMutex, TcpClient client)
 		{
 			m_devicePtr = devicePtr;
 			m_client = client;
+			m_deviceMutex = deviceMutex;
 		}
 
 		public async Task LoopAsync(CancellationToken cancellationToken)
@@ -60,41 +62,143 @@ namespace MipsRemoteDebugger
 			{
 				byte[] buffer = new byte[rmrp.Count];
 				uint readCount = 0;
-				md_status status = await Task.Run(() => mipsdebug_api.md_read_memory(m_devicePtr, buffer, (uint)buffer.Length, rmrp.Offset, out readCount));
+				md_status status = await Task.Run(() =>
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_read_memory(m_devicePtr, buffer, (uint)buffer.Length, rmrp.Offset, out readCount);
+					}
+					catch(Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				ReadMemoryResponsePacket resp = new ReadMemoryResponsePacket() { ID = rmrp.ID, Data = buffer, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else if (packet is WriteMemoryRequestPacket wmrp)
 			{
 				uint writtenCount = 0;
-				md_status status = await Task.Run(() => mipsdebug_api.md_write_memory(m_devicePtr, wmrp.Data, (uint)wmrp.Data.Length, wmrp.Offset, out writtenCount));
+				md_status status = await Task.Run(() => 
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_write_memory(m_devicePtr, wmrp.Data, (uint)wmrp.Data.Length, wmrp.Offset, out writtenCount);
+					}
+					catch (Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				WriteMemoryResponsePacket resp = new WriteMemoryResponsePacket() { ID = wmrp.ID, WrittenCount = writtenCount, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else if (packet is ReadRegisterRequestPacket rrrp)
 			{
 				uint value = 0;
-				md_status status = await Task.Run(() => mipsdebug_api.md_read_register(m_devicePtr, rrrp.Register, out value));
+				md_status status = await Task.Run(() => 
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_read_register(m_devicePtr, rrrp.Register, out value);
+					}
+					catch (Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				ReadRegisterResponsePacket resp = new ReadRegisterResponsePacket() { ID = rrrp.ID, Register = rrrp.Register, Value = value, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else if (packet is WriteRegisterRequestPacket wrrp)
 			{
 				uint value = 0;
-				md_status status = await Task.Run(() => mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, value));
+				md_status status = await Task.Run(() => 
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, value);
+					}
+					catch (Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				WriteRegisterResponsePacket resp = new WriteRegisterResponsePacket() { ID = wrrp.ID, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else if (packet is ReadStateRequestPacket rsrp)
 			{
 				md_state value = 0;
-				md_status status = await Task.Run(() => mipsdebug_api.md_get_state(m_devicePtr, out value));
+				md_status status = await Task.Run(() =>
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_get_state(m_devicePtr, out value);
+					}
+					catch (Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				ReadStateResponsePacket resp = new ReadStateResponsePacket() { ID = rsrp.ID, State = value, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}
 			else if (packet is WriteStateRequestPacket wsrp)
 			{
-				md_status status = await Task.Run(() => mipsdebug_api.md_set_state(m_devicePtr, wsrp.State));
+				md_status status = await Task.Run(() => 
+				{
+					md_status s = md_status.Failure;
+					try
+					{
+						m_deviceMutex.WaitOne();
+						s = mipsdebug_api.md_set_state(m_devicePtr, wsrp.State);
+					}
+					catch (Exception e)
+					{
+					}
+					finally
+					{
+						m_deviceMutex.ReleaseMutex();
+					}
+
+					return s;
+				});
 				WriteStateResponsePacket resp = new WriteStateResponsePacket() { ID = wsrp.ID, Status = status };
 				await SendPacketAsync(resp, cancellationToken);
 			}

@@ -19,6 +19,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Threading;
+using System.Collections.Concurrent;
 
 using MipsRemoteDebuggerUtils;
 
@@ -41,11 +42,15 @@ namespace MipsRemoteDebugger
 		
 		void OnMipsEvent(md_event e)
 		{
-			Connection con = m_connection;
-			if (con != null)
-				Task.Run(() => con.OnMipsEvent(e));
+			foreach (Connection con in m_connections.Values)
+			{
+				if (con != null)
+					Task.Run(() => con.OnMipsEvent(e));
+			}
 		}
-		Connection m_connection = null;
+		ConcurrentDictionary<TcpClient, Connection> m_connections = new ConcurrentDictionary<TcpClient, Connection>();
+		Mutex m_deviceMutex = new Mutex();
+
 		public void Run()
 		{
 			TcpListener listener = new TcpListener(IPAddress.Any, port);
@@ -66,10 +71,15 @@ namespace MipsRemoteDebugger
 					try
 					{
 						// AcceptTcpClientAsync cannot be canceled, it will raise an exception when listener stops
-						connection = new Connection(m_devicePtr, await listener.AcceptTcpClientAsync());
-						m_connection = connection;
+						TcpClient client = await listener.AcceptTcpClientAsync();
+						connection = new Connection(m_devicePtr, m_deviceMutex, client);
+						m_connections.TryAdd(client, connection);
 						Console.WriteLine(string.Format("Incoming connection from {0}", connection.Client.Client.RemoteEndPoint.ToString()));
-						await connection.LoopAsync(cts.Token);
+						_ = Task.Run(async () =>
+						{
+							await connection.LoopAsync(cts.Token);
+							m_connections.TryRemove(client, out _);
+						});
 					}
 					catch (Exception e)
 					{
@@ -77,7 +87,6 @@ namespace MipsRemoteDebugger
 						if (connection != null)
 							Console.WriteLine("Closed connection from " + (connection?.Client?.Client?.RemoteEndPoint?.ToString() ?? "<null>"));
 					}
-					m_connection = null;
 				}
 			}, cts.Token);
 
