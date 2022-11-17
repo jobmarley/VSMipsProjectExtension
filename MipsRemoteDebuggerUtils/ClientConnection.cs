@@ -103,8 +103,9 @@ namespace MipsRemoteDebuggerUtils
 				throw new Exception("packet too big");
 
 			byte[] buffer = new byte[hdr.Length - 8];
-			if (await ns.ReadAsync(buffer, 0, buffer.Length, cancellationToken) != buffer.Length)
-				throw new Exception();
+			int ofs = 0;
+			while (ofs < buffer.Length)
+				ofs += await ns.ReadAsync(buffer, ofs, buffer.Length - ofs, cancellationToken);
 
 			BinaryReader bufferReader = new BinaryReader(new MemoryStream(buffer));
 			switch (hdr.Type)
