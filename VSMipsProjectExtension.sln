@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ElfSymbolProviderPS", "ElfS
 		{1FFDAD0A-8539-431C-8B34-701345B6A047} = {1FFDAD0A-8539-431C-8B34-701345B6A047}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipsConsole", "MipsConsole\MipsConsole.csproj", "{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +124,18 @@ Global
 		{3685ED45-AEED-4AB8-96D4-D4A091BC90AE}.Release|Any CPU.ActiveCfg = Release|x64
 		{3685ED45-AEED-4AB8-96D4-D4A091BC90AE}.Release|x64.ActiveCfg = Release|x64
 		{3685ED45-AEED-4AB8-96D4-D4A091BC90AE}.Release|x86.ActiveCfg = Release|Win32
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|x64.Build.0 = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Debug|x86.Build.0 = Debug|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|x64.ActiveCfg = Release|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|x64.Build.0 = Release|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|x86.ActiveCfg = Release|Any CPU
+		{04B2B00C-558C-4767-97A2-90C4BCAB1B5F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
