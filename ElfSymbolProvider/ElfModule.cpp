@@ -296,7 +296,7 @@ Dwarf_Fde ElfModule::FdeFromAddress(DWORD address)
         });
 
     // This gets the first bigger than, so if 0, miss
-    if (found == end)
+    if (found == start)
         return nullptr;
 
     --found;
