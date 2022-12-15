@@ -53,69 +53,81 @@ namespace MipsRemoteDebugger
 
 		public void Run()
 		{
-			TcpListener listener = new TcpListener(IPAddress.Any, port);
-			Console.WriteLine(string.Format("Starting to listen on port {0}...", port));
-			listener.Start();
-
-			md_status status = mipsdebug_api.md_open(out m_devicePtr);
-			status = mipsdebug_api.md_register_callback(m_devicePtr, OnMipsEvent);
-
-			CancellationTokenSource cts = new CancellationTokenSource();
-
-			Task loopTask = Task.Run(async () =>
-			{
-				// This loop services 1 connection at a time
-				while (!cts.Token.IsCancellationRequested)
-				{
-					Connection connection = null;
-					try
-					{
-						// AcceptTcpClientAsync cannot be canceled, it will raise an exception when listener stops
-						TcpClient client = await listener.AcceptTcpClientAsync();
-						connection = new Connection(m_devicePtr, m_deviceMutex, client);
-						m_connections.TryAdd(client, connection);
-						Console.WriteLine(string.Format("Incoming connection from {0}", connection.Client.Client.RemoteEndPoint.ToString()));
-						_ = Task.Run(async () =>
-						{
-							await connection.LoopAsync(cts.Token);
-							m_connections.TryRemove(client, out _);
-						});
-					}
-					catch (Exception e)
-					{
-						Console.WriteLine("Exception: " + e.Message);
-						if (connection != null)
-							Console.WriteLine("Closed connection from " + (connection?.Client?.Client?.RemoteEndPoint?.ToString() ?? "<null>"));
-					}
-				}
-			}, cts.Token);
-
-			while (true)
-			{
-				Console.Write(">> ");
-				string s = Console.ReadLine();
-				if (s == "exit")
-				{
-					break;
-				}
-			}
-
-			// unregister before closing to make sure we dont send events to a closed connection, but we dont really care
-			status = mipsdebug_api.md_unregister_callback(m_devicePtr, OnMipsEvent);
-
 			try
 			{
-				cts.Cancel();
-				// Need to stop listening to stop AcceptTcpClientAsync
-				listener.Stop();
-				loopTask.Wait();
+				md_status status = mipsdebug_api.md_open(out m_devicePtr);
+				if (status != md_status.Success)
+					throw new Exception(string.Format("Could not open a handle to the device, status: {0}", status));
+
+				status = mipsdebug_api.md_register_callback(m_devicePtr, OnMipsEvent);
+				if (status != md_status.Success)
+					throw new Exception(string.Format("Could not register callback, status: {0}", status));
+
+				TcpListener listener = new TcpListener(IPAddress.Any, port);
+				Console.WriteLine(string.Format("Starting to listen on port {0}...", port));
+				listener.Start();
+
+				CancellationTokenSource cts = new CancellationTokenSource();
+
+				Task loopTask = Task.Run(async () =>
+				{
+				// This loop services 1 connection at a time
+					while (!cts.Token.IsCancellationRequested)
+					{
+						Connection connection = null;
+						try
+						{
+						// AcceptTcpClientAsync cannot be canceled, it will raise an exception when listener stops
+							TcpClient client = await listener.AcceptTcpClientAsync();
+							connection = new Connection(m_devicePtr, m_deviceMutex, client);
+							m_connections.TryAdd(client, connection);
+							Console.WriteLine(string.Format("Incoming connection from {0}", connection.Client.Client.RemoteEndPoint.ToString()));
+							_ = Task.Run(async () =>
+							{
+								await connection.LoopAsync(cts.Token);
+								m_connections.TryRemove(client, out _);
+							});
+						}
+						catch (Exception e)
+						{
+							Console.WriteLine("Exception: " + e.Message);
+							if (connection != null)
+								Console.WriteLine("Closed connection from " + (connection?.Client?.Client?.RemoteEndPoint?.ToString() ?? "<null>"));
+						}
+					}
+				}, cts.Token);
+
+				while (true)
+				{
+					Console.Write(">> ");
+					string s = Console.ReadLine();
+					if (s == "exit")
+					{
+						break;
+					}
+				}
+
+				// unregister before closing to make sure we dont send events to a closed connection, but we dont really care
+				status = mipsdebug_api.md_unregister_callback(m_devicePtr, OnMipsEvent);
+
+				try
+				{
+					cts.Cancel();
+					// Need to stop listening to stop AcceptTcpClientAsync
+					listener.Stop();
+					loopTask.Wait();
+				}
+				catch (Exception)
+				{
+					// thats not important
+				}
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
-
+				Console.WriteLine(string.Format("Exception: {0}", e.Message));
 			}
-
-			mipsdebug_api.md_close(m_devicePtr);
+			if (m_devicePtr != IntPtr.Zero)
+				mipsdebug_api.md_close(m_devicePtr);
 		}
 	}
 }
