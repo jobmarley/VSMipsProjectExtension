@@ -63,7 +63,7 @@ std::wstring CElfDebugProperty::GetValue(DWORD radix)
 			int64_t byteSize = m_pDie->GetType()->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
 			std::wstringstream ss;
 			if (radix == 16)
-				ss << std::hex << std::setfill(L'0') << std::setw(byteSize) << L"0x" << result;
+				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize*2) << result;
 			else
 				ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<int32_t*>(&result);
 			return ss.str();
@@ -73,7 +73,7 @@ std::wstring CElfDebugProperty::GetValue(DWORD radix)
 			int64_t byteSize = m_pDie->GetType()->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
 			std::wstringstream ss;
 			if (radix == 16)
-				ss << std::hex << std::setfill(L'0') << std::setw(byteSize) << L"0x" << result;
+				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize*2) << result;
 			else
 				ss << std::dec << std::setfill(L'0') << std::setw(0) << result;
 			return ss.str();
