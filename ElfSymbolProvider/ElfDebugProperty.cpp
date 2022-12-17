@@ -43,12 +43,56 @@ std::wstring CElfDebugProperty::GetValue(DWORD radix)
 
 	DWORD result = calculator->Calculate(registers);
 
-	std::wstringstream ss;
-	if (radix == 16)
-		ss << std::hex << std::setfill(L'0') << std::setw(8) << L"0x" << result;
-	else
-		ss << std::dec << std::setfill(L'0') << std::setw(0) << result;
-	return ss.str();
+
+	switch (m_pDie->GetType()->GetTag())
+	{
+	case DW_TAG_base_type:
+	{
+		switch (m_pDie->GetType()->GetAttribute(DW_AT_encoding)->GetValue().AsInt64())
+		{
+		case DW_ATE_boolean:
+			return result != 0 ? L"true" : L"false";
+		case DW_ATE_float:
+		{
+			std::wstringstream ss;
+			ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<float*>(&result);
+			return ss.str();
+		}
+		case DW_ATE_signed:
+		{
+			int64_t byteSize = m_pDie->GetType()->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+			std::wstringstream ss;
+			if (radix == 16)
+				ss << std::hex << std::setfill(L'0') << std::setw(byteSize) << L"0x" << result;
+			else
+				ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<int32_t*>(&result);
+			return ss.str();
+		}
+		case DW_ATE_unsigned:
+		{
+			int64_t byteSize = m_pDie->GetType()->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+			std::wstringstream ss;
+			if (radix == 16)
+				ss << std::hex << std::setfill(L'0') << std::setw(byteSize) << L"0x" << result;
+			else
+				ss << std::dec << std::setfill(L'0') << std::setw(0) << result;
+			return ss.str();
+		}
+		case DW_ATE_signed_char:
+		case DW_ATE_unsigned_char:
+		{
+			std::wstringstream ss;
+			ss << "'" << (char)result << "'";
+			return ss.str();
+		}
+		default:
+			return L"<unsupported value>";
+		}
+	}
+	default:
+		return L"<unsupported value>";
+	}
+
 }
 HRESULT CElfDebugProperty::GetPropertyInfo(
     /* [in] */ DEBUGPROP_INFO_FLAGS dwFields,

@@ -60,6 +60,35 @@ public:
     DWORD Calculate(MipsRegisters& registers);
 };
 
+class ElfAttributeValue
+{
+    std::variant<std::string, int64_t, uint64_t> m_v;
+public:
+    ElfAttributeValue(std::string v)
+        : m_v(v)
+    {
+    }
+    ElfAttributeValue(int64_t v)
+        : m_v(v)
+    {
+    }
+    ElfAttributeValue(uint64_t v)
+        : m_v(v)
+    {
+    }
+    std::string AsString()
+    {
+        return std::get<std::string>(m_v);
+    }
+    int64_t AsInt64()
+    {
+        return std::get<int64_t>(m_v);
+    }
+    uint64_t AsUInt64()
+    {
+        return std::get<uint64_t>(m_v);
+    }
+};
 class ElfAttribute
 {
     ElfAttribute() = delete;
@@ -74,4 +103,5 @@ public:
     Dwarf_Attribute Attr();
 
     std::unique_ptr<ElfLECalculator> GetCalculator(IMemoryOperation* pMemOp);
+    ElfAttributeValue GetValue();
 };

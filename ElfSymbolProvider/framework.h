@@ -40,6 +40,7 @@
 #include <future>
 #include <regex>
 #include <stack>
+#include <variant>
 
 #include <msdbg.h> 
 #include <dbgmetric.h> 

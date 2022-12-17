@@ -136,6 +136,51 @@ Dwarf_Attribute ElfAttribute::Attr()
     return m_attr;
 }
 
+ElfAttributeValue ElfAttribute::GetValue()
+{
+	Dwarf_Half form = 0;
+	Dwarf_Error err = nullptr;
+	int result = dwarf_whatform(m_attr, &form, &err);
+	SafeThrowOnError(m_dbg, err);
+	if (result != DW_DLV_OK)
+		throw std::exception();
+
+	switch (form)
+	{
+	case DW_FORM_data1:
+	case DW_FORM_data2:
+	case DW_FORM_data4:
+	case DW_FORM_data8:
+	case DW_FORM_sdata:
+	{
+		Dwarf_Signed v = 0;
+		result = dwarf_formsdata(m_attr, &v, &err);
+		SafeThrowOnError(m_dbg, err);
+		if (result != DW_DLV_OK)
+			throw std::exception();
+		return (int64_t)v;
+	}
+	case DW_FORM_udata:
+	{
+		Dwarf_Unsigned v = 0;
+		result = dwarf_formudata(m_attr, &v, &err);
+		SafeThrowOnError(m_dbg, err);
+		if (result != DW_DLV_OK)
+			throw std::exception();
+		return (uint64_t)v;
+	}
+	case DW_FORM_string:
+	{
+		char* v = nullptr;
+		result = dwarf_formstring(m_attr, &v, &err);
+		SafeThrowOnError(m_dbg, err);
+		if (result != DW_DLV_OK)
+			throw std::exception();
+		return std::string(v);
+	}
+	}
+	throw std::exception();
+}
 
 ElfLECalculator::ElfLECalculator(Dwarf_Debug dbg, Dwarf_Attribute attr, IMemoryOperation* pMemOp)
 {
