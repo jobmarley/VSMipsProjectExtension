@@ -7,6 +7,11 @@ class ElfModule;
 class ElfAttribute;
 struct MipsRegisters;
 
+struct ElfAddressRange
+{
+    uint64_t start;
+    uint64_t end;
+};
 class ElfDie
 {
     ElfDie() = delete;
@@ -40,6 +45,9 @@ public:
     Dwarf_Off GetDwarfOfs();
 
     std::unique_ptr<ElfAttribute> GetAttribute(Dwarf_Half attributeNum);
+
+    std::vector<ElfAddressRange> GetRanges();
+    bool HasAttribute(Dwarf_Half attr);
 };
 
 

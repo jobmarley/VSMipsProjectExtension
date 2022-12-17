@@ -80,7 +80,7 @@ void CElfDebugStackFrame::AddProperties(DWORD pc, const std::vector<std::unique_
 		{
 			try
 			{
-				if (it->GetLowPc() <= pc && pc < it->GetHiPc())
+				if (std::ranges::any_of(it->GetRanges(), [=](ElfAddressRange ar) { return ar.start <= pc && pc < ar.end; }))
 				{
 					AddProperties(pc, it->GetChildrens());
 				}

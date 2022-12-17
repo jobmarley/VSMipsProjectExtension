@@ -117,6 +117,48 @@ std::unique_ptr<ElfAttribute> ElfDie::GetAttribute(Dwarf_Half attributeNum)
 
     return std::make_unique<ElfAttribute>(m_dbg, attr);
 }
+std::vector<ElfAddressRange> ElfDie::GetRanges()
+{
+	std::vector<ElfAddressRange> r;
+	if (HasAttribute(DW_AT_low_pc))
+	{
+		r.push_back({ GetLowPc(), GetHiPc() });
+	}
+	else if (HasAttribute(DW_AT_ranges))
+	{
+		uint64_t ofs = GetAttribute(DW_AT_ranges)->GetValue().AsUInt64();
+
+		Dwarf_Off realOfs = 0;
+		Dwarf_Ranges* ranges = nullptr;
+		Dwarf_Signed count = 0;
+		Dwarf_Unsigned byteCount = 0;
+		Dwarf_Error err = nullptr;
+		int result = dwarf_get_ranges_b(m_dbg, ofs, m_die, &realOfs, &ranges, &count, &byteCount, &err);
+		SafeThrowOnError(m_dbg, err);
+		if (result != DW_DLV_OK)
+			throw std::exception();
+
+		for (int i = 0; i < count-1; ++i)
+		{
+			r.push_back({ ranges[i].dwr_addr1, ranges[i].dwr_addr2 });
+		}
+	}
+	else
+	{
+		throw std::exception("Cannot find an address range");
+	}
+	return r;
+}
+bool ElfDie::HasAttribute(Dwarf_Half attr)
+{
+	Dwarf_Bool b = 0;
+	Dwarf_Error err = nullptr;
+	int result = dwarf_hasattr(m_die, attr, &b, &err);
+	SafeThrowOnError(m_dbg, err);
+	if (result != DW_DLV_OK)
+		throw std::exception();
+	return b;
+}
 ElfAttribute::ElfAttribute(Dwarf_Debug dbg, Dwarf_Attribute attr)
 {
     m_dbg = dbg;
@@ -177,6 +219,16 @@ ElfAttributeValue ElfAttribute::GetValue()
 		if (result != DW_DLV_OK)
 			throw std::exception();
 		return std::string(v);
+	}
+	case DW_FORM_sec_offset:
+	{
+		Dwarf_Off ofs = 0;
+		Dwarf_Bool b = false;
+		result = dwarf_global_formref_b(m_attr, &ofs, &b, &err);
+		SafeThrowOnError(m_dbg, err);
+		if (result != DW_DLV_OK)
+			throw std::exception();
+		return (uint64_t)ofs;
 	}
 	}
 	throw std::exception();
