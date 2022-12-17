@@ -60,7 +60,7 @@ void CElfDebugStackFrame::AddProperties(DWORD pc, const std::vector<std::unique_
 {
 	for (auto& it : dies)
 	{
-		if (it->GetTag() == DW_TAG_variable)
+		if (it->GetTag() == DW_TAG_variable || it->GetTag() == DW_TAG_formal_parameter)
 		{
 			CComPtr<IElfDebugProperty> pProperty;
 			HRESULT hr = CElfDebugProperty::CreateInstance(&pProperty);
