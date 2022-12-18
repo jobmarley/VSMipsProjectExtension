@@ -81,22 +81,22 @@ HRESULT CElfDebugExpression::EvaluateSync(
 			break;
 		}
 	}
-
+	return E_FAIL;
 	//if (die == nullptr)
 	//	return E_FAIL;
 
 
-	CComPtr<IElfDebugProperty> pDebugProperty;
+	/*CComPtr<IElfDebugProperty> pDebugProperty;
 	HRESULT hr = CElfDebugProperty::CreateInstance(&pDebugProperty);
 	if (FAILED(hr))
 		return hr;
 
-	hr = pDebugProperty->Init(die, m_pDocumentContext, m_pStackFrame);
+	hr = pDebugProperty->Init(CA2W(die->GetName()), die->GetType(), m_pDocumentContext, m_pStackFrame);
 	if (FAILED(hr))
-		return hr;
+		return hr;*/
 
 	CComPtr<IComThreadingInfo> pThreadingInfo;
-	hr = CoGetObjectContext(IID_IComThreadingInfo, (LPVOID*)&pThreadingInfo);
+	HRESULT hr = CoGetObjectContext(IID_IComThreadingInfo, (LPVOID*)&pThreadingInfo);
 	APTTYPE apttype;
 	hr = pThreadingInfo->GetCurrentApartmentType(&apttype);
 	/*CComPtr<IDebugExpression2> gogo;
@@ -146,6 +146,6 @@ HRESULT CElfDebugExpression::EvaluateSync(
 	//		int zqdq = 0;
 	//		delete pzobob;
 	//	});
-	m_pResult = pDebugProperty;
-	return pDebugProperty.QueryInterface(&ppResult);
+	//m_pResult = pDebugProperty;
+	//return pDebugProperty.QueryInterface(&ppResult);
 }

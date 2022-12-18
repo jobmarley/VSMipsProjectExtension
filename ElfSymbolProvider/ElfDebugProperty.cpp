@@ -15,12 +15,15 @@
 #include "pch.h"
 #include "ElfDebugProperty.h"
 #include "ElfDebugStackFrame.h"
+#include "SimpleEnumerator.h"
 
 // CElfDebugProperty
 
-HRESULT CElfDebugProperty::Init(ElfDie* pDie, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame)
+HRESULT CElfDebugProperty::Init(BSTR name, ElfType type, DWORD address, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame)
 {
-	m_pDie = pDie;
+	m_name = name;
+	m_type = std::make_unique<ElfType>(type);
+	m_address = address;
 	m_pDocumentContext = pDocumentContext;
 	m_pStackFrame = pStackFrame;
 	return S_OK;
@@ -37,111 +40,150 @@ bool IsChar(ElfType t)
 		return IsChar(t.GetReferencedType());
 }
 
-std::wstring GetString(uint32_t offset, IMemoryOperation* pMemOp)
+void FormatChar(std::wstringstream& ss, char c, uint32_t radix)
 {
+	if (isgraph(c))
+	{
+		ss << c;
+	}
+	else
+	{
+		if (radix == 16)
+			ss << "\\" << "x" << std::hex << std::setfill(L'0') << std::setw(2) << (uint32_t)c;
+		else
+			ss << "\\" << std::dec << (uint32_t)c;
+	}
+}
+
+std::wstring GetString(uint32_t offset, uint32_t radix, IMemoryOperation* pMemOp)
+{
+	if (offset == 0)
+		return L"";
+
 	uint32_t max = 0x40000000;
-	char buffer[20] = { 0 };
-	uint32_t count = std::min(max - offset, (uint32_t)20);
+	std::array<char, 20> buffer = { 0 };
+	uint32_t count = std::min(max - offset, (uint32_t)buffer.size());
 	DWORD readCount = 0;
-	HRESULT hr = pMemOp->Read((BYTE*)buffer, offset, count, &readCount);
+	HRESULT hr = pMemOp->Read((BYTE*)&buffer[0], offset, count, &readCount);
 	if (FAILED(hr))
 		throw std::exception();
 
-	if (buffer[19] != '\0')
+	std::wstringstream ss;
+	int len = strnlen_s(&buffer[0], buffer.size());
+	if (len < buffer.size())
 	{
-		buffer[16] = '.';
-		buffer[17] = '.';
-		buffer[18] = '.';
-		buffer[19] = '\0';
+		for (int i = 0; i < len; ++i)
+			FormatChar(ss, buffer[i], radix);
 	}
-	return CA2W(buffer).m_psz;
+	else
+	{
+		for (int i = 0; i < buffer.size() - 3; ++i)
+			FormatChar(ss, buffer[i], radix);
+		ss << "...";
+	}
+	return ss.str();
 }
+
+
 std::wstring FormatValue(uint32_t address, uint32_t radix, ElfType type, IMemoryOperation* pMemOp)
 {
-	switch (type.GetDie()->GetTag())
+	try
 	{
-	case DW_TAG_base_type:
-	{
-		int64_t byteSize = type.GetByteSize();
-		uint32_t value = 0;
-		DWORD readCount = 0;
-		HRESULT hr = pMemOp->Read((BYTE*)&value, address, byteSize, &readCount);
-		if (FAILED(hr))
-			throw std::exception();
+		if (address == 0)
+			return L"";
 
-		switch (type.GetEncoding())
+		switch (type.GetDie()->GetTag())
 		{
-		case DW_ATE_boolean:
-			return value != 0 ? L"true" : L"false";
-		case DW_ATE_float:
+		case DW_TAG_base_type:
 		{
-			std::wstringstream ss;
-			ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<float*>(&value);
-			return ss.str();
-		}
-		case DW_ATE_signed:
-		{
-			std::wstringstream ss;
-			if (radix == 16)
-				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize * 2) << value;
-			else
-				ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<int32_t*>(&value);
-			return ss.str();
-		}
-		case DW_ATE_unsigned:
-		{
-			std::wstringstream ss;
-			if (radix == 16)
-				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize * 2) << value;
-			else
-				ss << std::dec << std::setfill(L'0') << std::setw(0) << value;
-			return ss.str();
-		}
-		case DW_ATE_signed_char:
-		case DW_ATE_unsigned_char:
-		{
-			std::wstringstream ss;
+			int64_t byteSize = type.GetByteSize();
+			uint32_t value = 0;
+			DWORD readCount = 0;
+			HRESULT hr = pMemOp->Read((BYTE*)&value, address, byteSize, &readCount);
+			if (FAILED(hr))
+				throw std::exception();
 
-			if (radix == 16)
-				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(2) << value;
-			else
-				ss << std::dec << std::setfill(L'0') << std::setw(0) << value;
-			ss << " '" << (char)value << "'";
+			switch (type.GetEncoding())
+			{
+			case DW_ATE_boolean:
+				return value != 0 ? L"true" : L"false";
+			case DW_ATE_float:
+			{
+				std::wstringstream ss;
+				ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<float*>(&value);
+				return ss.str();
+			}
+			case DW_ATE_signed:
+			{
+				std::wstringstream ss;
+				if (radix == 16)
+					ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize * 2) << value;
+				else
+					ss << std::dec << std::setfill(L'0') << std::setw(0) << *reinterpret_cast<int32_t*>(&value);
+				return ss.str();
+			}
+			case DW_ATE_unsigned:
+			{
+				std::wstringstream ss;
+				if (radix == 16)
+					ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize * 2) << value;
+				else
+					ss << std::dec << std::setfill(L'0') << std::setw(0) << value;
+				return ss.str();
+			}
+			case DW_ATE_signed_char:
+			case DW_ATE_unsigned_char:
+			{
+				std::wstringstream ss;
+				ss << "'";
+				FormatChar(ss, value, radix);
+				ss << "'";
+				return ss.str();
+			}
+			default:
+				return L"<unsupported value>";
+			}
+		}
+		case DW_TAG_pointer_type:
+		{
+			uint32_t value = 0;
+			DWORD readCount = 0;
+			HRESULT hr = pMemOp->Read((BYTE*)&value, address, 4, &readCount);
+			if (FAILED(hr))
+				throw std::exception();
+
+			std::wstringstream ss;
+			ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << value;
+
+			if (value != 0)
+			{
+				if (IsChar(type.GetReferencedType()) && pMemOp)
+					ss << " \"" << GetString(value, radix, pMemOp) << "\"";
+				else
+					ss << "{" << "}";
+			}
+
+			return ss.str();
+		}
+		case DW_TAG_array_type:
+		{
+			std::wstringstream ss;
+			ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << address;
+
+			if (IsChar(type.GetReferencedType()) && pMemOp)
+				ss << " \"" << GetString(address, radix, pMemOp) << "\"";
+
 			return ss.str();
 		}
 		default:
 			return L"<unsupported value>";
 		}
 	}
-	case DW_TAG_pointer_type:
+	catch (...)
 	{
-		uint32_t value = 0;
-		DWORD readCount = 0;
-		HRESULT hr = pMemOp->Read((BYTE*)&value, address, 4, &readCount);
-		if (FAILED(hr))
-			throw std::exception();
 
-		std::wstringstream ss;
-		ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << value;
-
-		if (IsChar(type.GetReferencedType()) && pMemOp)
-			ss << " \"" << GetString(value, pMemOp) << "\"";
-
-		return ss.str();
 	}
-	case DW_TAG_array_type:
-	{
-		std::wstringstream ss;
-		ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << address;
-
-		if (IsChar(type.GetReferencedType()) && pMemOp)
-			ss << " \"" << GetString(address, pMemOp) << "\"";
-
-		return ss.str();
-	}
-	default:
-		return L"<unsupported value>";
-	}
+	return L"<unsupported value>";
 }
 std::wstring GetTypeName(ElfType t, uint32_t radix)
 {
@@ -166,21 +208,11 @@ std::wstring GetTypeName(ElfType t, uint32_t radix)
 
 std::wstring CElfDebugProperty::GetValue(DWORD radix)
 {
-	auto attr = m_pDie->GetAttribute(DW_AT_location);
-	
 	CComPtr<IMemoryOperation> pMemoryOp;
 	HRESULT hr = m_pStackFrame->GetMemoryOperation(&pMemoryOp);
 	if (FAILED(hr))
 		throw std::exception();
-	auto calculator = attr->GetCalculator(pMemoryOp);
-
-	MipsRegisters registers = {};
-	hr = m_pStackFrame->GetRegisters(&registers);
-	if (FAILED(hr))
-		throw std::exception();
-
-	DWORD address = calculator->Calculate(registers);
-	return FormatValue(address, radix, m_pDie->GetType(), pMemoryOp);
+	return FormatValue(m_address, radix, *m_type, pMemoryOp);
 }
 HRESULT CElfDebugProperty::GetPropertyInfo(
     /* [in] */ DEBUGPROP_INFO_FLAGS dwFields,
@@ -195,57 +227,44 @@ HRESULT CElfDebugProperty::GetPropertyInfo(
 
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_FULLNAME)
 	{
-		if (m_pDie)
-		{
-			pPropertyInfo->bstrName = SysAllocString(CA2W(m_pDie->GetName()));
-			pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_FULLNAME;
-		}
+		pPropertyInfo->bstrName = SysAllocString(m_name);
+		pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_FULLNAME;
 	}
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_NAME)
 	{
-		if (m_pDie)
-		{
-			pPropertyInfo->bstrName = SysAllocString(CA2W(m_pDie->GetName()));
-			pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_NAME;
-		}
+		pPropertyInfo->bstrName = SysAllocString(m_name);
+		pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_NAME;
 	}
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_TYPE)
 	{
-		if (m_pDie)
+		try
 		{
-			try
-			{
-				pPropertyInfo->bstrType = SysAllocString(GetTypeName(m_pDie->GetType(), dwRadix).c_str());
-			}
-			catch (std::exception e)
-			{
-				pPropertyInfo->bstrType = SysAllocString(L"<unsupported type>");
-			}
-			pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_TYPE;
+			pPropertyInfo->bstrType = SysAllocString(GetTypeName(*m_type, dwRadix).c_str());
 		}
+		catch (std::exception e)
+		{
+			pPropertyInfo->bstrType = SysAllocString(L"<unsupported type>");
+		}
+		pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_TYPE;
 	}
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_VALUE)
 	{
-		if (m_pDie)
+		std::wstring sValue = L"";
+		try
 		{
-			std::wstring sValue = L"";
-			try
-			{
-				sValue = GetValue(dwRadix);
-			}
-			catch (...)
-			{ }
-			pPropertyInfo->bstrValue = SysAllocString(sValue.c_str());
-			pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_VALUE;
+			sValue = GetValue(dwRadix);
 		}
+		catch (...)
+		{ }
+		pPropertyInfo->bstrValue = SysAllocString(sValue.c_str());
+		pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_VALUE;
 	}
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_ATTRIB)
 	{
-		if (m_pDie)
-		{
-			pPropertyInfo->dwAttrib |= DBG_ATTRIB_ACCESS_PUBLIC | DBG_ATTRIB_DATA;
-			pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_ATTRIB;
-		}
+		pPropertyInfo->dwAttrib |= DBG_ATTRIB_ACCESS_PUBLIC | DBG_ATTRIB_DATA;
+		if (m_type->IsPointer() || (m_type->IsArray() && m_type->GetCount() > 0))
+			pPropertyInfo->dwAttrib |= DBG_ATTRIB_OBJ_IS_EXPANDABLE;
+		pPropertyInfo->dwFields |= enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_ATTRIB;
 	}
 	if (dwFields & enum_DEBUGPROP_INFO_FLAGS::DEBUGPROP_INFO_PROP)
 	{
@@ -301,7 +320,41 @@ HRESULT CElfDebugProperty::EnumChildren(
     /* [in] */ DWORD dwTimeout,
     /* [out] */ __RPC__deref_out_opt IEnumDebugPropertyInfo2** ppEnum)
 {
-	return E_NOTIMPL;
+	if (!m_childrenEnumerated)
+	{
+		if (m_type->IsPointer())
+		{
+			CComPtr<IElfDebugProperty> pProperty;
+			HRESULT hr = CElfDebugProperty::CreateInstance(&pProperty);
+			if (FAILED(hr))
+				throw std::exception();
+
+			CComPtr<IMemoryOperation> pMemoryOp;
+			hr = m_pStackFrame->GetMemoryOperation(&pMemoryOp);
+			if (FAILED(hr))
+				throw std::exception();
+			DWORD ptrValue = 0;
+			DWORD readCount = 0;
+			hr = pMemoryOp->Read((BYTE*)&ptrValue, m_address, 4, &readCount);
+			if (FAILED(hr))
+				throw std::exception();
+
+			hr = pProperty->Init(CComBSTR(), m_type->GetReferencedType(), ptrValue, m_pDocumentContext, m_pStackFrame);
+			if (FAILED(hr))
+				throw std::exception();
+
+			m_children.push_back(pProperty);
+		}
+		m_childrenEnumerated = true;
+	}
+
+	std::vector<DEBUG_PROPERTY_INFO> infos(m_children.size());
+	for (int i = 0; i < m_children.size(); ++i)
+	{
+		if (FAILED(m_children[i]->GetPropertyInfo(dwFields, dwRadix, dwTimeout, nullptr, 0, &infos[i])))
+			throw std::exception();
+	}
+	return SimpleEnumerator<IEnumDebugPropertyInfo2>::Create(infos, ppEnum);
 }
 
 HRESULT CElfDebugProperty::GetParent(

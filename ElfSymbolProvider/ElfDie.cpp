@@ -262,7 +262,7 @@ ElfType ElfType::GetReferencedType()
 }
 Dwarf_Unsigned ElfType::GetEncoding()
 {
-	return m_pDie->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+	return m_pDie->GetAttribute(DW_AT_encoding)->GetValue().AsInt64();
 }
 ElfDie* ElfType::GetDie()
 {

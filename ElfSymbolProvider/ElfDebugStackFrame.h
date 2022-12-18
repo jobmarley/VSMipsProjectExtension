@@ -60,6 +60,7 @@ class ATL_NO_VTABLE CElfDebugStackFrame :
     HRESULT GetFirstCodeContext(IDebugCodeContext2** ppCodeContext);
     void InitializeProperties();
     void AddProperties(DWORD pc, const std::vector<std::unique_ptr<ElfDie>>& dies);
+    uint32_t GetVariableAddress(ElfDie* die);
 public:
 	CElfDebugStackFrame()
 	{

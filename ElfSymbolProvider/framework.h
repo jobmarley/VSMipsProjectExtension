@@ -41,6 +41,7 @@
 #include <regex>
 #include <stack>
 #include <variant>
+#include <array>
 
 #include <msdbg.h> 
 #include <dbgmetric.h> 

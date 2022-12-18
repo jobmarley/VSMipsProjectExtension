@@ -22,19 +22,24 @@ MIDL_INTERFACE("f0e7e2fc-eb52-4d97-90bb-492b4d07a253")
 IElfDebugProperty : public IDebugProperty2
 {
 public:
-	virtual HRESULT Init(ElfDie* pDie, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame) = 0;
+	virtual HRESULT Init(BSTR name, ElfType type, DWORD address, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame) = 0;
 };
 
 // CElfDebugProperty
-
+// This represent a variable to be displayed in eg. the local window in the debugger
+// It has an address, a type and a name
 class ATL_NO_VTABLE CElfDebugProperty :
 	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CElfDebugProperty, &CLSID_ElfDebugProperty>,
 	public IElfDebugProperty
 {
-    ElfDie* m_pDie = nullptr;
+    uint32_t m_address = 0;
+    std::unique_ptr<ElfType> m_type;
     CComPtr<IDebugDocumentContext2> m_pDocumentContext;
     IElfDebugStackFrame* m_pStackFrame = nullptr;
+    std::vector<CComPtr<IElfDebugProperty>> m_children;
+    bool m_childrenEnumerated = false;
+    CComBSTR m_name;
 
     std::wstring GetValue(DWORD radix);
 public:
@@ -51,7 +56,7 @@ BEGIN_COM_MAP(CElfDebugProperty)
 END_COM_MAP()
 
 
-STDMETHOD(Init)(ElfDie* pDie, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame);
+STDMETHOD(Init)(BSTR name, ElfType type, DWORD address, IDebugDocumentContext2* pDocumentContext, IElfDebugStackFrame* pStackFrame);
 
 STDMETHOD(GetPropertyInfo)(
     /* [in] */ DEBUGPROP_INFO_FLAGS dwFields,

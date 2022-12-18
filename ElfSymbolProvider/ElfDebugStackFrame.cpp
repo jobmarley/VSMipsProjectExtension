@@ -55,6 +55,23 @@ HRESULT CElfDebugStackFrame::GetFirstCodeContext(IDebugCodeContext2** ppCodeCont
 	return S_OK;
 }
 
+uint32_t CElfDebugStackFrame::GetVariableAddress(ElfDie* die)
+{
+	auto attr = die->GetAttribute(DW_AT_location);
+
+	CComPtr<IMemoryOperation> pMemoryOp;
+	HRESULT hr = GetMemoryOperation(&pMemoryOp);
+	if (FAILED(hr))
+		throw std::exception();
+	auto calculator = attr->GetCalculator(pMemoryOp);
+
+	MipsRegisters registers = {};
+	hr = GetRegisters(&registers);
+	if (FAILED(hr))
+		throw std::exception();
+
+	return calculator->Calculate(registers);
+}
 
 void CElfDebugStackFrame::AddProperties(DWORD pc, const std::vector<std::unique_ptr<ElfDie>>& dies)
 {
@@ -62,11 +79,14 @@ void CElfDebugStackFrame::AddProperties(DWORD pc, const std::vector<std::unique_
 	{
 		if (it->GetTag() == DW_TAG_variable || it->GetTag() == DW_TAG_formal_parameter)
 		{
+			uint32_t qzdqd = 55;
+			uint32_t* dddd = &qzdqd;
 			CComPtr<IElfDebugProperty> pProperty;
 			HRESULT hr = CElfDebugProperty::CreateInstance(&pProperty);
 			if (FAILED(hr))
 				continue;
-			hr = pProperty->Init(it.get(), m_pDocumentContext, this);
+
+			hr = pProperty->Init(CA2W(it->GetName()), it->GetType(), GetVariableAddress(it.get()), m_pDocumentContext, this);
 			if (FAILED(hr))
 				continue;
 
