@@ -12,6 +12,7 @@ struct ElfAddressRange
     uint64_t start;
     uint64_t end;
 };
+
 class ElfDie
 {
     ElfDie() = delete;

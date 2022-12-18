@@ -743,12 +743,7 @@ DWORD ElfLECalculator::Calculate(MipsRegisters& registers)
 		break;
     }
 
-	DWORD value = 0;
-	DWORD readCount = 0;
-	HRESULT hr = m_pMemOp->Read(reinterpret_cast<BYTE*>(&value), address, sizeof(value), &readCount);
-	if (FAILED(hr) || readCount != sizeof(value))
-		throw std::exception();
-	return value;
+	return address;
 }
 std::unique_ptr<ElfLECalculator> ElfAttribute::GetCalculator(IMemoryOperation* pMemOp)
 {
