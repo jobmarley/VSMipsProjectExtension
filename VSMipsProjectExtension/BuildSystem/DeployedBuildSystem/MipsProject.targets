@@ -23,7 +23,7 @@
 		<PropertyGroup>
 			<clang_path>"C:\Program Files\LLVM\bin\clang++"</clang_path>
 		</PropertyGroup>
-		<Exec Command="$(clang_path) -c --target=mipsel -mips32 %(ClCompile.Identity) -g3 -o $(IntDir)\%(ClCompile.Filename).o" />
+		<Exec Command="$(clang_path) -c --target=mipsel -mips32 %(ClCompile.Identity) -g3 -fno-exceptions -o $(IntDir)\%(ClCompile.Filename).o" />
 	</Target>
 
 	<!-- that step is required to deal with SectionStart -->
