@@ -175,6 +175,10 @@ std::wstring FormatValue(uint32_t address, uint32_t radix, ElfType type, IMemory
 
 			return ss.str();
 		}
+		case DW_TAG_const_type:
+		{
+			return FormatValue(address, radix, type.GetReferencedType(), pMemOp);
+		}
 		default:
 			return L"<unsupported value>";
 		}
@@ -195,7 +199,7 @@ std::wstring GetTypeName(ElfType t, uint32_t radix)
 		ss << GetTypeName(t.GetReferencedType(), radix) << L"[";
 		int64_t count = t.GetCount();
 		if (radix == 16)
-			ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(0) << count;
+			ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << count;
 		else
 			ss << std::dec << std::setfill(L'0') << std::setw(0) << count;
 		ss << L"]";
@@ -344,6 +348,29 @@ HRESULT CElfDebugProperty::EnumChildren(
 				throw std::exception();
 
 			m_children.push_back(pProperty);
+		}
+		else if (m_type->IsArray())
+		{
+			for (int i = 0; i < m_type->GetCount(); ++i)
+			{
+				CComPtr<IElfDebugProperty> pProperty;
+				HRESULT hr = CElfDebugProperty::CreateInstance(&pProperty);
+				if (FAILED(hr))
+					throw std::exception();
+
+				std::wstringstream ss;
+				ss << L"[";
+				if (dwRadix == 16)
+					ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << i;
+				else
+					ss << std::dec << std::setfill(L'0') << std::setw(0) << i; 
+				ss << L"]";
+				hr = pProperty->Init(CComBSTR(ss.str().c_str()), m_type->GetReferencedType(), m_address + i, m_pDocumentContext, m_pStackFrame);
+				if (FAILED(hr))
+					throw std::exception();
+
+				m_children.push_back(pProperty);
+			}
 		}
 		m_childrenEnumerated = true;
 	}
