@@ -85,7 +85,7 @@ ElfDie* ElfDie::GetParent()
 {
     return m_parent;
 }
-ElfDie* ElfDie::GetType()
+ElfType ElfDie::GetType()
 {
     Dwarf_Off ofs = 0;
     Dwarf_Error err = nullptr;
@@ -94,7 +94,7 @@ ElfDie* ElfDie::GetType()
     if (result != DW_DLV_OK)
         throw std::exception();
 
-    return m_pModule->GetDieFromOffset(ofs);
+    return ElfType(m_pModule->GetDieFromOffset(ofs));
 }
 Dwarf_Off ElfDie::GetDwarfOfs()
 {
@@ -232,6 +232,49 @@ ElfAttributeValue ElfAttribute::GetValue()
 	}
 	}
 	throw std::exception();
+}
+ElfType::ElfType(ElfDie* pDie)
+	: m_pDie(pDie)
+{
+
+}
+
+bool ElfType::IsPointer()
+{
+	return m_pDie->GetTag() == DW_TAG_pointer_type;
+}
+bool ElfType::IsArray()
+{
+	return m_pDie->GetTag() == DW_TAG_array_type;
+}
+bool ElfType::IsConst()
+{
+	return m_pDie->GetTag() == DW_TAG_const_type;
+}
+uint64_t ElfType::GetCount()
+{
+	auto subrange = std::ranges::find_if(m_pDie->GetChildrens(), [](std::unique_ptr<ElfDie>& p) { return p->GetTag() == DW_TAG_subrange_type; });
+	return (*subrange)->GetAttribute(DW_AT_count)->GetValue().AsInt64();
+}
+ElfType ElfType::GetReferencedType()
+{
+	return m_pDie->GetType();
+}
+Dwarf_Unsigned ElfType::GetEncoding()
+{
+	return m_pDie->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+}
+ElfDie* ElfType::GetDie()
+{
+	return m_pDie;
+}
+uint64_t ElfType::GetByteSize()
+{
+	return m_pDie->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+}
+std::string ElfType::GetName()
+{
+	return m_pDie->GetName();
 }
 
 ElfLECalculator::ElfLECalculator(Dwarf_Debug dbg, Dwarf_Attribute attr, IMemoryOperation* pMemOp)

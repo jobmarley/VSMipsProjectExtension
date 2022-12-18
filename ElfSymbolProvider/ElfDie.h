@@ -13,6 +13,8 @@ struct ElfAddressRange
     uint64_t end;
 };
 
+class ElfType;
+
 class ElfDie
 {
     ElfDie() = delete;
@@ -41,7 +43,7 @@ public:
     inline Dwarf_Debug Dbg() { return m_dbg; }
     inline Dwarf_Die Die() { return m_die; }
 
-    ElfDie* GetType();
+    ElfType GetType();
 
     Dwarf_Off GetDwarfOfs();
 
@@ -51,6 +53,22 @@ public:
     bool HasAttribute(Dwarf_Half attr);
 };
 
+class ElfType
+{
+    ElfDie* m_pDie = nullptr;
+public:
+    ElfType(ElfDie* pDie);
+
+    Dwarf_Unsigned GetEncoding();
+    bool IsPointer();
+    bool IsArray();
+    bool IsConst();
+    uint64_t GetCount();
+    ElfType GetReferencedType();
+    ElfDie* GetDie();
+    uint64_t GetByteSize();
+    std::string GetName();
+};
 
 // Calculate location expressions
 class ElfLECalculator

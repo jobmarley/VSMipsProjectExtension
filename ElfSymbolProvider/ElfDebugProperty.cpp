@@ -26,15 +26,15 @@ HRESULT CElfDebugProperty::Init(ElfDie* pDie, IDebugDocumentContext2* pDocumentC
 	return S_OK;
 }
 
-bool IsChar(ElfDie* d)
+bool IsChar(ElfType t)
 {
-	if (d->GetTag() == DW_TAG_base_type)
+	if (t.GetDie()->GetTag() == DW_TAG_base_type)
 	{
-		int64_t encoding = d->GetAttribute(DW_AT_encoding)->GetValue().AsInt64();
+		int64_t encoding = t.GetEncoding();
 		return encoding == DW_ATE_signed_char || encoding == DW_ATE_unsigned_char;
 	}
-	if (d->GetTag() == DW_TAG_const_type)
-		return IsChar(d->GetType());
+	if (t.GetDie()->GetTag() == DW_TAG_const_type)
+		return IsChar(t.GetReferencedType());
 }
 
 std::wstring GetString(uint32_t offset, IMemoryOperation* pMemOp)
@@ -56,20 +56,20 @@ std::wstring GetString(uint32_t offset, IMemoryOperation* pMemOp)
 	}
 	return CA2W(buffer).m_psz;
 }
-std::wstring FormatValue(uint32_t address, uint32_t radix, ElfDie* type, IMemoryOperation* pMemOp)
+std::wstring FormatValue(uint32_t address, uint32_t radix, ElfType type, IMemoryOperation* pMemOp)
 {
-	switch (type->GetTag())
+	switch (type.GetDie()->GetTag())
 	{
 	case DW_TAG_base_type:
 	{
-		int64_t byteSize = type->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
+		int64_t byteSize = type.GetByteSize();
 		uint32_t value = 0;
 		DWORD readCount = 0;
 		HRESULT hr = pMemOp->Read((BYTE*)&value, address, byteSize, &readCount);
 		if (FAILED(hr))
 			throw std::exception();
 
-		switch (type->GetAttribute(DW_AT_encoding)->GetValue().AsInt64())
+		switch (type.GetEncoding())
 		{
 		case DW_ATE_boolean:
 			return value != 0 ? L"true" : L"false";
@@ -81,7 +81,6 @@ std::wstring FormatValue(uint32_t address, uint32_t radix, ElfDie* type, IMemory
 		}
 		case DW_ATE_signed:
 		{
-			int64_t byteSize = type->GetAttribute(DW_AT_byte_size)->GetValue().AsInt64();
 			std::wstringstream ss;
 			if (radix == 16)
 				ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(byteSize * 2) << value;
@@ -125,7 +124,7 @@ std::wstring FormatValue(uint32_t address, uint32_t radix, ElfDie* type, IMemory
 		std::wstringstream ss;
 		ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << value;
 
-		if (IsChar(type->GetType()) && pMemOp)
+		if (IsChar(type.GetReferencedType()) && pMemOp)
 			ss << " \"" << GetString(value, pMemOp) << "\"";
 
 		return ss.str();
@@ -135,7 +134,7 @@ std::wstring FormatValue(uint32_t address, uint32_t radix, ElfDie* type, IMemory
 		std::wstringstream ss;
 		ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(8) << address;
 
-		if (IsChar(type->GetType()) && pMemOp)
+		if (IsChar(type.GetReferencedType()) && pMemOp)
 			ss << " \"" << GetString(address, pMemOp) << "\"";
 
 		return ss.str();
@@ -144,16 +143,15 @@ std::wstring FormatValue(uint32_t address, uint32_t radix, ElfDie* type, IMemory
 		return L"<unsupported value>";
 	}
 }
-std::wstring GetTypeName(ElfDie* d, uint32_t radix)
+std::wstring GetTypeName(ElfType t, uint32_t radix)
 {
-	if (d->GetTag() == DW_TAG_pointer_type)
-		return GetTypeName(d->GetType(), radix) + L" *";
-	if (d->GetTag() == DW_TAG_array_type)
+	if (t.IsPointer())
+		return GetTypeName(t.GetReferencedType(), radix) + L" *";
+	if (t.IsArray())
 	{
-		auto subrange = std::ranges::find_if(d->GetChildrens(), [](std::unique_ptr<ElfDie>& p) { return p->GetTag() == DW_TAG_subrange_type; });
 		std::wstringstream ss;
-		ss << GetTypeName(d->GetType(), radix) << L"[";
-		int64_t count = (*subrange)->GetAttribute(DW_AT_count)->GetValue().AsInt64();
+		ss << GetTypeName(t.GetReferencedType(), radix) << L"[";
+		int64_t count = t.GetCount();
 		if (radix == 16)
 			ss << L"0x" << std::hex << std::setfill(L'0') << std::setw(0) << count;
 		else
@@ -161,9 +159,9 @@ std::wstring GetTypeName(ElfDie* d, uint32_t radix)
 		ss << L"]";
 		return ss.str();
 	}
-	if (d->GetTag() == DW_TAG_const_type)
-		return L"const " + GetTypeName(d->GetType(), radix);
-	return CA2W(d->GetName()).m_psz;
+	if (t.IsConst())
+		return L"const " + GetTypeName(t.GetReferencedType(), radix);
+	return CA2W(t.GetName().c_str()).m_psz;
 }
 
 std::wstring CElfDebugProperty::GetValue(DWORD radix)
