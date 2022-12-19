@@ -388,6 +388,8 @@ void ElfModule::UnwindRegisters(MipsRegisters* pRegisters, IMemoryOperation* pMe
 
     // pc is set at return address register value
     previousFrameRegs.values[0] = previousFrameRegs.values[31];
+    // revert sp = fp, I dont know why its not done in the debug_frame
+    previousFrameRegs.values[29] = previousFrameRegs.values[30];
     *pRegisters = previousFrameRegs;
 }
 
