@@ -32,7 +32,7 @@ public:
         if (m_context)
             dwarf_srclines_dealloc_b(m_context);
     }
-    // Return the line corresponding to that address, or nullptr if not found
+    // Return the line corresponding to that address, or the line just before if no exact match. nullptr otherwise
     Dwarf_Line LineFromAddress(DWORD address)
     {
         Dwarf_Line* start = &m_lines[0];
@@ -51,9 +51,7 @@ public:
             return nullptr;
 
         --found;
-        if (get_address(*found) == address)
-            return *found;
-        return nullptr;
+        return *found;
     }
 };
 

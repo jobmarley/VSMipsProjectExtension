@@ -50,13 +50,20 @@ HRESULT CElfDebugDocumentContext::GetName(
 	/* [in] */ GETNAME_TYPE gnType,
 	/* [out] */ __RPC__deref_out_opt BSTR* pbstrFileName)
 {
-	char* filename = nullptr;
-	Dwarf_Error err = nullptr;
-	int result = dwarf_linesrc(m_line, &filename, &err);
-	SafeThrowOnError(m_dbg, err);
-	CA2W filenameW(filename);
-	*pbstrFileName = SysAllocString(filenameW);
-	return S_OK;
+	try
+	{
+		char* filename = nullptr;
+		Dwarf_Error err = nullptr;
+		int result = dwarf_linesrc(m_line, &filename, &err);
+		SafeThrowOnError(m_dbg, err);
+		CA2W filenameW(filename);
+		*pbstrFileName = SysAllocString(filenameW);
+		return S_OK;
+	}
+	catch (...)
+	{
+		return E_FAIL;
+	}
 }
 
 HRESULT CElfDebugDocumentContext::EnumCodeContexts(
@@ -99,28 +106,35 @@ HRESULT CElfDebugDocumentContext::GetStatementRange(
 	/* [full][out][in] */ __RPC__inout_opt TEXT_POSITION* pBegPosition,
 	/* [full][out][in] */ __RPC__inout_opt TEXT_POSITION* pEndPosition)
 {
-	Dwarf_Unsigned no = 0;
-	Dwarf_Error err = nullptr;
-	int result = dwarf_lineno(m_line, &no, &err);
-	SafeThrowOnError(m_dbg, err);
-	--no; // vs expect zero based I guess
-	Dwarf_Unsigned col = 0;
-	result = dwarf_lineoff_b(m_line, &col, &err);
-	SafeThrowOnError(m_dbg, err);
-	--col;
-
-	if (pBegPosition)
+	try
 	{
-		pBegPosition->dwLine = static_cast<DWORD>(no);
-		pBegPosition->dwColumn = static_cast<DWORD>(col);
-	}
-	if (pEndPosition)
-	{
-		pEndPosition->dwLine = static_cast<DWORD>(no);
-		pEndPosition->dwColumn = static_cast<DWORD>(col);
-	}
+		Dwarf_Unsigned no = 0;
+		Dwarf_Error err = nullptr;
+		int result = dwarf_lineno(m_line, &no, &err);
+		SafeThrowOnError(m_dbg, err);
+		--no; // vs expect zero based I guess
+		Dwarf_Unsigned col = 0;
+		result = dwarf_lineoff_b(m_line, &col, &err);
+		SafeThrowOnError(m_dbg, err);
+		--col;
 
-	return S_OK;
+		if (pBegPosition)
+		{
+			pBegPosition->dwLine = static_cast<DWORD>(no);
+			pBegPosition->dwColumn = static_cast<DWORD>(col);
+		}
+		if (pEndPosition)
+		{
+			pEndPosition->dwLine = static_cast<DWORD>(no);
+			pEndPosition->dwColumn = static_cast<DWORD>(col);
+		}
+
+		return S_OK;
+	}
+	catch (...)
+	{
+		return E_FAIL;
+	}
 }
 
 HRESULT CElfDebugDocumentContext::GetSourceRange(
