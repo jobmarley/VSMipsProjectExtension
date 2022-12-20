@@ -49,9 +49,9 @@ void FormatChar(std::wstringstream& ss, char c, uint32_t radix)
 	else
 	{
 		if (radix == 16)
-			ss << "\\" << "x" << std::hex << std::setfill(L'0') << std::setw(2) << (uint32_t)c;
+			ss << "\\" << "x" << std::hex << std::setfill(L'0') << std::setw(2) << (uint32_t)(uint8_t)c;
 		else
-			ss << "\\" << std::dec << (uint32_t)c;
+			ss << "\\" << std::dec << (uint32_t)(uint8_t)c;
 	}
 }
 
