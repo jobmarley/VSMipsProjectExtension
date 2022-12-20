@@ -120,8 +120,6 @@ namespace VSMipsProjectExtension.DebugEngine
 			m_symbolProvider = symbolProvider;
 			m_processorOp = new MipsProcessorOperation(remoteClient);
 		}
-		EnumDebugFrameInfo2 m_zozozo = null;
-		EnumDebugFrameInfo2 m_zozozo2 = null;
 		public int EnumFrameInfo(enum_FRAMEINFO_FLAGS dwFieldSpec, uint nRadix, out IEnumDebugFrameInfo2 ppEnum)
 		{
 			var fis = StackFrames.Select(x =>
@@ -130,9 +128,7 @@ namespace VSMipsProjectExtension.DebugEngine
 				x.GetInfo(dwFieldSpec, nRadix, fi);
 				return fi[0];
 			}).ToArray();
-			m_zozozo = new EnumDebugFrameInfo2(fis);
-			m_zozozo2 = m_zozozo;
-			ppEnum = m_zozozo;
+			ppEnum = new EnumDebugFrameInfo2(fis);
 			return VSConstants.S_OK;
 		}
 
