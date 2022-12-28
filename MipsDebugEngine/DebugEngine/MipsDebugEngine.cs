@@ -17,6 +17,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.VisualStudio;
@@ -205,6 +206,7 @@ namespace VSMipsProjectExtension.DebugEngine
 			throw new NotImplementedException();
 		}
 
+		ManualResetEvent m_attachedEvent = new ManualResetEvent(false);
 		public int Attach(IDebugProgram2[] rgpPrograms, IDebugProgramNode2[] rgpProgramNodes, uint celtPrograms, IDebugEventCallback2 pCallback, enum_ATTACH_REASON dwReason)
 		{
 			// rpgPrograms are VSDebug.dll!sdm::CDebugProgram
@@ -237,6 +239,8 @@ namespace VSMipsProjectExtension.DebugEngine
 			{
 				//SendEvent(new MipsDebugEntryPointEvent(), program.Thread);
 			}
+
+			m_attachedEvent.Set();
 			return VSConstants.S_OK;
 		}
 
@@ -386,6 +390,7 @@ namespace VSMipsProjectExtension.DebugEngine
 			ppProcess = null;
 
 			m_callback = pCallback;
+			m_attachedEvent.Reset();
 
 			// For some reason the manifest is not loaded correctly, so we need to do it manually with activation context
 			string asmFilepath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -489,6 +494,7 @@ namespace VSMipsProjectExtension.DebugEngine
 				// This is done asynchronously otherwise Attach is called before ResumeProcess returns, but who knows...
 				// maybe its better to do it synchronously, so we can attach before we resume the program
 				err = portNotify.AddProgramNode(program);
+				m_attachedEvent.WaitOne();
 
 				program.Execute();
 
