@@ -116,7 +116,10 @@ namespace MipsRemoteDebugger
 					try
 					{
 						m_deviceMutex.WaitOne();
-						s = mipsdebug_api.md_read_register(m_devicePtr, rrrp.Register, out value);
+						if (rrrp.Sel > 7)
+							s = md_status.InvalidArg;
+						else
+							s = mipsdebug_api.md_read_register(m_devicePtr, rrrp.Register, (byte)rrrp.Sel, out value);
 					}
 					catch (Exception e)
 					{
@@ -140,7 +143,10 @@ namespace MipsRemoteDebugger
 					try
 					{
 						m_deviceMutex.WaitOne();
-						s = mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, value);
+						if (wrrp.Sel > 7)
+							s = md_status.InvalidArg;
+						else
+							s = mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, (byte)wrrp.Sel, value);
 					}
 					catch (Exception e)
 					{

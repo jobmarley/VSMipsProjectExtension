@@ -37,9 +37,9 @@ namespace MipsRemoteDebugger
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
 		public static extern md_status md_write_memory(IntPtr device, [MarshalAs(UnmanagedType.LPArray)] byte[] buffer, uint count, uint offset, out uint writtencount);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
-		public static extern md_status md_read_register(IntPtr device, md_register r, out uint value);
+		public static extern md_status md_read_register(IntPtr device, md_register r, byte sel, out uint value);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
-		public static extern md_status md_write_register(IntPtr device, md_register r, uint value);
+		public static extern md_status md_write_register(IntPtr device, md_register r, byte sel, uint value);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]
 		public static extern md_status md_get_state(IntPtr device, out md_state state);
 		[DllImport("mipsdebug.dll", CallingConvention = CallingConvention.StdCall)]

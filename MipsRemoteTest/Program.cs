@@ -100,7 +100,43 @@ namespace MipsRemoteTest
 
 					try
 					{
-						uint value = client.ReadRegisterAsync((md_register)register).Result;
+						uint value = client.ReadRegisterAsync((md_register)register, 0).Result;
+						Console.WriteLine(string.Format("value: 0x{0:X8}", value));
+					}
+					catch (AggregateException e)
+					{
+						if (e.InnerException is MipsException me)
+						{
+							Console.WriteLine(string.Format("command failed, status: {0}", me.Status));
+						}
+						else
+							Console.WriteLine("Exception: " + e.Message);
+					}
+				}
+				else if (cmd == "readcop0reg")
+				{
+					if (commandParams.Length != 3)
+					{
+						Console.WriteLine("Wrong arg number, expected 1");
+						continue;
+					}
+
+					uint register = 0;
+					if (!TryParseUInt(commandParams[1], out register))
+					{
+						Console.WriteLine("arg 1 must be an integer");
+						continue;
+					}
+					uint sel = 0;
+					if (!TryParseUInt(commandParams[2], out sel) || sel > 7)
+					{
+						Console.WriteLine("arg 2 must be an integer <= 7");
+						continue;
+					}
+
+					try
+					{
+						uint value = client.ReadRegisterAsync(register + md_register.md_register_cop0_r0, (byte)sel).Result;
 						Console.WriteLine(string.Format("value: 0x{0:X8}", value));
 					}
 					catch (AggregateException e)
@@ -136,7 +172,49 @@ namespace MipsRemoteTest
 
 					try
 					{
-						client.WriteRegisterAsync((md_register)register, value).Wait();
+						client.WriteRegisterAsync((md_register)register, 0, value).Wait();
+						Console.WriteLine(string.Format("status: {0}", md_status.Success));
+					}
+					catch (AggregateException e)
+					{
+						if (e.InnerException is MipsException me)
+						{
+							Console.WriteLine(string.Format("command failed, status: {0}", me.Status));
+						}
+						else
+							Console.WriteLine("Exception: " + e.Message);
+					}
+				}
+				else if (cmd == "writecop0reg")
+				{
+					if (commandParams.Length != 4)
+					{
+						Console.WriteLine("Wrong arg number, expected 2");
+						continue;
+					}
+
+					uint register = 0;
+					if (!TryParseUInt(commandParams[1], out register))
+					{
+						Console.WriteLine("arg 1 must be an integer");
+						continue;
+					}
+					uint sel = 0;
+					if (!TryParseUInt(commandParams[2], out sel) || sel > 7)
+					{
+						Console.WriteLine("arg 2 must be an integer <= 7");
+						continue;
+					}
+					uint value = 0;
+					if (!TryParseUInt(commandParams[2], out value))
+					{
+						Console.WriteLine("arg 2 must be an integer");
+						continue;
+					}
+
+					try
+					{
+						client.WriteRegisterAsync(register + md_register.md_register_cop0_r0, (byte)sel, value).Wait();
 						Console.WriteLine(string.Format("status: {0}", md_status.Success));
 					}
 					catch (AggregateException e)

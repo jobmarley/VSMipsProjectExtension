@@ -63,17 +63,17 @@ namespace MipsRemoteDebuggerUtils
 			return false;
 		}
 
-		public async Task<uint> ReadRegisterAsync(md_register r)
+		public async Task<uint> ReadRegisterAsync(md_register r, byte sel)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<ReadRegisterResponsePacket>(new ReadRegisterRequestPacket() { Register = r });
+			var resp = await m_clientConnection.SendPacketAsync<ReadRegisterResponsePacket>(new ReadRegisterRequestPacket() { Register = r, Sel = sel });
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 
 			return resp.Value;
 		}
-		public async Task WriteRegisterAsync(md_register r, uint value)
+		public async Task WriteRegisterAsync(md_register r, byte sel, uint value)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<WriteRegisterResponsePacket>(new WriteRegisterRequestPacket() { Register = r, Value = value });
+			var resp = await m_clientConnection.SendPacketAsync<WriteRegisterResponsePacket>(new WriteRegisterRequestPacket() { Register = r, Sel = sel, Value = value });
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 		}
