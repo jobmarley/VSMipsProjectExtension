@@ -206,9 +206,9 @@ namespace MipsRemoteTest
 						continue;
 					}
 					uint value = 0;
-					if (!TryParseUInt(commandParams[2], out value))
+					if (!TryParseUInt(commandParams[3], out value))
 					{
-						Console.WriteLine("arg 2 must be an integer");
+						Console.WriteLine("arg 3 must be an integer");
 						continue;
 					}
 

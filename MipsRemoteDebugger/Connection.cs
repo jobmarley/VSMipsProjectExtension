@@ -136,7 +136,6 @@ namespace MipsRemoteDebugger
 			}
 			else if (packet is WriteRegisterRequestPacket wrrp)
 			{
-				uint value = 0;
 				md_status status = await Task.Run(() => 
 				{
 					md_status s = md_status.Failure;
@@ -146,7 +145,7 @@ namespace MipsRemoteDebugger
 						if (wrrp.Sel > 7)
 							s = md_status.InvalidArg;
 						else
-							s = mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, (byte)wrrp.Sel, value);
+							s = mipsdebug_api.md_write_register(m_devicePtr, wrrp.Register, (byte)wrrp.Sel, wrrp.Value);
 					}
 					catch (Exception e)
 					{
