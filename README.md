@@ -22,9 +22,8 @@ Contains the VSPackage of the extension, the IDebugLaunchProvider implementation
 Contains the debug engine. It communicates with MipsRemoteDebugger throught TCP to debug the processor.
 
 ## ElfSymbolProvider
-This is a native side-by-side COM component. It implement everything that touches debug symbols. I implemented it in native c++ because it uses libdwarf, and I didn't want to bother marshalling everything in c#.  
-The libdwarf binaries were compiled by myself on mingw64.  
-The COM marshaling is causing issues though. The Session Debug Manager seems to want the event arguments to be marshalled, or is not really happy about them being native I don't really know. But the issue only arises with expression evaluation, which is disabled for now.
+This is a native side-by-side COM component. It contains everything related to debug symbols. I implemented it in native c++ because it uses libdwarf, and I didn't want to bother marshalling everything in c#.  
+The libdwarf binaries were compiled by myself on mingw64.
 
 ## MipsRemoteDebugger
 This is the server part of the debugger. It uses [mipsdebug](https://github.com/jobmarley/pcie_mips_driver) on the target machine to access the processor hardware.
