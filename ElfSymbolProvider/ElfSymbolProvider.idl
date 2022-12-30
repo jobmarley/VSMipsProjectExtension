@@ -11,6 +11,7 @@ import "msdbg.idl";
 
 [
 	object,
+	oleautomation,
 	uuid(22F26F84-2D86-4835-A3E3-56C0837D0B0D),
 	pointer_default(unique)
 ]
@@ -22,6 +23,7 @@ interface IMipsDEEventCallback : IUnknown
 }
 [
 	object,
+	oleautomation,
 	uuid(BB324892-D76E-41A6-97EC-8A106D43C4CF),
 	pointer_default(unique)
 ]
@@ -32,6 +34,7 @@ interface IRegisterOperation : IUnknown
 };
 [
 	object,
+	oleautomation,
 	uuid(06E76594-7C91-4282-9B10-6A626D5D4864),
 	pointer_default(unique)
 ]
@@ -42,6 +45,7 @@ interface IMemoryOperation : IUnknown
 };
 [
 	object,
+	oleautomation,
 	uuid(c8b40372-81f0-45f5-8532-02f8443dd2a6),
 	pointer_default(unique)
 ]
