@@ -66,6 +66,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		MipsRemoteDebuggerClient m_client = null;
 		IDebugExpressionEvaluator2 m_expressionEvaluator = null;
 		IElfSymbolProvider m_symbolProvider = null;
+		IntPtr m_activationContextCookie = IntPtr.Zero;
 
 		public int SendPropertyCreateEvent(IDebugProperty2 pProperty)
 		{
@@ -399,13 +400,15 @@ namespace VSMipsProjectExtension.DebugEngine
 				System.IO.Path.GetFileNameWithoutExtension(asmFilepath) + ".manifest");
 			m_activationContext = new VSComHelper.ActivationContext(manifestFilepath);
 
-			// Com object creation need to be wrapped in that so the CLSID can be found (since its not registered)
-			using (var guard = m_activationContext.Activate())
-			{
-				Type t = Type.GetTypeFromCLSID(new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
-				m_symbolProvider = (IElfSymbolProvider)Activator.CreateInstance(t);
-				m_symbolProvider.SetEventCallback(this);
-			}
+			// Com object creation need that activation context so the CLSID can be found (since its not registered)
+			// DO NOT deactivate that activation context, it is required to resolve IID/CLSID and thus, for marshalling. If you deactivate it
+			// you way get random error whenever an interface needs to be marshalled
+			if (!m_activationContext.Activate(out m_activationContextCookie))
+				throw new Exception("Couldnt activate the activation context");
+
+			Type t = Type.GetTypeFromCLSID(new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
+			m_symbolProvider = (IElfSymbolProvider)Activator.CreateInstance(t);
+			m_symbolProvider.SetEventCallback(this);
 			//m_expressionEvaluator = CreateExpressionEvaluator();
 
 			// Delegate to port because its remote
