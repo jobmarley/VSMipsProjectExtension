@@ -125,9 +125,17 @@
     </Link>
     <Manifest>
       <AssemblyIdentity>$(TargetName), type=win32, version=1.0.0.1</AssemblyIdentity>
-      <ComponentFileName>$(TargetFilename)</ComponentFileName>
-      <TypeLibraryFile>$(IntDir)$(TargetName).tlb</TypeLibraryFile>
+      <ComponentFileName>
+      </ComponentFileName>
+      <TypeLibraryFile>
+      </TypeLibraryFile>
     </Manifest>
+    <PreBuildEvent>
+      <Command>python manifest_checker.py</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Check manifest file contains all interfaces</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -168,9 +176,17 @@
     </Link>
     <Manifest>
       <AssemblyIdentity>$(TargetName), type=win32, version=1.0.0.1</AssemblyIdentity>
-      <ComponentFileName>$(TargetFilename)</ComponentFileName>
-      <TypeLibraryFile>$(IntDir)$(TargetName).tlb</TypeLibraryFile>
+      <ComponentFileName>
+      </ComponentFileName>
+      <TypeLibraryFile>
+      </TypeLibraryFile>
     </Manifest>
+    <PreBuildEvent>
+      <Command>python manifest_checker.py</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Check manifest file contains all interfaces</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -213,9 +229,17 @@
     </Link>
     <Manifest>
       <AssemblyIdentity>$(TargetName), type=win32, version=1.0.0.1</AssemblyIdentity>
-      <ComponentFileName>$(TargetFilename)</ComponentFileName>
-      <TypeLibraryFile>$(IntDir)$(TargetName).tlb</TypeLibraryFile>
+      <ComponentFileName>
+      </ComponentFileName>
+      <TypeLibraryFile>
+      </TypeLibraryFile>
     </Manifest>
+    <PreBuildEvent>
+      <Command>python manifest_checker.py</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Check manifest file contains all interfaces</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -257,9 +281,17 @@
     </Link>
     <Manifest>
       <AssemblyIdentity>$(TargetName), type=win32, version=1.0.0.1</AssemblyIdentity>
-      <ComponentFileName>$(TargetFilename)</ComponentFileName>
-      <TypeLibraryFile>$(IntDir)$(TargetName).tlb</TypeLibraryFile>
+      <ComponentFileName>
+      </ComponentFileName>
+      <TypeLibraryFile>
+      </TypeLibraryFile>
     </Manifest>
+    <PreBuildEvent>
+      <Command>python manifest_checker.py</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Check manifest file contains all interfaces</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ElfDebugCodeContext.h" />
@@ -345,6 +377,7 @@
     <None Include="ElfSymbolProvider.def" />
     <None Include="ElfSymbolProvider.rgs" />
     <None Include="ElfSymbolProvider1.rgs" />
+    <None Include="manifest_checker.py" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="ElfSymbolProvider.idl" />

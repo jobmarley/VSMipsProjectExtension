@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
 	<file name="ElfSymbolProvider.dll" hashalg="SHA1">
-		<comClass clsid="{305AE8E3-CE4D-4A0B-889C-9836BF4DDEDF}" threadingModel="Both" />
-		<comClass clsid="{A40AB257-221D-4DB3-8618-F7E2CFB16355}" threadingModel="Both" />
-		<comClass clsid="{546D6384-97AB-428B-9BE2-5E287080CE93}" threadingModel="Both" />
-		<comClass clsid="{D8762730-223E-4616-9D72-236321BBFB9A}" threadingModel="Both" />
-		<comClass clsid="{AB1A8BF8-F8B7-4681-BDC8-5C389F9835FE}" threadingModel="Both" />
-		<comClass clsid="{4FD1BCEB-8D02-411E-AEE7-8B7FAA83ACB2}" threadingModel="Both" />
-		<comClass clsid="{508E94E5-487A-4D94-8F12-06756192FB93}" threadingModel="Both" />
-		<comClass clsid="{D7EBC85C-E027-4201-A7D8-33755512EF4B}" threadingModel="Both" />
+		<comClass clsid="{305AE8E3-CE4D-4A0B-889C-9836BF4DDEDF}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{A40AB257-221D-4DB3-8618-F7E2CFB16355}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{546D6384-97AB-428B-9BE2-5E287080CE93}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{D8762730-223E-4616-9D72-236321BBFB9A}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{AB1A8BF8-F8B7-4681-BDC8-5C389F9835FE}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{4FD1BCEB-8D02-411E-AEE7-8B7FAA83ACB2}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{508E94E5-487A-4D94-8F12-06756192FB93}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<comClass clsid="{D7EBC85C-E027-4201-A7D8-33755512EF4B}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}"></comClass>
+		<typelib tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}" version="1.0" helpdir="" flags="HASDISKIMAGE"></typelib>
 	</file>
+	<comInterfaceExternalProxyStub name="IElfSymbolProvider" iid="{C8B40372-81F0-45F5-8532-02F8443DD2A6}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"></comInterfaceExternalProxyStub>
+	<comInterfaceExternalProxyStub name="IMemoryOperation" iid="{06E76594-7C91-4282-9B10-6A626D5D4864}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"></comInterfaceExternalProxyStub>
+	<comInterfaceExternalProxyStub name="IRegisterOperation" iid="{BB324892-D76E-41A6-97EC-8A106D43C4CF}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"></comInterfaceExternalProxyStub>
+	<comInterfaceExternalProxyStub name="IMipsDEEventCallback" iid="{22F26F84-2D86-4835-A3E3-56C0837D0B0D}" tlbid="{D58C5021-1E35-4BDE-854C-80217CADA2AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"></comInterfaceExternalProxyStub>
 </assembly>

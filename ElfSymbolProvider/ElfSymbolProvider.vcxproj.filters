@@ -193,6 +193,9 @@
     <None Include="ElfDebugProperty.rgs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="manifest_checker.py">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="ElfSymbolProvider.idl">
