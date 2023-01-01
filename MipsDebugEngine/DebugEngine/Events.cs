@@ -33,6 +33,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		public const uint EVENT_EXPRESSION_EVALUATION = 0x8;
 
 		public const int E_PORTSUPPLIER_NO_PORT = unchecked((int)0x80040080);
+		public const int E_BP_DELETED = unchecked((int)0x80040060);
 	}
 	abstract class MipsDebugEvent
 		: IDebugEvent2
@@ -272,6 +273,70 @@ namespace VSMipsProjectExtension.DebugEngine
 		{
 			ppProperty = Property;
 			return VSConstants.S_OK;
+		}
+	}
+
+	internal class MipsBreakpointErrorEvent
+		: MipsAsynchronousEvent,
+		IDebugBreakpointErrorEvent2,
+		IDebugEvent2
+	{
+		IDebugErrorBreakpoint2 m_errorBreakpoint = null;
+		public MipsBreakpointErrorEvent(
+			IDebugErrorBreakpoint2 errorBreakpoint)
+			: base(typeof(IDebugBreakpointErrorEvent2).GUID)
+		{
+			m_errorBreakpoint = errorBreakpoint;
+		}
+		public int GetErrorBreakpoint(out IDebugErrorBreakpoint2 ppErrorBP)
+		{
+			ppErrorBP = m_errorBreakpoint;
+			return VSConstants.S_OK;
+		}
+	}
+
+	internal class MipsBreakpointEvent
+		: MipsAsynchronousEvent,
+		IDebugBreakpointEvent2,
+		IDebugEvent2
+	{
+		IEnumDebugBoundBreakpoints2 m_pEnumBoundBreakpoints = null;
+		public MipsBreakpointEvent(
+			IEnumDebugBoundBreakpoints2 pEnumBoundBreakpoints)
+			: base(typeof(IDebugBreakpointEvent2).GUID)
+		{
+			m_pEnumBoundBreakpoints = pEnumBoundBreakpoints;
+		}
+		public int EnumBreakpoints(out IEnumDebugBoundBreakpoints2 ppEnum)
+		{
+			return m_pEnumBoundBreakpoints.Clone(out ppEnum);
+		}
+	}
+	internal class MipsBreakpointBoundEvent
+		: MipsAsynchronousEvent,
+		IDebugBreakpointBoundEvent2,
+		IDebugEvent2
+	{
+		IDebugPendingBreakpoint2 m_pendingBreakpoint = null;
+		IEnumDebugBoundBreakpoints2 m_boundBreakpoints = null;
+		public MipsBreakpointBoundEvent(
+			IDebugPendingBreakpoint2 pendingBreakpoint,
+			IEnumDebugBoundBreakpoints2 boundBreakpoints)
+			: base(typeof(IDebugBreakpointBoundEvent2).GUID)
+		{
+			m_pendingBreakpoint = pendingBreakpoint;
+			m_boundBreakpoints = boundBreakpoints;
+		}
+
+		public int GetPendingBreakpoint(out IDebugPendingBreakpoint2 ppPendingBP)
+		{
+			ppPendingBP = m_pendingBreakpoint;
+			return VSConstants.S_OK;
+		}
+
+		public int EnumBoundBreakpoints(out IEnumDebugBoundBreakpoints2 ppEnum)
+		{
+			return m_boundBreakpoints.Clone(out ppEnum);
 		}
 	}
 }

@@ -22,6 +22,9 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 
 using MipsRemoteDebuggerUtils;
+using System.Security.AccessControl;
+using System.Threading;
+using Microsoft.VisualStudio.Shell;
 
 namespace VSMipsProjectExtension.DebugEngine
 {
@@ -86,6 +89,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		Guid m_guid = Guid.Empty;
 		IMipsDEEventCallback m_eventCallback = null;
 		MipsRemoteDebuggerClient m_remoteClient = null;
+		public MipsRemoteDebuggerClient RemoteClient => m_remoteClient;
 
 		public MipsDebugProcess Process => m_process;
 		List<MipsDebugThread> m_threads = new List<MipsDebugThread>();
@@ -94,12 +98,15 @@ namespace VSMipsProjectExtension.DebugEngine
 		private ConcurrentBag<MipsDebugModule> m_modules = new ConcurrentBag<MipsDebugModule>();
 		public IEnumerable<MipsDebugModule> Modules => m_modules;
 		IElfSymbolProvider m_symbolProvider = null;
-		object m_eventLock = new object();
+		Semaphore m_semaphore = new Semaphore(1, 1);
+		public Semaphore Semaphore => m_semaphore;
 		public MipsDebugModule LoadModule(string filepath, uint address)
 		{
 			MipsDebugModule m = new MipsDebugModule(this, filepath, address);
 			m_modules.Add(m);
 			int hr = m_symbolProvider.LoadModule(m, filepath, address);
+			if (hr != VSConstants.S_OK)
+				throw new COMException("", hr);
 			m.SymbolsLoaded = (hr == VSConstants.S_OK);
 			return m;
 		}
@@ -176,17 +183,19 @@ namespace VSMipsProjectExtension.DebugEngine
 
 		public int Execute()
 		{
-			lock (m_eventLock)
+			Semaphore.WaitOne();
+			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
 			{
-				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.SetStateAsync(md_state.md_state_enabled));
-
 				m_threads.ForEach(x =>
 				{
 					uint count;
 					x.Resume(out count);
 				});
-				return VSConstants.S_OK;
-			}
+
+				await m_remoteClient.SetStateAsync(md_state.md_state_enabled);
+			});
+			Semaphore.Release();
+			return VSConstants.S_OK;
 		}
 
 		public int Continue(IDebugThread2 pThread)
@@ -203,23 +212,17 @@ namespace VSMipsProjectExtension.DebugEngine
 		{
 			// This is required to avoid race condition between resume/break
 			// otherwise, thread.Suspend/Resume could execute on the wrong order
-			lock (m_eventLock)
+			Semaphore.WaitOne();
+			// Not too sure there...
+			m_remoteClient.SetState(md_state.md_state_paused);
+			m_threads.ForEach(x =>
 			{
-				// Not too sure there...
-				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
-				{
-					await m_remoteClient.SetStateAsync(md_state.md_state_paused);
-					await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-					m_threads.ForEach(x =>
-					{
-						uint count;
-						x.Suspend(out count);
-					});
-					m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
-				});
-
-				return VSConstants.S_OK;
-			}
+				uint count;
+				x.Suspend(out count);
+			});
+			m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
+			Semaphore.Release();
+			return VSConstants.S_OK;
 		}
 
 		public int GetEngineInfo(out string pbstrEngine, out Guid pguidEngine)
@@ -307,22 +310,198 @@ namespace VSMipsProjectExtension.DebugEngine
 			throw new NotImplementedException();
 		}
 
+
+		async Task<bool> IsModuleLoadedBreakpointAsync(uint address)
+		{
+			byte[] buffer = new byte[4];
+			await m_remoteClient.ReadMemoryAsync(buffer, address);
+			uint bpInstr = BitConverter.ToUInt32(buffer, 0);
+			if (bpInstr >> 26 != 0x1C)
+				return false;
+			uint code = (bpInstr >> 6) & 0xFFFFF;
+			return code == 0x10AD;
+		}
+		
+		void NotifyBreak()
+		{
+			m_threads.ForEach(x =>
+			{
+				uint count;
+				x.Suspend(out count);
+			});
+			m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
+		}
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+		struct debug_notify_module_loaded_data_t
+		{
+			public uint address;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 300)]
+			public string filename;
+		};
+		async Task<T> ReadStructureFromMemoryAsync<T>(uint address)
+		{
+			byte[] buffer = new byte[Marshal.SizeOf(typeof(T))];
+			if (await m_remoteClient.ReadMemoryAsync(buffer, address) != buffer.Length)
+				throw new Exception();
+
+			IntPtr ptr = Marshal.AllocHGlobal(buffer.Length);
+			try
+			{
+				Marshal.Copy(buffer, 0, ptr, buffer.Length);
+				T t = Marshal.PtrToStructure<T>(ptr);
+				Marshal.FreeHGlobal(ptr);
+				return t;
+			}
+			catch (Exception e)
+			{
+				Marshal.FreeHGlobal(ptr);
+				throw e;
+			}
+		}
+
+		Dictionary<uint, MipsDebugBoundBreakpoint> m_boundBreakpoints = new Dictionary<uint, MipsDebugBoundBreakpoint>();
+		public void AddBoundBreakpoint(uint address, MipsDebugBoundBreakpoint breakpoint)
+		{
+			m_boundBreakpoints.Add(address, breakpoint);
+		}
+		public void RemoveBoundBreakpoint(uint address)
+		{
+			m_boundBreakpoints.Remove(address);
+		}
 		public int OnBreak()
 		{
-			lock (m_eventLock)
+			m_semaphore.WaitOne();
+			Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
 			{
-				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+				uint pc = await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc, 0);
+
+				if (await IsModuleLoadedBreakpointAsync(pc - 4))
 				{
-					await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-					m_threads.ForEach(x =>
+					try
 					{
-						uint count;
-						x.Suspend(out count);
-					});
-					m_eventCallback.SendDebugBreakEvent(Threads.FirstOrDefault());
-				});
-				return VSConstants.S_OK;
+						uint loadedDataOfs = await m_remoteClient.ReadRegisterAsync(md_register.md_register_cop0_r22, 1);
+						var loadedData = await ReadStructureFromMemoryAsync<debug_notify_module_loaded_data_t>(loadedDataOfs);
+
+						if (string.IsNullOrEmpty(loadedData.filename))
+						{
+							var mod = Modules.FirstOrDefault(x => x.Address == loadedData.address);
+							if (mod != null)
+								m_eventCallback.SendModuleLoadEvent(mod, true);
+						}
+						else
+						{
+							// what if we load a module from somewhere we dont have access to... like a ssd?
+							// probably should dump the elf file to have access to dwarf
+							if (System.IO.File.Exists(loadedData.filename))
+							{
+								var mod = LoadModule(loadedData.filename, loadedData.address);
+								m_eventCallback.SendModuleLoadEvent(mod, true);
+							}
+						}
+					}
+					catch (Exception)
+					{
+
+					}
+					md_state s = await m_remoteClient.GetStateAsync();
+					await m_remoteClient.SetStateAsync(s | md_state.md_state_enabled);
+				}
+				else
+				{
+					MipsDebugBoundBreakpoint breakpoint = null;
+					if (m_boundBreakpoints.TryGetValue(pc - 4, out breakpoint))
+						breakpoint.OnBreak(pc);
+
+					// If we dont switch to main thread, use of elfSymbolProvider fails with E_NOINTERFACE on IElfSymbolProvider
+					// after trying to marshal it seems. Not sure why it doesnt work
+					await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+					NotifyBreak();
+				}
+			});
+			m_semaphore.Release();
+			return VSConstants.S_OK;
+		}
+		public int CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
+		{
+			ppPendingBP = null;
+			try
+			{
+
+				enum_BP_LOCATION_TYPE[] type = new enum_BP_LOCATION_TYPE[1];
+				if (pBPRequest.GetLocationType(type) != VSConstants.S_OK)
+					return VSConstants.E_INVALIDARG;
+
+				switch (type[0])
+				{
+					case enum_BP_LOCATION_TYPE.BPLT_CODE_FILE_LINE:
+						ppPendingBP = new MipsDebugPendingBreakpoint(pBPRequest, m_symbolProvider, m_eventCallback, this);
+						return VSConstants.S_OK;
+					default:
+						return VSConstants.E_FAIL;
+				}
 			}
+			catch (Exception e)
+			{
+
+			}
+			return VSConstants.E_FAIL;
+		}
+
+		public MipsProcessorPauseGuard SafePause()
+		{
+			return new MipsProcessorPauseGuard(m_remoteClient, m_semaphore);
+		}
+	}
+
+	class MipsProcessorPauseGuard
+		: IDisposable
+	{
+		private bool disposedValue;
+		private MipsRemoteDebuggerClient m_remoteClient = null;
+		md_state m_oldState = 0;
+		Semaphore m_semaphore = null;
+		public MipsProcessorPauseGuard(MipsRemoteDebuggerClient remoteClient, Semaphore semaphore)
+		{
+			m_remoteClient = remoteClient;
+			m_semaphore = semaphore;
+			m_semaphore.WaitOne();
+
+			m_oldState = m_remoteClient.GetState();
+			m_remoteClient.SetState(m_oldState & ~md_state.md_state_enabled);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: dispose managed state (managed objects)
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+				// TODO: set large fields to null
+
+
+				m_remoteClient.SetState(m_oldState);
+				m_semaphore.Release();
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		~MipsProcessorPauseGuard()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: false);
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 	}
 }

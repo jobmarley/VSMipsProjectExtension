@@ -50,6 +50,10 @@ const char* ElfDie::GetName()
     SafeThrowOnError(m_dbg, err);
     return name;
 }
+std::string ElfDie::GetCompDir()
+{
+	return GetAttribute(DW_AT_comp_dir)->GetValue().AsString();
+}
 Dwarf_Unsigned ElfDie::GetLang()
 {
     return m_lang;
@@ -211,6 +215,7 @@ ElfAttributeValue ElfAttribute::GetValue()
 			throw std::exception();
 		return (uint64_t)v;
 	}
+	case DW_FORM_strp:
 	case DW_FORM_string:
 	{
 		char* v = nullptr;

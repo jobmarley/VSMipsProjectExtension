@@ -38,6 +38,16 @@ namespace VSMipsProjectExtension.DebugEngine
 		int SendDebugBreakEvent(IDebugThread2 pThread);
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
 		int SendPropertyCreateEvent(IDebugProperty2 pProperty);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendBreakpointBoundEvent(
+			IDebugPendingBreakpoint2 pPendingBreakpoint,
+			IEnumDebugBoundBreakpoints2 pEnumBoundBreakpoints);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendBreakpointEvent(IEnumDebugBoundBreakpoints2 pEnumBoundBreakpoints);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendBreakpointErrorEvent(IDebugErrorBreakpoint2 pErrorBreakpoint);
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int SendModuleLoadEvent(IDebugModule2 pModule, bool loading);
 	}
 
 	[ComVisible(true)]
@@ -49,13 +59,8 @@ namespace VSMipsProjectExtension.DebugEngine
 		IDebugIDECallback
 	//, ICustomQueryInterface
 	{
-
 		string m_registryRoot;
 		Dictionary<string, object> m_metrics = new Dictionary<string, object>();
-		/*public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
-		{
-			throw new NotImplementedException();
-		}*/
 
 		IDebugEventCallback2 m_callback = null;
 		bool m_createEventSent = false;
@@ -67,6 +72,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		IDebugExpressionEvaluator2 m_expressionEvaluator = null;
 		IElfSymbolProvider m_symbolProvider = null;
 		IntPtr m_activationContextCookie = IntPtr.Zero;
+		public MipsRemoteDebuggerClient RemoteClient => m_client;
 
 		public int SendPropertyCreateEvent(IDebugProperty2 pProperty)
 		{
@@ -102,6 +108,56 @@ namespace VSMipsProjectExtension.DebugEngine
 				mt?.Program?.Process,
 				mt?.Program,
 				mt,
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendBreakpointBoundEvent(
+			IDebugPendingBreakpoint2 pPendingBreakpoint,
+			IEnumDebugBoundBreakpoints2 pEnumBoundBreakpoints)
+		{
+			MipsBreakpointBoundEvent e = new MipsBreakpointBoundEvent(pPendingBreakpoint, pEnumBoundBreakpoints);
+			m_callback.Event(this,
+				m_debuggedProgram.Process,
+				m_debuggedProgram,
+				m_debuggedProgram.Threads.FirstOrDefault(),
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendBreakpointEvent(IEnumDebugBoundBreakpoints2 pEnumBoundBreakpoints)
+		{
+			MipsBreakpointEvent e = new MipsBreakpointEvent(pEnumBoundBreakpoints);
+			m_callback.Event(this,
+				m_debuggedProgram.Process,
+				m_debuggedProgram,
+				null,
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendBreakpointErrorEvent(IDebugErrorBreakpoint2 errorBreakpoint)
+		{
+			MipsBreakpointErrorEvent e = new MipsBreakpointErrorEvent(errorBreakpoint);
+			m_callback.Event(this,
+				m_debuggedProgram.Process,
+				m_debuggedProgram,
+				null,
+				e,
+				e.IID,
+				e.Attributes);
+			return VSConstants.S_OK;
+		}
+		public int SendModuleLoadEvent(IDebugModule2 pModule, bool loading)
+		{
+			MipsDebugModuleLoadEvent e = new MipsDebugModuleLoadEvent(pModule as MipsDebugModule, loading);
+			m_callback.Event(this,
+				e.Module.Program.Process,
+				e.Module.Program,
+				null,
 				e,
 				e.IID,
 				e.Attributes);
@@ -220,26 +276,13 @@ namespace VSMipsProjectExtension.DebugEngine
 
 
 			MipsDebugProgram program = rgpPrograms[0] as MipsDebugProgram;
-			//MipsDebugProgram program = rgpProgramNodes[0] as MipsDebugProgram;
 			m_debuggedProgram = program;
 
 			m_client.OnMipsEvent += OnMipsEvent;
 
-			//MipsDebugModule module = program.LoadModule(program.Process.Filepath);
-			//SendEvent(new MipsDebugModuleLoadEvent(module, true));
 
 			SendEvent(new MipsDebugProgramCreateEvent(program));
 			SendEvent(new MipsDebugLoadCompleteEvent(program));
-
-
-
-			//SendEvent(new MipsDebugModuleLoadEvent(program.LoadModule(program.Process.Filepath), true));
-			//SendEvent(new MipsDebugThreadCreateEvent(), program.Thread);
-
-			if (dwReason == enum_ATTACH_REASON.ATTACH_REASON_LAUNCH)
-			{
-				//SendEvent(new MipsDebugEntryPointEvent(), program.Thread);
-			}
 
 			m_attachedEvent.Set();
 			return VSConstants.S_OK;
@@ -258,7 +301,8 @@ namespace VSMipsProjectExtension.DebugEngine
 		}
 		public int CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
 		{
-			throw new NotImplementedException();
+			ppPendingBP = null;
+			return m_debuggedProgram?.CreatePendingBreakpoint(pBPRequest, out ppPendingBP) ?? VSConstants.E_FAIL;
 		}
 
 		public int SetException(EXCEPTION_INFO[] pException)
@@ -373,7 +417,9 @@ namespace VSMipsProjectExtension.DebugEngine
 			Microsoft.Win32.RegistryKey EEKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(string.Format("{0}\\AD7Metrics\\ExpressionEvaluator\\{1}\\{2}", m_registryRoot, EECppGuid, EEVendorGuid));
 			return new Guid((string)EEKey.GetValue("CLSID"));
 		}
+
 		VSComHelper.ActivationContext m_activationContext = null;
+		const uint COP0_R22_1_IS_DEBUGGING = 0x1;
 		public int LaunchSuspended(string pszServer,
 			IDebugPort2 pPort,
 			string pszExe,
@@ -409,6 +455,8 @@ namespace VSMipsProjectExtension.DebugEngine
 			Type t = Type.GetTypeFromCLSID(new Guid("305ae8e3-ce4d-4a0b-889c-9836bf4ddedf"));
 			m_symbolProvider = (IElfSymbolProvider)Activator.CreateInstance(t);
 			m_symbolProvider.SetEventCallback(this);
+
+			//m_activationContext.Deactivate(0, m_activationContextCookie);
 			//m_expressionEvaluator = CreateExpressionEvaluator();
 
 			// Delegate to port because its remote
@@ -424,13 +472,22 @@ namespace VSMipsProjectExtension.DebugEngine
 			if (filesToLoad.Count() < 1)
 				return VSConstants.E_INVALIDARG;
 
+			// Create the process with the name of the first file
+			MipsDebugProcess process = new MipsDebugProcess(filesToLoad.First().Item1, pPort);
+			ppProcess = process;
+			m_debuggedProcess = process;
+
+			MipsDebugProgram program = new MipsDebugProgram(m_client, this, process, "main program", m_symbolProvider);
+			process.AddProgram(program);
+
 			int result = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
 			{
 				try
 				{
 					// Stop the processor if it's running and set pc to 0
 					await m_client.SetStateAsync(md_state.md_state_paused);
-					await m_client.WriteRegisterAsync(md_register.md_register_pc, 0);
+					await m_client.WriteRegisterAsync(md_register.md_register_pc, 0, 0);
+					await m_client.WriteRegisterAsync(md_register.md_register_cop0_r22, 0, COP0_R22_1_IS_DEBUGGING);
 
 					// Load each file in memory at the given offset
 					// Maybe we should check for overlap but...
@@ -452,22 +509,17 @@ namespace VSMipsProjectExtension.DebugEngine
 			if (result != VSConstants.S_OK)
 				return result;
 
-			// Create the process with the name of the first file
-			MipsDebugProcess process = new MipsDebugProcess(filesToLoad.First().Item1, pPort);
-			ppProcess = process;
-			m_debuggedProcess = process;
-
-			MipsDebugProgram program = new MipsDebugProgram(m_client, this, process, "main program", m_symbolProvider);
-			process.AddProgram(program);
-
-			// Load all modules asynchronously
-			_ = Task.Run(async () =>
+			foreach (var (fp, ofs) in filesToLoad)
 			{
-				// the symbol provider is apartment and is not in the registry so it can only be accessed from the main thread
-				await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-				foreach (var (fp, ofs) in filesToLoad)
+				try
+				{
 					program.LoadModule(fp, ofs);
-			});
+				}
+				catch (Exception)
+				{
+
+				}
+			}
 
 			return VSConstants.S_OK;
 		}
@@ -499,10 +551,13 @@ namespace VSMipsProjectExtension.DebugEngine
 				err = portNotify.AddProgramNode(program);
 				m_attachedEvent.WaitOne();
 
+				// Create a thread
+				SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault()));
+
+				Thread.Sleep(100);
+
 				program.Execute();
 
-				// Create a thread
-				_ = Task.Run(() => SendEvent(new MipsDebugThreadCreateEvent(program?.Threads.FirstOrDefault())));
 				return VSConstants.S_OK;
 			}
 			catch (Exception)

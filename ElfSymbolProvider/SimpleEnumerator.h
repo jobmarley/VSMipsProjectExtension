@@ -4,7 +4,7 @@
 
 template<class IEnumerator>
 class SimpleEnumerator
-	: public CComObjectRootEx<CComSingleThreadModel>,
+	: public CComObjectRootEx<CComObjectThreadModel>,
 	public IEnumerator
 {
 	template<typename T>
@@ -68,7 +68,7 @@ public:
 	void Add(Range r)
 	{
 		m_elements.reserve(m_elements.size() + std::size(r));
-		for (auto& it : r)
+		for (const auto& it : r)
 			m_elements.push_back(static_cast<IElement>(it)); // static_cast because CComPtr<B> cannot be converted to CComPtr<A>
 	}
 	HRESULT Next(ULONG celt, IElement* rgelt, ULONG* pceltFetched)

@@ -108,5 +108,7 @@ namespace VSMipsProjectExtension.DebugEngine
 		int SetEventCallback(IMipsDEEventCallback pDEEventCallback);
 		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
 		int UnloadAll();
+		[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall)]
+		int GetCodeContextFromAddress(IDebugAddress pAddress, out IDebugCodeContext2 ppCodeContext);
 	}
 }

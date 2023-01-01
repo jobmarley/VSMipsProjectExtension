@@ -48,7 +48,8 @@ namespace MipsRemoteDebuggerUtils
 		{
 			while (!cancellationToken.IsCancellationRequested)
 			{
-				Packet p = await ReceivePacketAsync(cancellationToken);
+				Packet p = await ReceivePacketAsync(cancellationToken).ConfigureAwait(false);
+				System.Diagnostics.Debug.WriteLine(string.Format("ClientConnection: received packet {0}", p.ID));
 				if (p is EventNotificationPacket enp)
 				{
 					_ = Task.Run(() => OnMipsEvent.Invoke(this, new MipsEventArgs(enp.Event)));
@@ -66,12 +67,14 @@ namespace MipsRemoteDebuggerUtils
 			if (packet.ID == 0)
 				packet.ID = GeneratePacketID();
 
+			System.Diagnostics.Debug.WriteLine(string.Format("ClientConnection: sending packet {0}", packet.ID));
+
 			byte[] buffer = Packet.Serialize(packet);
 			PacketHeader hdr = new PacketHeader() { Length = (uint)buffer.Length + 8, Type = packet.Type };
 			buffer = Packet.Serialize(hdr).Concat(buffer).ToArray(); // concat so we send only 1 buffer
 
 			TaskCompletionSource<Packet> tcs = new TaskCompletionSource<Packet>();
-			CancellationTokenSource cts = new CancellationTokenSource(2000);
+			CancellationTokenSource cts = new CancellationTokenSource(5000);
 			if (!m_pendingPackets.TryAdd(packet.ID, tcs))
 				throw new Exception("Packet ID already exist");
 
@@ -83,7 +86,15 @@ namespace MipsRemoteDebuggerUtils
 			// Register the token now, so we dont cancel in the middle of the write
 			cts.Token.Register(() => tcs.TrySetCanceled());
 
-			return (TResponsePacket)(await tcs.Task);
+			try
+			{
+				return (TResponsePacket)(await tcs.Task.ConfigureAwait(false));
+			}
+			catch (Exception ex)
+			{
+				int qzdq = 0;
+				return null;
+			}
 		}
 
 		public event EventHandler<MipsEventArgs> OnMipsEvent;
@@ -95,7 +106,7 @@ namespace MipsRemoteDebuggerUtils
 			BinaryReader reader = new BinaryReader(ns);
 
 			byte[] hdrbuffer = new byte[8];
-			if (await ns.ReadAsync(hdrbuffer, 0, hdrbuffer.Length, cancellationToken) != hdrbuffer.Length)
+			if (await ns.ReadAsync(hdrbuffer, 0, hdrbuffer.Length, cancellationToken).ConfigureAwait(false) != hdrbuffer.Length)
 				throw new Exception();
 
 			PacketHeader hdr = Packet.Deserialize<PacketHeader>(new BinaryReader(new MemoryStream(hdrbuffer)));
@@ -105,25 +116,25 @@ namespace MipsRemoteDebuggerUtils
 			byte[] buffer = new byte[hdr.Length - 8];
 			int ofs = 0;
 			while (ofs < buffer.Length)
-				ofs += await ns.ReadAsync(buffer, ofs, buffer.Length - ofs, cancellationToken);
+				ofs += await ns.ReadAsync(buffer, ofs, buffer.Length - ofs, cancellationToken).ConfigureAwait(false);
 
 			BinaryReader bufferReader = new BinaryReader(new MemoryStream(buffer));
 			switch (hdr.Type)
 			{
 				case PacketType.ReadMemoryResponse:
-					return await Task.Run(() => Packet.Deserialize<ReadMemoryResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<ReadMemoryResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.ReadRegisterResponse:
-					return await Task.Run(() => Packet.Deserialize<ReadRegisterResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<ReadRegisterResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.WriteMemoryResponse:
-					return await Task.Run(() => Packet.Deserialize<WriteMemoryResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<WriteMemoryResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.WriteRegisterResponse:
-					return await Task.Run(() => Packet.Deserialize<WriteRegisterResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<WriteRegisterResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.ReadStateResponse:
-					return await Task.Run(() => Packet.Deserialize<ReadStateResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<ReadStateResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.WriteStateResponse:
-					return await Task.Run(() => Packet.Deserialize<WriteStateResponsePacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<WriteStateResponsePacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				case PacketType.EventNotificationPacket:
-					return await Task.Run(() => Packet.Deserialize<EventNotificationPacket>(bufferReader), cancellationToken);
+					return await Task.Run(() => Packet.Deserialize<EventNotificationPacket>(bufferReader), cancellationToken).ConfigureAwait(false);
 				default:
 					throw new Exception("Unknown packet type");
 			}
@@ -132,7 +143,7 @@ namespace MipsRemoteDebuggerUtils
 		// cancellationToken is not used
 		async Task SendPacketAsync(Packet packet, CancellationToken cancellationToken)
 		{
-			await Task.Run(() => SendPacket(packet));
+			await Task.Run(() => SendPacket(packet)).ConfigureAwait(false);
 		}
 
 		// This must be threadsafe because it can be called from loopAsync and asynchronous events

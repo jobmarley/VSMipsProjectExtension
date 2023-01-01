@@ -55,7 +55,7 @@ namespace VSMipsProjectExtension.DebugEngine
 			pValue = 0;
 			try
 			{
-				pValue = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync((md_register)index));
+				pValue = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync((md_register)index, 0));
 				return VSConstants.S_OK;
 			}
 			catch(Exception)
@@ -84,7 +84,7 @@ namespace VSMipsProjectExtension.DebugEngine
 			try
 			{
 				Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(
-					async () => await m_remoteClient.WriteRegisterAsync((md_register)index, value));
+					async () => await m_remoteClient.WriteRegisterAsync((md_register)index, 0, value));
 				return VSConstants.S_OK;
 			}
 			catch (Exception)
@@ -178,7 +178,7 @@ namespace VSMipsProjectExtension.DebugEngine
 
 			m_state = enum_THREADSTATE.THREADSTATE_STOPPED;
 			pdwSuspendCount = ++SuspendCount;
-			uint pc = Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.Run(async () => await m_remoteClient.ReadRegisterAsync(md_register.md_register_pc));
+			uint pc = m_remoteClient.ReadRegister(md_register.md_register_pc, 0);
 
 			// We cannot return an error there, the thread is stopped already
 			IDebugAddress address = null;

@@ -38,7 +38,7 @@ public:
 
 // CElfSymbolProvider
 class ATL_NO_VTABLE CElfSymbolProvider :
-	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComObjectRootEx<CComObjectThreadModel>,
 	public CComCoClass<CElfSymbolProvider, &CLSID_ElfSymbolProvider>,
 	public IElfSymbolProvider,
     public ISymbolProviderInternal
@@ -94,6 +94,7 @@ END_COM_MAP()
         IDebugStackFrame2** ppStackFrame);
 
     STDMETHOD(GetPreviousStackFrame)(IDebugStackFrame2* pStackFrame, IDebugStackFrame2** ppStackFrame);
+    STDMETHOD(GetCodeContextFromAddress)(IDebugAddress* pAddress, IDebugCodeContext2** ppCodeContext);
 
     STDMETHOD(SetEventCallback)(IMipsDEEventCallback* pDEEventCallback);
     STDMETHOD(UnloadAll)();

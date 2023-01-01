@@ -30,7 +30,7 @@ public:
 // CElfDebugExpressionContext
 
 class ATL_NO_VTABLE CElfDebugExpressionContext :
-	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComObjectRootEx<CComObjectThreadModel>,
 	public CComCoClass<CElfDebugExpressionContext, &CLSID_ElfDebugExpressionContext>,
 	public IElfDebugExpressionContext
 {

@@ -19,32 +19,79 @@
 // CElfDebugCodeContext
 
 
-HRESULT CElfDebugCodeContext::Init(ElfModule* pModule, IDebugAddress* pAddress, IDebugDocumentContext2* pDocumentContext)
+HRESULT CElfDebugCodeContext::Init(IElfSymbolProvider* pSymbolProvider, ElfModule* pModule, IDebugAddress* pAddress)
 {
+	m_pSymbolProvider = pSymbolProvider;
 	m_pModule = pModule;
 	m_pAddress = pAddress;
-	m_pDocumentContext = pDocumentContext;
+	m_addressValue = GetAddressValue(pAddress);
 
-	m_die = pModule->GetFunction(pAddress);
+	try
+	{
+		m_function = pModule->GetFunction(pAddress);
+	}
+	catch (...)
+	{
+
+	}
+	std::wstringstream ss;
+	if (m_function)
+		ss << m_function->GetName() << "!";
+	ss << std::hex << std::setfill(L'0') << std::setw(8) << m_addressValue;
+	m_name = ss.str();
 	return S_OK;
 }
 HRESULT CElfDebugCodeContext::GetDocumentContext(
 	/* [out] */ __RPC__deref_out_opt IDebugDocumentContext2** ppSrcCxt)
 {
-	return m_pDocumentContext.QueryInterface(ppSrcCxt);
+	return m_pSymbolProvider->GetContextFromAddress(m_pAddress, ppSrcCxt);
 }
 
+Dwarf_Unsigned GetLang(ElfModule* pModule, uint32_t address)
+{
+	if (pModule)
+	{
+		auto it = pModule->CUFromAddress(address);
+		if (it)
+			return it->die->GetLang();
+	}
+	return 0;
+}
 HRESULT CElfDebugCodeContext::GetLanguageInfo(
 	/* [full][out][in] */ __RPC__deref_opt_inout_opt BSTR* pbstrLanguage,
 	/* [full][out][in] */ __RPC__inout_opt GUID* pguidLanguage)
 {
-	return m_pDocumentContext->GetLanguageInfo(pbstrLanguage, pguidLanguage);
+	if (pbstrLanguage == nullptr || pguidLanguage == nullptr)
+		return E_INVALIDARG;
+
+	Dwarf_Unsigned lang = GetLang(m_pModule, m_addressValue);
+
+	switch (lang)
+	{
+	case DW_LANG_C89:
+	case DW_LANG_C:
+		*pbstrLanguage = SysAllocString(L"C");
+		*pguidLanguage = guidCLang;
+		break;
+	case DW_LANG_C_plus_plus_14:
+	case DW_LANG_C_plus_plus_11:
+	case DW_LANG_C_plus_plus_03:
+	case DW_LANG_C_plus_plus:
+		*pbstrLanguage = SysAllocString(L"C++");
+		*pguidLanguage = guidCPPLang;
+		break;
+	default:
+		*pbstrLanguage = SysAllocString(L"Unknown");
+		*pguidLanguage = {};
+		return S_OK;
+	}
+	return S_OK;
 }
 
 HRESULT CElfDebugCodeContext::GetName(
 	/* [out] */ __RPC__deref_out_opt BSTR* pbstrName)
 {
-	*pbstrName = SysAllocString(CA2W(m_die->GetName()));
+	*pbstrName = SysAllocString(m_name.c_str());
 	return S_OK;
 }
 
@@ -55,40 +102,46 @@ HRESULT CElfDebugCodeContext::GetInfo(
 	if (!pInfo)
 		return E_INVALIDARG;
 
-	DEBUG_ADDRESS da = {};
-	m_pAddress->GetAddress(&da);
-
 	std::wstringstream ss;
-	ss << std::hex << std::setfill(L'0') << std::setw(8) << da.addr.addr.addrNative.unknown;
+	ss << std::hex << std::setfill(L'0') << std::setw(8) << m_addressValue;
 
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS)
 	{
+		// Dont know the difference with CIF_ADDRESSABSOLUTE. Virtual/non-virtual?
 		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
 		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESSABSOLUTE)
 	{
 		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
-		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESSABSOLUTE;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_ADDRESSOFFSET)
 	{
-		pInfo->bstrAddress = SysAllocString(ss.str().c_str());
-		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
+		// Not sure what that is... the offset in the .text section?
+		//pInfo->bstrAddress = SysAllocString(ss.str().c_str());
+		//pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_ADDRESS;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION)
 	{
-		 pInfo->bstrFunction = SysAllocString(CA2W(m_die->GetName()));
-		 pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION;
+		if (m_function)
+			pInfo->bstrFunction = SysAllocString(CA2W(m_function->GetName()));
+		else
+			pInfo->bstrFunction = SysAllocString(L""); // not sure if I should return empty string here
+		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTION;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET)
 	{
-		m_pDocumentContext->GetSourceRange(&pInfo->posFunctionOffset, nullptr);
-		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET;
+		// Thats not good, we need to function span, not the line of code
+		//m_pDocumentContext->GetSourceRange(&pInfo->posFunctionOffset, nullptr);
+		//pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_FUNCTIONOFFSET;
 	}
 	if (dwFields & enum_CONTEXT_INFO_FIELDS::CIF_MODULEURL)
 	{
-		pInfo->bstrModuleUrl = SysAllocString(CA2W(m_pModule->GetFilepath()));
+		if (m_pModule)
+			pInfo->bstrModuleUrl = SysAllocString(CA2W(m_pModule->GetFilepath()));
+		else
+			pInfo->bstrModuleUrl = SysAllocString(L"");
 		pInfo->dwFields |= enum_CONTEXT_INFO_FIELDS::CIF_MODULEURL;
 	}
 

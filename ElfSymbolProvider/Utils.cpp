@@ -23,3 +23,14 @@ void SafeThrowOnError(Dwarf_Debug dbg, Dwarf_Error err)
         throw std::exception(msg.c_str());
     }
 }
+uint32_t GetAddressValue(IDebugAddress* pAddress)
+{
+    DEBUG_ADDRESS da = {};
+    HRESULT hr = pAddress->GetAddress(&da);
+    if (FAILED(hr))
+        throw std::exception();
+
+    if (da.addr.dwKind != enum_ADDRESS_KIND::ADDRESS_KIND_NATIVE)
+        throw std::exception("Address kind different than ADDRESS_KIND_NATIVE not supported");
+    return da.addr.addr.addrNative.unknown;
+}

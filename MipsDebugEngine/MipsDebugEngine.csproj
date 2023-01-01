@@ -408,9 +408,12 @@
   <ItemGroup>
     <Compile Include="DebugEngine\Enumerators.cs" />
     <Compile Include="DebugEngine\Events.cs" />
+    <Compile Include="DebugEngine\MipsDebugBoundBreakpoint.cs" />
     <Compile Include="DebugEngine\MipsDebugEngine.cs" />
+    <Compile Include="DebugEngine\MipsDebugErrorBreakpoint.cs" />
     <Compile Include="DebugEngine\MipsDebugModule.cs" />
     <Compile Include="DebugEngine\MipsDebugSymbolProvider.cs" />
+    <Compile Include="DebugEngine\MipsDebugPendingBreakpoint.cs" />
     <Compile Include="DebugEngine\MipsRemoteDebugPort.cs" />
     <Compile Include="DebugEngine\MipsRemotePortSupplier.cs" />
     <Compile Include="DebugEngine\MipsDebugProcess.cs" />

@@ -39,7 +39,7 @@ public:
 struct IElfSymbolProvider;
 
 class ATL_NO_VTABLE CElfDebugStackFrame :
-	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComObjectRootEx<CComObjectThreadModel>,
 	public CComCoClass<CElfDebugStackFrame, &CLSID_ElfDebugStackFrame>,
 	public IElfDebugStackFrame
 {

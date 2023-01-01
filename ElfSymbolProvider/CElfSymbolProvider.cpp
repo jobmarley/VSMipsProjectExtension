@@ -17,6 +17,8 @@
 #include "ElfDebugDocumentContext.h"
 #include "ElfDebugAddress.h"
 #include "ElfDebugStackFrame.h"
+#include "SimpleEnumerator.h"
+#include "ElfDebugCodeContext.h"
 
 // CElfSymbolProvider
 
@@ -176,6 +178,18 @@ HRESULT CElfSymbolProvider::GetPreviousStackFrame(IDebugStackFrame2* pStackFrame
 
     return pElfStackFrame->GetPreviousStackFrame(ppStackFrame);
 }
+HRESULT CElfSymbolProvider::GetCodeContextFromAddress(IDebugAddress* pAddress, IDebugCodeContext2** ppCodeContext)
+{
+    CComPtr<IElfDebugCodeContext> pContext;
+    HRESULT hr = CElfDebugCodeContext::CreateInstance(&pContext);
+    if (FAILED(hr))
+        return hr;
+
+    ElfModule* pModule = nullptr;
+    GetModuleFromDebugAddress(pAddress, &pModule);
+    pContext->Init(this, pModule, pAddress);
+    return pContext.QueryInterface(ppCodeContext);
+}
 HRESULT CElfSymbolProvider::SetEventCallback(IMipsDEEventCallback* pDEEventCallback)
 {
     m_pDEEventCallback = pDEEventCallback;
@@ -222,7 +236,51 @@ HRESULT CElfSymbolProvider::GetAddressesFromPosition(
     /* [out] */ __RPC__deref_out_opt IEnumDebugAddresses** ppEnumBegAddresses,
     /* [out] */ __RPC__deref_out_opt IEnumDebugAddresses** ppEnumEndAddresses)
 {
-	return S_OK;
+    CComBSTR filename;
+    HRESULT hr = pDocPos->GetFileName(&filename);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    TEXT_POSITION beg = {};
+    TEXT_POSITION end = {};
+    hr = pDocPos->GetRange(&beg, &end);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    for (auto& it : m_modules)
+    {
+        std::vector<std::pair<DWORD, DWORD>> v;
+        try
+        {
+            v = it.second->GetAddressesFromLine(CW2A(filename).m_psz, beg.dwLine + 1);
+        }
+        catch (...)
+        {
+            continue;
+        }
+        try
+        {
+            auto create_address = [this](DWORD d)
+            {
+                CComPtr<IDebugAddress> o;
+                HRESULT hr = GetAddressFromMemory(d, &o);
+                if (FAILED(hr))
+                    throw std::exception();
+                return o;
+            };
+            CComPtr<IEnumDebugAddresses> enumBegAddresses;
+            CComPtr<IEnumDebugAddresses> enumEndAddresses;
+            SimpleEnumerator<IEnumDebugAddresses>::Create(v | std::views::transform([&create_address](std::pair<DWORD, DWORD> p) { return create_address(p.first); }), &enumBegAddresses);
+            SimpleEnumerator<IEnumDebugAddresses>::Create(v | std::views::transform([&create_address](std::pair<DWORD, DWORD> p) { return create_address(p.second); }), &enumEndAddresses);
+            *ppEnumBegAddresses = enumBegAddresses.Detach();
+            *ppEnumEndAddresses = enumEndAddresses.Detach();
+            return S_OK;
+        }
+        catch (...)
+        {
+        }
+    }
+	return E_FAIL;
 }
 
 HRESULT CElfSymbolProvider::GetAddressesFromContext(

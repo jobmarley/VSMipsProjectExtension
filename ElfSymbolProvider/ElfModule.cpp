@@ -203,7 +203,7 @@ HRESULT ElfModule::GetContextFromAddress(IDebugAddress* pAddress, IDebugDocument
     if (FAILED(hr))
         return hr;
 
-    hr = pDocumentContext->Init(this, pAddress, m_dbg, line, cu_info->die->GetLang());
+    hr = pDocumentContext->Init(m_pSymbolProvider, this, pAddress, m_dbg, line, cu_info->die->GetLang());
     if (FAILED(hr))
         return hr;
 
@@ -467,4 +467,36 @@ ElfDie* ElfModule::GetDieFromOffset(Dwarf_Off ofs)
         return nullptr;
 
     return f->second;
+}
+bool ElfModule::HasSourceFile(std::string filepath)
+{
+    for (auto& it : m_compilationUnits)
+    {
+        std::filesystem::path p = it.second.die->GetCompDir();
+        p /= it.second.die->GetName();
+
+        if (std::filesystem::equivalent(filepath, p))
+            return true;
+    }
+    return false;
+}
+std::vector<std::pair<DWORD, DWORD>> ElfModule::GetAddressesFromLine(std::string filepath, DWORD line)
+{
+    cu_info* ci = nullptr;
+    for (auto& it : m_compilationUnits)
+    {
+        std::filesystem::path p = it.second.die->GetCompDir();
+        p /= it.second.die->GetName();
+
+        if (std::filesystem::equivalent(filepath, p))
+        {
+            ci = &it.second;
+            break;
+        }
+    }
+
+    if (!ci)
+        throw std::exception();
+
+    return ci->lineTable->GetAddressesFromLine(line);
 }

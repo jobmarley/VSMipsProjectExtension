@@ -33,6 +33,7 @@ public:
 
     Dwarf_Half GetTag();
     const char* GetName();
+    std::string GetCompDir();
     Dwarf_Unsigned GetLang();
 
     Dwarf_Addr GetLowPc();

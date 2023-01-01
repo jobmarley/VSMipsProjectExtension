@@ -13,6 +13,35 @@ class ElfLineTable
     Dwarf_Line_Context m_context = nullptr;
     Dwarf_Line* m_lines = nullptr;
     Dwarf_Signed m_lineCount = 0;
+
+    Dwarf_Addr GetLineAddress(Dwarf_Line l)
+    {
+        Dwarf_Addr addr = 0;
+        Dwarf_Error err = nullptr;
+        int result = dwarf_lineaddr(l, &addr, &err);
+        return addr;
+    }
+    Dwarf_Unsigned GetLineNumber(Dwarf_Line l)
+    {
+        Dwarf_Unsigned no = 0;
+        Dwarf_Error err = nullptr;
+        int result = dwarf_lineno(l, &no, &err);
+        return no;
+    }
+    Dwarf_Bool IsBeginStatement(Dwarf_Line l)
+    {
+        Dwarf_Bool b = 0;
+        Dwarf_Error err = nullptr;
+        int result = dwarf_linebeginstatement(l, &b, &err);
+        return b;
+    }
+    Dwarf_Bool IsEndSequence(Dwarf_Line l)
+    {
+        Dwarf_Bool b = 0;
+        Dwarf_Error err = nullptr;
+        int result = dwarf_lineendsequence(l, &b, &err);
+        return b;
+    }
 public:
     ElfLineTable(Dwarf_Debug dbg, Dwarf_Die die)
     {
@@ -37,14 +66,7 @@ public:
     {
         Dwarf_Line* start = &m_lines[0];
         Dwarf_Line* end = &m_lines[m_lineCount];
-        auto get_address = [](Dwarf_Line l)
-        {
-            Dwarf_Addr addr = 0;
-            Dwarf_Error err = nullptr;
-            int result = dwarf_lineaddr(l, &addr, &err);
-            return addr;
-        };
-        Dwarf_Line* found = std::upper_bound(start, end, address, [&get_address](DWORD v, Dwarf_Line l) { return v < get_address(l); });
+        Dwarf_Line* found = std::upper_bound(start, end, address, [this](DWORD v, Dwarf_Line l) { return v < GetLineAddress(l); });
 
         // This gets the first bigger than, so if 0, miss
         if (found == start)
@@ -52,6 +74,39 @@ public:
 
         --found;
         return *found;
+    }
+
+    std::vector<std::pair<DWORD, DWORD>> GetAddressesFromLine(DWORD line)
+    {
+        std::vector<std::pair<DWORD, DWORD>> result;
+        int i = 0;
+        while (i < m_lineCount)
+        {
+            Dwarf_Unsigned iStart = GetLineNumber(m_lines[i]);
+            Dwarf_Addr addrStart = GetLineAddress(m_lines[i]);
+            if (iStart == line && IsBeginStatement(m_lines[i]))
+            {
+                Dwarf_Unsigned iEnd = iStart;
+                Dwarf_Addr addrEnd = addrStart;
+                ++i;
+                for (; i < m_lineCount && !IsEndSequence(m_lines[i]) && !IsBeginStatement(m_lines[i]); ++i)
+                {
+                    Dwarf_Unsigned iLine = GetLineNumber(m_lines[i]);
+                    Dwarf_Addr addr = GetLineAddress(m_lines[i]);
+                    if (iLine != iStart)
+                        break;
+                    iEnd = iLine;
+                    addrEnd = addr;
+                }
+                result.push_back({ addrStart, addrEnd });
+            }
+            else
+            {
+                ++i;
+            }
+        }
+
+        return result;
     }
 };
 
@@ -86,7 +141,6 @@ class ElfModule
     Dwarf_Fde* m_fdeTable = nullptr;
     Dwarf_Signed m_fdeCount = 0;
 
-    cu_info* CUFromAddress(DWORD address);
     void LoadChildren(ElfDie* die);
     void LoadFrames();
     Dwarf_Fde FdeFromAddress(DWORD address);
@@ -121,4 +175,8 @@ public:
 
     // Get die from dwarf offset
     ElfDie* GetDieFromOffset(Dwarf_Off ofs);
+
+    bool HasSourceFile(std::string filepath);
+    std::vector<std::pair<DWORD, DWORD>> GetAddressesFromLine(std::string filepath, DWORD line);
+    cu_info* CUFromAddress(DWORD address);
 };

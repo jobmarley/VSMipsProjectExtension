@@ -31,7 +31,7 @@ public:
 // CElfDebugExpression
 
 class ATL_NO_VTABLE CElfDebugExpression :
-	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComObjectRootEx<CComObjectThreadModel>,
 	public CComCoClass<CElfDebugExpression, &CLSID_ElfDebugExpression>,
 	public IElfDebugExpression
 {

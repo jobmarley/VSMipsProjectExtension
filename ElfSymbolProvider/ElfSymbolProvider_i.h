@@ -3,11 +3,11 @@
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
 
 
- /* File created by MIDL compiler version 8.01.0628 */
+ /* File created by MIDL compiler version 8.01.0626 */
 /* at Tue Jan 19 04:14:07 2038
  */
 /* Compiler settings for ElfSymbolProvider.idl:
-    Oicf, W1, Zp8, env=Win64 (32b run), target_arch=AMD64 8.01.0628 
+    Oicf, W1, Zp8, env=Win64 (32b run), target_arch=AMD64 8.01.0626 
     protocol : all , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
@@ -43,7 +43,7 @@
 #endif
 
 #ifndef DECLSPEC_XFGVIRT
-#if defined(_CONTROL_FLOW_GUARD_XFG)
+#if _CONTROL_FLOW_GUARD_XFG
 #define DECLSPEC_XFGVIRT(base, func) __declspec(xfg_virtual(base, func))
 #else
 #define DECLSPEC_XFGVIRT(base, func)
@@ -190,7 +190,7 @@ extern "C"{
 #define __IMipsDEEventCallback_INTERFACE_DEFINED__
 
 /* interface IMipsDEEventCallback */
-/* [unique][uuid][object] */ 
+/* [unique][uuid][oleautomation][object] */ 
 
 
 EXTERN_C const IID IID_IMipsDEEventCallback;
@@ -211,6 +211,20 @@ EXTERN_C const IID IID_IMipsDEEventCallback;
         
         virtual HRESULT STDMETHODCALLTYPE SendPropertyCreateEvent( 
             IDebugProperty2 *pProperty) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendBreakpointBoundEvent( 
+            IDebugPendingBreakpoint2 *pPendingBreakpoint,
+            IEnumDebugBoundBreakpoints2 *pEnumBoundBreakpoints) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendBreakpointEvent( 
+            IEnumDebugBoundBreakpoints2 *pEnumBoundBreakpoints) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendBreakpointErrorEvent( 
+            IDebugErrorBreakpoint2 *pErrorBreakpoint) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE SendModuleLoadEvent( 
+            IDebugModule2 *pModule,
+            BOOL loading) = 0;
         
     };
     
@@ -253,6 +267,28 @@ EXTERN_C const IID IID_IMipsDEEventCallback;
             IMipsDEEventCallback * This,
             IDebugProperty2 *pProperty);
         
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendBreakpointBoundEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendBreakpointBoundEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugPendingBreakpoint2 *pPendingBreakpoint,
+            IEnumDebugBoundBreakpoints2 *pEnumBoundBreakpoints);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendBreakpointEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendBreakpointEvent )( 
+            IMipsDEEventCallback * This,
+            IEnumDebugBoundBreakpoints2 *pEnumBoundBreakpoints);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendBreakpointErrorEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendBreakpointErrorEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugErrorBreakpoint2 *pErrorBreakpoint);
+        
+        DECLSPEC_XFGVIRT(IMipsDEEventCallback, SendModuleLoadEvent)
+        HRESULT ( STDMETHODCALLTYPE *SendModuleLoadEvent )( 
+            IMipsDEEventCallback * This,
+            IDebugModule2 *pModule,
+            BOOL loading);
+        
         END_INTERFACE
     } IMipsDEEventCallbackVtbl;
 
@@ -285,6 +321,18 @@ EXTERN_C const IID IID_IMipsDEEventCallback;
 #define IMipsDEEventCallback_SendPropertyCreateEvent(This,pProperty)	\
     ( (This)->lpVtbl -> SendPropertyCreateEvent(This,pProperty) ) 
 
+#define IMipsDEEventCallback_SendBreakpointBoundEvent(This,pPendingBreakpoint,pEnumBoundBreakpoints)	\
+    ( (This)->lpVtbl -> SendBreakpointBoundEvent(This,pPendingBreakpoint,pEnumBoundBreakpoints) ) 
+
+#define IMipsDEEventCallback_SendBreakpointEvent(This,pEnumBoundBreakpoints)	\
+    ( (This)->lpVtbl -> SendBreakpointEvent(This,pEnumBoundBreakpoints) ) 
+
+#define IMipsDEEventCallback_SendBreakpointErrorEvent(This,pErrorBreakpoint)	\
+    ( (This)->lpVtbl -> SendBreakpointErrorEvent(This,pErrorBreakpoint) ) 
+
+#define IMipsDEEventCallback_SendModuleLoadEvent(This,pModule,loading)	\
+    ( (This)->lpVtbl -> SendModuleLoadEvent(This,pModule,loading) ) 
+
 #endif /* COBJMACROS */
 
 
@@ -300,7 +348,7 @@ EXTERN_C const IID IID_IMipsDEEventCallback;
 #define __IRegisterOperation_INTERFACE_DEFINED__
 
 /* interface IRegisterOperation */
-/* [unique][uuid][object] */ 
+/* [unique][uuid][oleautomation][object] */ 
 
 
 EXTERN_C const IID IID_IRegisterOperation;
@@ -399,7 +447,7 @@ EXTERN_C const IID IID_IRegisterOperation;
 #define __IMemoryOperation_INTERFACE_DEFINED__
 
 /* interface IMemoryOperation */
-/* [unique][uuid][object] */ 
+/* [unique][uuid][oleautomation][object] */ 
 
 
 EXTERN_C const IID IID_IMemoryOperation;
@@ -506,7 +554,7 @@ EXTERN_C const IID IID_IMemoryOperation;
 #define __IElfSymbolProvider_INTERFACE_DEFINED__
 
 /* interface IElfSymbolProvider */
-/* [unique][uuid][object] */ 
+/* [unique][uuid][oleautomation][object] */ 
 
 
 EXTERN_C const IID IID_IElfSymbolProvider;
@@ -541,6 +589,10 @@ EXTERN_C const IID IID_IElfSymbolProvider;
             IMipsDEEventCallback *pDEEventCallback) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE UnloadAll( void) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE GetCodeContextFromAddress( 
+            IDebugAddress *pAddress,
+            IDebugCodeContext2 **ppCodeContext) = 0;
         
     };
     
@@ -693,6 +745,12 @@ EXTERN_C const IID IID_IElfSymbolProvider;
         HRESULT ( STDMETHODCALLTYPE *UnloadAll )( 
             IElfSymbolProvider * This);
         
+        DECLSPEC_XFGVIRT(IElfSymbolProvider, GetCodeContextFromAddress)
+        HRESULT ( STDMETHODCALLTYPE *GetCodeContextFromAddress )( 
+            IElfSymbolProvider * This,
+            IDebugAddress *pAddress,
+            IDebugCodeContext2 **ppCodeContext);
+        
         END_INTERFACE
     } IElfSymbolProviderVtbl;
 
@@ -776,6 +834,9 @@ EXTERN_C const IID IID_IElfSymbolProvider;
 
 #define IElfSymbolProvider_UnloadAll(This)	\
     ( (This)->lpVtbl -> UnloadAll(This) ) 
+
+#define IElfSymbolProvider_GetCodeContextFromAddress(This,pAddress,ppCodeContext)	\
+    ( (This)->lpVtbl -> GetCodeContextFromAddress(This,pAddress,ppCodeContext) ) 
 
 #endif /* COBJMACROS */
 

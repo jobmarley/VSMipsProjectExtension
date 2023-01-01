@@ -29,7 +29,7 @@ public:
 // This represent a variable to be displayed in eg. the local window in the debugger
 // It has an address, a type and a name
 class ATL_NO_VTABLE CElfDebugProperty :
-	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComObjectRootEx<CComObjectThreadModel>,
 	public CComCoClass<CElfDebugProperty, &CLSID_ElfDebugProperty>,
 	public IElfDebugProperty
 {

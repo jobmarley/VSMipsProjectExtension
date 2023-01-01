@@ -65,48 +65,72 @@ namespace MipsRemoteDebuggerUtils
 
 		public async Task<uint> ReadRegisterAsync(md_register r, byte sel)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<ReadRegisterResponsePacket>(new ReadRegisterRequestPacket() { Register = r, Sel = sel });
+			var resp = await m_clientConnection.SendPacketAsync<ReadRegisterResponsePacket>(new ReadRegisterRequestPacket() { Register = r, Sel = sel }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 
 			return resp.Value;
 		}
+		public uint ReadRegister(md_register r, byte sel)
+		{
+			return ReadRegisterAsync(r, sel).Result;
+		}
 		public async Task WriteRegisterAsync(md_register r, byte sel, uint value)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<WriteRegisterResponsePacket>(new WriteRegisterRequestPacket() { Register = r, Sel = sel, Value = value });
+			var resp = await m_clientConnection.SendPacketAsync<WriteRegisterResponsePacket>(new WriteRegisterRequestPacket() { Register = r, Sel = sel, Value = value }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 		}
+		public void WriteRegister(md_register r, byte sel, uint value)
+		{
+			WriteRegisterAsync(r, sel, value).Wait();
+		}
 		public async Task<uint> ReadMemoryAsync(byte[] buffer, uint offset)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<ReadMemoryResponsePacket>(new ReadMemoryRequestPacket() { Offset = offset, Count = (uint)buffer.Length });
+			var resp = await m_clientConnection.SendPacketAsync<ReadMemoryResponsePacket>(new ReadMemoryRequestPacket() { Offset = offset, Count = (uint)buffer.Length }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 
 			resp.Data.CopyTo(buffer, 0);
 			return (uint)resp.Data.Length;
 		}
+		public uint ReadMemory(byte[] buffer, uint offset)
+		{
+			return ReadMemoryAsync(buffer, offset).Result;
+		}
 		public async Task<uint> WriteMemoryAsync(byte[] buffer, uint offset)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<WriteMemoryResponsePacket>(new WriteMemoryRequestPacket() { Data = buffer, Offset = offset });
+			var resp = await m_clientConnection.SendPacketAsync<WriteMemoryResponsePacket>(new WriteMemoryRequestPacket() { Data = buffer, Offset = offset }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 
 			return resp.WrittenCount;
 		}
+		public uint WriteMemory(byte[] buffer, uint offset)
+		{
+			return WriteMemoryAsync(buffer, offset).Result;
+		}
 		public async Task<md_state> GetStateAsync()
 		{
-			var resp = await m_clientConnection.SendPacketAsync<ReadStateResponsePacket>(new ReadStateRequestPacket() { });
+			var resp = await m_clientConnection.SendPacketAsync<ReadStateResponsePacket>(new ReadStateRequestPacket() { }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
 
 			return resp.State;
 		}
+		public md_state GetState()
+		{
+			return GetStateAsync().Result;
+		}
 		public async Task SetStateAsync(md_state state)
 		{
-			var resp = await m_clientConnection.SendPacketAsync<WriteStateResponsePacket>(new WriteStateRequestPacket() { State = state });
+			var resp = await m_clientConnection.SendPacketAsync<WriteStateResponsePacket>(new WriteStateRequestPacket() { State = state }).ConfigureAwait(false);
 			if (resp.Status != md_status.Success)
 				throw new MipsException(resp.Status);
+		}
+		public void SetState(md_state state)
+		{
+			SetStateAsync(state).Wait();
 		}
 
 		public event EventHandler<MipsEventArgs> OnMipsEvent;

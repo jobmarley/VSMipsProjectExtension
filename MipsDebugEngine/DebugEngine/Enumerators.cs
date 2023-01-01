@@ -236,6 +236,72 @@ namespace VSMipsProjectExtension.DebugEngine
 			return base.GetCount(out pcelt);
 		}
 	}
-	
+	class EnumDebugBoundBreakpoints2
+		: EnumeratorBase<IDebugBoundBreakpoint2>,
+		IEnumDebugBoundBreakpoints2
+	{
+		public EnumDebugBoundBreakpoints2(IEnumerable<IDebugBoundBreakpoint2> l)
+			: base(l)
+		{
+		}
+		int IEnumDebugBoundBreakpoints2.Next(uint celt, IDebugBoundBreakpoint2[] rgelt, ref uint pceltFetched)
+		{
+			return base.Next(celt, rgelt, ref pceltFetched);
+		}
 
+		int IEnumDebugBoundBreakpoints2.Skip(uint celt)
+		{
+			return base.Skip(celt);
+		}
+
+		int IEnumDebugBoundBreakpoints2.Reset()
+		{
+			return base.Reset();
+		}
+
+		int IEnumDebugBoundBreakpoints2.Clone(out IEnumDebugBoundBreakpoints2 ppEnum)
+		{
+			ppEnum = new EnumDebugBoundBreakpoints2(m_l);
+			return VSConstants.S_OK;
+		}
+
+		int IEnumDebugBoundBreakpoints2.GetCount(out uint pcelt)
+		{
+			return base.GetCount(out pcelt);
+		}
+	}
+	class EnumDebugErrorBreakpoints2
+		: EnumeratorBase<IDebugErrorBreakpoint2>,
+		IEnumDebugErrorBreakpoints2
+	{
+		public EnumDebugErrorBreakpoints2(IEnumerable<IDebugErrorBreakpoint2> l)
+			: base(l)
+		{
+		}
+		int IEnumDebugErrorBreakpoints2.Next(uint celt, IDebugErrorBreakpoint2[] rgelt, ref uint pceltFetched)
+		{
+			return base.Next(celt, rgelt, ref pceltFetched);
+		}
+
+		int IEnumDebugErrorBreakpoints2.Skip(uint celt)
+		{
+			return base.Skip(celt);
+		}
+
+		int IEnumDebugErrorBreakpoints2.Reset()
+		{
+			return base.Reset();
+		}
+
+		int IEnumDebugErrorBreakpoints2.Clone(out IEnumDebugErrorBreakpoints2 ppEnum)
+		{
+			ppEnum = new EnumDebugErrorBreakpoints2(m_l);
+			return VSConstants.S_OK;
+		}
+
+		int IEnumDebugErrorBreakpoints2.GetCount(out uint pcelt)
+		{
+			return base.GetCount(out pcelt);
+		}
+	}
 }
