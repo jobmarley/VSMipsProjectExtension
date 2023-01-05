@@ -18,7 +18,7 @@
 		<Exec Command='$(RunCommand) "$(MSBuildProjectDirectory)\$(StartItem)" $(RunCommandArguments)' WorkingDirectory="$(RunWorkingDirectory)" />
 	</Target>
 
-	<Target Name="Compile" Outputs="%(ClCompile.Identity)">
+	<Target Name="Compile" Outputs="%(ClCompile.Identity)" DependsOnTargets="PreBuildEvent">
 		<Message Importance="High" Text="%(ClCompile.Identity)" />
 		<PropertyGroup>
 			<clang_path>"C:\Program Files\LLVM\bin\clang++"</clang_path>
@@ -39,7 +39,7 @@
 			</Link>
 		</ItemGroup>
 	</Target>
-	<Target Name="Link" DependsOnTargets="CreateLinkItem" Outputs="%(Link.Identity)">
+	<Target Name="Link" DependsOnTargets="PreLinkEvent;CreateLinkItem" Outputs="%(Link.Identity)">
 		<PropertyGroup>
 			<lld_path>"C:\Program Files\LLVM\bin\ld.lld"</lld_path>
 		</PropertyGroup>
@@ -55,7 +55,7 @@
 		<Message Importance="High" Text="cmd: $(cmd_line)" />
 		<Exec Command="$(cmd_line)" />
 	</Target>
-	<Target Name="Build" DependsOnTargets="Link">
+	<Target Name="Build" DependsOnTargets="Link;PostBuildEvent">
 		<Message Importance="High" Text="$(MSBuildProjectFile) -> $(TargetPath)" />
 	</Target>
 
