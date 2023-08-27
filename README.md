@@ -10,8 +10,9 @@ To use it, MipsRemoteDebugger must be running on the target machine, and the pro
 - pause/resume
 - dwarf debug info in elf
 - callstack
-- hardcoded breakpoints (mips instruction "sdbbp", breakpoint window and adding breakpoint on the fly not supported)
-- local variable for simple types
+- hardcoded breakpoints (mips instruction "sdbbp")
+- dynamic breakpoints
+- local variable for simple types (char/char*, ints, float, pointers, classes/struct not supported for now)
 
 ![image](https://user-images.githubusercontent.com/99695100/178160470-03acb55f-7645-4ae0-8374-3537b45f9cbd.png)
 
